@@ -1,0 +1,1 @@
+// shop.controller.js placeholder
