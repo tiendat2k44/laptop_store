@@ -7,24 +7,24 @@ $db = Database::getInstance();
 
 // Get featured products
 $featuredProducts = $db->query("
-    SELECT p.*, b.name as brand_name, s.shop_name,
-           (SELECT image_url FROM product_images WHERE product_id = p.id ORDER BY display_order LIMIT 1) as main_image
+    SELECT p.*, s.shop_name,
+           (SELECT image_url FROM product_images WHERE product_id = p.id ORDER BY display_order LIMIT 1) as main_image,
+           p.rating_average, p.review_count
     FROM products p
-    JOIN brands b ON p.brand_id = b.id
     JOIN shops s ON p.shop_id = s.id
-    WHERE p.status = 'active' AND p.featured = true
+    WHERE p.status = 'active' AND p.featured = true AND s.status = 'active'
     ORDER BY p.created_at DESC
     LIMIT 8
 ");
 
 // Get latest products
 $latestProducts = $db->query("
-    SELECT p.*, b.name as brand_name, s.shop_name,
-           (SELECT image_url FROM product_images WHERE product_id = p.id ORDER BY display_order LIMIT 1) as main_image
+    SELECT p.*, s.shop_name,
+           (SELECT image_url FROM product_images WHERE product_id = p.id ORDER BY display_order LIMIT 1) as main_image,
+           p.rating_average, p.review_count
     FROM products p
-    JOIN brands b ON p.brand_id = b.id
     JOIN shops s ON p.shop_id = s.id
-    WHERE p.status = 'active'
+    WHERE p.status = 'active' AND s.status = 'active'
     ORDER BY p.created_at DESC
     LIMIT 8
 ");
