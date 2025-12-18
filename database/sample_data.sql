@@ -78,74 +78,73 @@ INSERT INTO products (shop_id, category_id, brand_id, name, slug, description, c
 'Razer Blade 15 với thiết kế CNC nguyên khối sang trọng, màn hình QHD 240Hz và RGB Chroma. Laptop gaming cao cấp đẳng cấp thế giới.',
 'Intel Core i7-12800H (14 cores, up to 4.8GHz)', '16GB DDR5 4800MHz', '1TB SSD NVMe', '15.6 inch QHD 240Hz', 'NVIDIA RTX 3070Ti 8GB', '2.01kg', '80Wh', 'Windows 11 Home', 52990000, 49990000, 5, 'assets/uploads/products/razer-blade-15.jpg', true, 'active', CURRENT_TIMESTAMP);
 
--- Thêm hình ảnh cho sản phẩm
-INSERT INTO product_images (product_id, image_url, display_order) VALUES
--- Dell Latitude 5430
-(1, 'assets/uploads/products/dell-latitude-5430-1.jpg', 0),
-(1, 'assets/uploads/products/dell-latitude-5430-2.jpg', 1),
-(1, 'assets/uploads/products/dell-latitude-5430-3.jpg', 2),
+-- =============================================
+-- DỮ LIỆU MẪU - LAPTOP STORE (ĐÃ CẬP NHẬT)
+-- =============================================
 
--- Dell Inspiron 15 3520
-(2, 'assets/uploads/products/dell-inspiron-15-3520-1.jpg', 0),
-(2, 'assets/uploads/products/dell-inspiron-15-3520-2.jpg', 1),
+-- Lưu ý: File này chỉ chứa phần INSERT hình ảnh và banners
+-- Phần INSERT products giữ nguyên từ sample_data.sql
 
--- HP EliteBook 840 G9
-(3, 'assets/uploads/products/hp-elitebook-840-g9-1.jpg', 0),
-(3, 'assets/uploads/products/hp-elitebook-840-g9-2.jpg', 1),
-(3, 'assets/uploads/products/hp-elitebook-840-g9-3.jpg', 2),
+-- XÓA DỮ LIỆU CŨ (nếu cần)
+-- TRUNCATE TABLE product_images, banners CASCADE;
 
--- HP Victus 15
-(4, 'assets/uploads/products/hp-victus-15-1.jpg', 0),
-(4, 'assets/uploads/products/hp-victus-15-2.jpg', 1),
+-- =============================================
+-- THÊM HÌNH ẢNH SẢN PHẨM (khớp với tên file thực tế)
+-- =============================================
+INSERT INTO product_images (product_id, image_url, is_primary, display_order) VALUES
+-- Sản phẩm 1: Dell Latitude 5430
+(1, 'assets/uploads/products/dell-latitude-5430.jpg', true, 1),
 
--- Lenovo ThinkPad X1 Carbon
-(5, 'assets/uploads/products/lenovo-x1-carbon-1.jpg', 0),
-(5, 'assets/uploads/products/lenovo-x1-carbon-2.jpg', 1),
+-- Sản phẩm 2: Dell Inspiron 15 3520
+(2, 'assets/uploads/products/dell-inspiron-15-3520.jpg', true, 1),
 
--- Lenovo Legion 5 Pro
-(6, 'assets/uploads/products/lenovo-legion-5-pro-1.jpg', 0),
-(6, 'assets/uploads/products/lenovo-legion-5-pro-2.jpg', 1),
-(6, 'assets/uploads/products/lenovo-legion-5-pro-3.jpg', 2),
+-- Sản phẩm 3: HP EliteBook 840 G9
+(3, 'assets/uploads/products/hp-elitebook-840-g9.jpg', true, 1),
 
--- ASUS ROG Strix G15
-(7, 'assets/uploads/products/asus-rog-strix-g15-1.jpg', 0),
-(7, 'assets/uploads/products/asus-rog-strix-g15-2.jpg', 1),
+-- Sản phẩm 4: HP Victus 15
+(4, 'assets/uploads/products/hp-victus-15.jpg', true, 1),
 
--- ASUS ZenBook 14
-(8, 'assets/uploads/products/asus-zenbook-14-1.jpg', 0),
-(8, 'assets/uploads/products/asus-zenbook-14-2.jpg', 1),
+-- Sản phẩm 5: Lenovo X1 Carbon Gen 10
+(5, 'assets/uploads/products/lenovo-x1-carbon-gen10.jpg', true, 1),
 
--- Acer Predator Helios 300
-(9, 'assets/uploads/products/acer-predator-helios-1.jpg', 0),
-(9, 'assets/uploads/products/acer-predator-helios-2.jpg', 1),
+-- Sản phẩm 6: Lenovo Legion 5 Pro
+(6, 'assets/uploads/products/lenovo-legion-5-pro.jpg', true, 1),
 
--- Acer Aspire 5
-(10, 'assets/uploads/products/acer-aspire-5-1.jpg', 0),
+-- Sản phẩm 7: ASUS ROG Strix G15
+(7, 'assets/uploads/products/asus-rog-strix-g15.jpg', true, 1),
 
--- MacBook Air M2
-(11, 'assets/uploads/products/macbook-air-m2-1.jpg', 0),
-(11, 'assets/uploads/products/macbook-air-m2-2.jpg', 1),
+-- Sản phẩm 8: ASUS ZenBook 14 OLED
+(8, 'assets/uploads/products/asus-zenbook-14-oled.jpg', true, 1),
 
--- MacBook Pro 14
-(12, 'assets/uploads/products/macbook-pro-14-1.jpg', 0),
-(12, 'assets/uploads/products/macbook-pro-14-2.jpg', 1),
+-- Sản phẩm 9: Acer Predator Helios 300
+(9, 'assets/uploads/products/acer-predator-helios-300.jpg', true, 1),
 
--- MSI Katana GF66
-(13, 'assets/uploads/products/msi-katana-gf66-1.jpg', 0),
+-- Sản phẩm 10: Acer Aspire 5
+(10, 'assets/uploads/products/acer-aspire-5.jpg', true, 1),
 
--- MSI GE76 Raider
-(14, 'assets/uploads/products/msi-ge76-raider-1.jpg', 0),
-(14, 'assets/uploads/products/msi-ge76-raider-2.jpg', 1),
+-- Sản phẩm 11: MacBook Air M2
+(11, 'assets/uploads/products/macbook-air-m2.jpg', true, 1),
 
--- Razer Blade 15
-(15, 'assets/uploads/products/razer-blade-15-1.jpg', 0),
-(15, 'assets/uploads/products/razer-blade-15-2.jpg', 1);
+-- Sản phẩm 12: MacBook Pro 14 M2
+(12, 'assets/uploads/products/macbook-pro-14-m2.jpg', true, 1),
 
--- Thêm banners
+-- Sản phẩm 13: MSI Katana GF66
+(13, 'assets/uploads/products/msi-katana-gf66.jpg', true, 1),
+
+-- Sản phẩm 14: MSI GE76 Raider
+(14, 'assets/uploads/products/msi-ge76-raider.jpg', true, 1),
+
+-- Sản phẩm 15: Razer Blade 15
+(15, 'assets/uploads/products/razer-blade-15.jpg', true, 1);
+
+-- =============================================
+-- THÊM BANNERS (khớp với tên file thực tế)
+-- =============================================
 INSERT INTO banners (title, image, link, display_order, status) VALUES
-('Khuyến mãi cuối năm - Giảm đến 30%', 'assets/uploads/banners/banner-01.jpg', '/products.php?sale=1', 1, 'active'),
-('Laptop Gaming RTX 40 Series mới nhất', 'assets/uploads/banners/banner-02.jpg', '/products.php?category=2', 2, 'active'),
-('MacBook Air M2 - Mỏng nhẹ đỉnh cao', 'assets/uploads/banners/banner-03.jpg', '/products.php?brand=6', 3, 'active');
+('Khuyến mãi cuối năm - Giảm đến 30%', 'assets/uploads/banners/banner-1.jpg', '/products.php?sale=1', 1, 'active'),
+('Laptop Gaming RTX 40 Series mới nhất', 'assets/uploads/banners/banner-2.jpg', '/products.php?category=2', 2, 'active'),
+('MacBook Air M2 - Mỏng nhẹ đỉnh cao', 'assets/uploads/banners/banner-3.jpg', '/products.php?brand=6', 3, 'active');
 
--- Thêm reviews mẫu (giả sử có đơn hàng đã giao)
--- Lưu ý: Cần có đơn hàng trước khi thêm reviews
+-- =============================================
+-- HOÀN TẤT
+-- =============================================
