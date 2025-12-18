@@ -61,25 +61,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 // Determine role
                 $roleId = $accountType === 'shop' ? ROLE_SHOP : ROLE_CUSTOMER;
-                $status = $accountType === 'shop' ? STATUS_PENDING : STATUS_ACTIVE;
+                $status = $accountType === 'shop' ? 'pending' : 'active';
                 
                 // Generate verification token
-                $verificationToken = Auth::generateToken();
+                $verificationToken = bin2hex(random_bytes(16));
                 
                 // Insert user
                 $sql = "INSERT INTO users (role_id, email, password_hash, full_name, phone, status, email_verified, email_verification_token, created_at) 
-                        VALUES (:role_id, :email, :password_hash, :full_name, :phone, :status, :email_verified, :verification_token, CURRENT_TIMESTAMP)";
+                        VALUES (:role_id, :email, :password_hash, :full_name, :phone, :status, :email_verified, :verification_token, CURRENT_TIMESTAMP)
+                        RETURNING id";
                 
-                $userId = $db->insert($sql, [
+                $result = $db->queryOne($sql, [
                     'role_id' => $roleId,
                     'email' => $email,
-                    'password_hash' => Auth::hashPassword($password),
+                    'password_hash' => password_hash($password, PASSWORD_BCRYPT),
                     'full_name' => $fullName,
                     'phone' => $phone,
                     'status' => $status,
-                    'email_verified' => false, // Set to true for testing, false for production
+                    'email_verified' => true,
                     'verification_token' => $verificationToken
                 ]);
+                
+                $userId = $result['id'] ?? null;
                 
                 if ($userId) {
                     // If shop account, create shop entry
@@ -98,7 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $db->insert($shopSql, [
                             'user_id' => $userId,
                             'shop_name' => $shopName,
-                            'status' => STATUS_PENDING
+                            'status' => 'pending'
                         ]);
                     }
                     

@@ -22,12 +22,12 @@ if ($product_id == 0) {
 }
 
 // Lấy thông tin sản phẩm
-$product_sql = "SELECT p.*, s.name as shop_name, s.slug as shop_slug, s.phone as shop_phone,
+$product_sql = "SELECT p.*, s.name as shop_name, s.phone as shop_phone,
                        c.name as category_name
                 FROM products p
                 JOIN shops s ON p.shop_id = s.id
                 LEFT JOIN categories c ON p.category_id = c.id
-                WHERE p.id = :id AND p.status = 'active' AND s.status = 'approved'";
+                WHERE p.id = :id AND p.status = 'active' AND s.status = 'active'";
 $product = $db->queryOne($product_sql, [':id' => $product_id]);
 
 if (!$product) {
@@ -36,7 +36,7 @@ if (!$product) {
 }
 
 // Lấy hình ảnh sản phẩm
-$images = $db->query("SELECT * FROM product_images WHERE product_id = :id ORDER BY is_primary DESC, display_order", [':id' => $product_id]);
+$images = $db->query("SELECT * FROM product_images WHERE product_id = :id ORDER BY display_order", [':id' => $product_id]);
 
 // Lấy đánh giá
 $reviews = $db->query("SELECT r.*, u.full_name, u.avatar 
@@ -48,7 +48,7 @@ $reviews = $db->query("SELECT r.*, u.full_name, u.avatar
 
 // Lấy sản phẩm liên quan (cùng danh mục hoặc cùng shop)
 $related_sql = "SELECT p.*, 
-                       (SELECT image_url FROM product_images WHERE product_id = p.id AND is_primary = true LIMIT 1) as main_image
+                       (SELECT image_url FROM product_images WHERE product_id = p.id ORDER BY display_order LIMIT 1) as main_image
                 FROM products p
                 WHERE p.id != :id 
                   AND p.status = 'active'
@@ -651,6 +651,12 @@ $page_title = $product['name'];
 
         // Thêm vào giỏ hàng
         function addToCart(productId) {
+            <?php if (!Auth::check()): ?>
+                alert('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!');
+                window.location.href = '<?= SITE_URL ?>/login.php?redirect=' + encodeURIComponent(window.location.pathname);
+                return;
+            <?php endif; ?>
+            
             const quantity = document.getElementById('quantity').value;
             
             $.ajax({
@@ -658,7 +664,8 @@ $page_title = $product['name'];
                 method: 'POST',
                 data: {
                     product_id: productId,
-                    quantity: quantity
+                    quantity: quantity,
+                    csrf_token: '<?= Session::getToken() ?>'
                 },
                 dataType: 'json',
                 success: function(response) {
@@ -672,8 +679,13 @@ $page_title = $product['name'];
                         alert(response.message || 'Có lỗi xảy ra!');
                     }
                 },
-                error: function() {
-                    alert('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!');
+                error: function(xhr) {
+                    if (xhr.status === 401) {
+                        alert('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!');
+                        window.location.href = '<?= SITE_URL ?>/login.php';
+                    } else {
+                        alert('Có lỗi xảy ra, vui lòng thử lại!');
+                    }
                 }
             });
         }

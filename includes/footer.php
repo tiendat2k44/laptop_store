@@ -66,6 +66,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         window.jQuery || document.write('<script src="<?php echo SITE_URL; ?>/assets/js/jquery-3.6.0.min.js"><\\/script>');
+        window.SITE_URL = '<?php echo SITE_URL; ?>';
     </script>
     
     <!-- Custom JS -->

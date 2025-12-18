@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="<?php echo Session::getToken(); ?>">
     <title><?php echo isset($pageTitle) ? escape($pageTitle) . ' - ' : ''; ?><?php echo SITE_NAME; ?></title>
     <meta name="description" content="<?php echo isset($pageDescription) ? escape($pageDescription) : 'Mua sắm laptop chính hãng, giá tốt nhất'; ?>">
     
@@ -14,6 +15,12 @@
     
     <!-- Custom CSS -->
     <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/style.css">
+    
+    <?php if (Auth::check()): ?>
+    <script>
+        window.userLoggedIn = true;
+    </script>
+    <?php endif; ?>
     
     <?php if (isset($additionalCSS)): ?>
         <?php echo $additionalCSS; ?>

@@ -12,14 +12,14 @@ $(document).ready(function() {
         
         // Check if user is logged in
         if (!isLoggedIn()) {
-            window.location.href = '/login.php?redirect=' + encodeURIComponent(window.location.pathname);
+            window.location.href = window.SITE_URL + '/login.php?redirect=' + encodeURIComponent(window.location.pathname);
             return;
         }
         
         button.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Đang xử lý...');
         
         $.ajax({
-            url: '/ajax/cart-add.php',
+            url: window.SITE_URL + '/ajax/cart-add.php',
             method: 'POST',
             data: {
                 product_id: productId,
@@ -29,14 +29,21 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 if (response.success) {
-                    showNotification('success', response.message);
+                    showNotification('success', response.message || 'Đã thêm vào giỏ hàng!');
                     updateCartCount(response.cart_count);
                 } else {
                     showNotification('error', response.message);
                 }
             },
-            error: function() {
-                showNotification('error', 'Có lỗi xảy ra. Vui lòng thử lại.');
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    showNotification('error', 'Vui lòng đăng nhập để thêm vào giỏ hàng!');
+                    setTimeout(function() {
+                        window.location.href = window.SITE_URL + '/login.php';
+                    }, 1500);
+                } else {
+                    showNotification('error', 'Có lỗi xảy ra. Vui lòng thử lại.');
+                }
             },
             complete: function() {
                 button.prop('disabled', false).html('<i class="bi bi-cart-plus"></i> Thêm vào giỏ');
