@@ -18,7 +18,17 @@ function escape($string) {
  * @param string $url
  * @param int $statusCode
  */
+/**
+ * Redirect to a URL
+ * Tự động thêm SITE_URL nếu $url bắt đầu bằng /
+ * @param string $url
+ * @param int $statusCode
+ */
 function redirect($url, $statusCode = 302) {
+    // Nếu URL bắt đầu bằng / và không phải là URL đầy đủ, thêm SITE_URL
+    if (strpos($url, '/') === 0 && strpos($url, 'http') !== 0) {
+        $url = SITE_URL . $url;
+    }
     header('Location: ' . $url, true, $statusCode);
     exit;
 }
