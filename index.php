@@ -53,7 +53,7 @@ include __DIR__ . '/includes/header.php';
                     <?php if (!empty($banner['link'])): ?>
                         <a href="<?php echo escape($banner['link']); ?>">
                     <?php endif; ?>
-                        <img src="<?php echo UPLOAD_URL . '/' . escape($banner['image']); ?>" class="d-block w-100" alt="<?php echo escape($banner['title']); ?>" style="max-height: 500px; object-fit: cover;">
+                        <img src="<?php echo image_url($banner['image']); ?>" class="d-block w-100" alt="<?php echo escape($banner['title']); ?>" style="max-height: 500px; object-fit: cover;">
                     <?php if (!empty($banner['link'])): ?>
                         </a>
                     <?php endif; ?>
@@ -81,7 +81,7 @@ include __DIR__ . '/includes/header.php';
                     <a href="<?php echo SITE_URL; ?>/products.php?category=<?php echo $category['id']; ?>" class="text-decoration-none">
                         <div class="card text-center h-100 category-card">
                             <?php if (!empty($category['image'])): ?>
-                                <img src="<?php echo UPLOAD_URL . '/' . escape($category['image']); ?>" class="card-img-top p-3" alt="<?php echo escape($category['name']); ?>">
+                                <img src="<?php echo image_url($category['image']); ?>" class="card-img-top p-3" alt="<?php echo escape($category['name']); ?>">
                             <?php else: ?>
                                 <div class="p-5 bg-light">
                                     <i class="bi bi-laptop fs-1 text-primary"></i>
@@ -113,6 +113,12 @@ include __DIR__ . '/includes/header.php';
             <?php endforeach; ?>
         </div>
     </section>
+    <?php else: ?>
+    <section class="mb-5 text-center bg-light p-5 rounded">
+        <h4 class="mb-2">Chưa có sản phẩm nổi bật</h4>
+        <p class="text-muted mb-3">Hãy nhập dữ liệu mẫu (database/sample_data.sql) hoặc thêm sản phẩm mới.</p>
+        <a class="btn btn-primary" href="<?php echo SITE_URL; ?>/products.php">Xem tất cả sản phẩm</a>
+    </section>
     <?php endif; ?>
 
     <!-- Latest Products -->
@@ -129,6 +135,12 @@ include __DIR__ . '/includes/header.php';
                 </div>
             <?php endforeach; ?>
         </div>
+    </section>
+    <?php else: ?>
+    <section class="mb-5 text-center bg-light p-5 rounded">
+        <h4 class="mb-2">Chưa có sản phẩm để hiển thị</h4>
+        <p class="text-muted mb-3">Vui lòng nhập dữ liệu mẫu (database/sample_data.sql) hoặc thêm sản phẩm.</p>
+        <a class="btn btn-primary" href="<?php echo SITE_URL; ?>/products.php">Xem tất cả sản phẩm</a>
     </section>
     <?php endif; ?>
 
