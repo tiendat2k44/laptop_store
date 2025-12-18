@@ -23,7 +23,7 @@ $sort = isset($_GET['sort']) ? $_GET['sort'] : 'newest';
 $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
 
 // Xây dựng câu truy vấn SQL
-$where = ["p.status = 'active'", "s.status = 'approved'"];
+$where = ["p.status = 'active'", "s.status = 'active'"];
 $params = [];
 
 if (!empty($keyword)) {
@@ -37,7 +37,7 @@ if ($category_id > 0) {
 }
 
 if (!empty($brand)) {
-    $where[] = "p.brand = :brand";
+    $where[] = "p.brand_id = :brand";
     $params[':brand'] = $brand;
 }
 
@@ -73,9 +73,10 @@ $total_products = $total_result['total'] ?? 0;
 $total_pages = ceil($total_products / ITEMS_PER_PAGE);
 
 // Lấy danh sách sản phẩm
-$products_sql = "SELECT p.*, s.name as shop_name, s.slug as shop_slug,
+$products_sql = "SELECT p.*, s.shop_name,
                         c.name as category_name,
-                        (SELECT image_url FROM product_images WHERE product_id = p.id AND is_primary = true LIMIT 1) as main_image
+                        (SELECT image_url FROM product_images WHERE product_id = p.id ORDER BY display_order LIMIT 1) as main_image,
+                        p.rating_average, p.review_count
                  FROM products p
                  JOIN shops s ON p.shop_id = s.id
                  LEFT JOIN categories c ON p.category_id = c.id
@@ -89,7 +90,7 @@ $products = $db->query($products_sql, $params);
 $categories = $db->query("SELECT * FROM categories WHERE status = 'active' ORDER BY name");
 
 // Lấy danh sách thương hiệu
-$brands = $db->query("SELECT DISTINCT brand FROM products WHERE status = 'active' AND brand IS NOT NULL ORDER BY brand");
+$brands = $db->query("SELECT id, name FROM brands WHERE status = 'active' ORDER BY name");
 
 $page_title = !empty($keyword) ? "Tìm kiếm: $keyword" : "Tất Cả Laptop";
 ?>
@@ -309,7 +310,7 @@ $page_title = !empty($keyword) ? "Tìm kiếm: $keyword" : "Tất Cả Laptop";
                         <select name="brand" class="form-select">
                             <option value="">Tất cả thương hiệu</option>
                             <?php foreach ($brands as $b): ?>
-                            <option value="<?= htmlspecialchars($b['brand']) ?>" <?= $brand == $b['brand'] ? 'selected' : '' ?>><?= htmlspecialchars($b['brand']) ?></option>
+                            <option value="<?= $b['id'] ?>" <?= $brand == $b['id'] ? 'selected' : '' ?>><?= htmlspecialchars($b['name']) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
