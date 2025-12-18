@@ -2,6 +2,23 @@
 -- DỮ LIỆU MẪU - LAPTOP STORE
 -- =============================================
 
+-- XÓA DỮ LIỆU CŨ (nếu đã tồn tại) - chạy theo thứ tự để tránh lỗi foreign key
+DELETE FROM reviews;
+DELETE FROM order_items;
+DELETE FROM orders;
+DELETE FROM cart_items;
+DELETE FROM wishlist;
+DELETE FROM product_images;
+DELETE FROM products;
+DELETE FROM banners;
+DELETE FROM shops;
+
+-- Đặt lại sequence ID cho các bảng chính
+ALTER SEQUENCE products_id_seq RESTART WITH 1;
+ALTER SEQUENCE shops_id_seq RESTART WITH 1;
+ALTER SEQUENCE product_images_id_seq RESTART WITH 1;
+ALTER SEQUENCE banners_id_seq RESTART WITH 1;
+
 -- Thêm shops mẫu
 INSERT INTO shops (user_id, shop_name, description, phone, email, status, approved_by, approved_at, created_at) VALUES
 (1, 'Tech World Store', 'Cửa hàng chuyên laptop cao cấp', '0901234567', 'techworld@example.com', 'active', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
