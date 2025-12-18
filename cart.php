@@ -1,0 +1,76 @@
+<?php
+require_once __DIR__ . '/includes/init.php';
+
+if (!Auth::check()) {
+    Session::setFlash('error', 'Vui lòng đăng nhập để xem giỏ hàng');
+    redirect('/login.php?redirect=/cart.php');
+}
+
+$db = Database::getInstance();
+
+// Lấy danh sách sản phẩm trong giỏ
+$items = $db->query(
+    "SELECT ci.id as item_id, ci.quantity, ci.created_at, 
+            p.id as product_id, p.name, p.price, p.sale_price, p.stock_quantity,
+            (SELECT image_url FROM product_images WHERE product_id = p.id ORDER BY display_order LIMIT 1) AS main_image
+     FROM cart_items ci
+     JOIN products p ON ci.product_id = p.id
+     WHERE ci.user_id = :user_id
+     ORDER BY ci.created_at DESC",
+    ['user_id' => Auth::id()]
+);
+
+// Tính tổng tiền
+$total = 0;
+foreach ($items as $it) {
+    $price = (!empty($it['sale_price']) && $it['sale_price'] < $it['price']) ? $it['sale_price'] : $it['price'];
+    $total += $price * $it['quantity'];
+}
+
+$pageTitle = 'Giỏ hàng của bạn';
+include __DIR__ . '/includes/header.php';
+?>
+
+<div class="container my-4">
+    <h3 class="mb-4"><i class="bi bi-cart"></i> Giỏ hàng</h3>
+    <?php if (empty($items)): ?>
+        <div class="alert alert-info">Giỏ hàng của bạn đang trống. <a href="<?= SITE_URL ?>/products.php" class="alert-link">Tiếp tục mua sắm</a>.</div>
+    <?php else: ?>
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="list-group">
+                    <?php foreach ($items as $it): 
+                        $img = image_url($it['main_image'] ?? '');
+                        $price = (!empty($it['sale_price']) && $it['sale_price'] < $it['price']) ? $it['sale_price'] : $it['price'];
+                    ?>
+                    <div class="list-group-item d-flex align-items-center">
+                        <img src="<?= $img ?>" alt="<?= escape($it['name']) ?>" class="me-3" style="width:80px;height:80px;object-fit:cover;border-radius:8px;">
+                        <div class="flex-grow-1">
+                            <a href="<?= SITE_URL ?>/product-detail.php?id=<?= $it['product_id'] ?>" class="text-decoration-none fw-bold"><?= escape($it['name']) ?></a>
+                            <div class="text-muted small">Còn <?= (int)$it['stock_quantity'] ?> trong kho</div>
+                            <div class="d-flex align-items-center mt-2">
+                                <span class="text-danger fw-bold me-3"><?= formatPrice($price) ?></span>
+                                <input type="number" class="form-control form-control-sm cart-quantity-input" style="width:90px" value="<?= (int)$it['quantity'] ?>" min="1" max="<?= (int)$it['stock_quantity'] ?>" data-item-id="<?= (int)$it['item_id'] ?>">
+                                <button class="btn btn-sm btn-outline-danger ms-2 btn-remove-cart-item" data-item-id="<?= (int)$it['item_id'] ?>"><i class="bi bi-trash"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Tổng kết</h5>
+                        <p class="card-text">Tạm tính: <strong class="text-danger"><?= formatPrice($total) ?></strong></p>
+                        <a class="btn btn-success w-100" href="<?= SITE_URL ?>/checkout.php">
+                            <i class="bi bi-credit-card"></i> Tiến hành thanh toán
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
+</div>
+
+<?php include __DIR__ . '/includes/footer.php'; ?>

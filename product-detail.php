@@ -691,10 +691,32 @@ $page_title = $product['name'];
 
         // Mua ngay
         function buyNow(productId) {
-            addToCart(productId);
-            setTimeout(function() {
-                window.location.href = '<?= SITE_URL ?>/cart.php';
-            }, 500);
+            <?php if (!Auth::check()): ?>
+                alert('Vui lòng đăng nhập để mua ngay!');
+                window.location.href = '<?= SITE_URL ?>/login.php?redirect=' + encodeURIComponent(window.location.pathname);
+                return;
+            <?php endif; ?>
+            const quantity = document.getElementById('quantity').value;
+            $.ajax({
+                url: '<?= SITE_URL ?>/ajax/cart-add.php',
+                method: 'POST',
+                data: {
+                    product_id: productId,
+                    quantity: quantity,
+                    csrf_token: '<?= Session::getToken() ?>'
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        window.location.href = '<?= SITE_URL ?>/checkout.php';
+                    } else {
+                        alert(response.message || 'Có lỗi xảy ra!');
+                    }
+                },
+                error: function(xhr) {
+                    alert('Có lỗi xảy ra, vui lòng thử lại!');
+                }
+            });
         }
     </script>
 </body>
