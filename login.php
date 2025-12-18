@@ -42,6 +42,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             if ($result['success']) {
                 $redirectUrl = $_GET['redirect'] ?? '/';
+                // Sanitize redirect target: chỉ cho phép đường dẫn tương đối trong site
+                if (!is_string($redirectUrl)) {
+                    $redirectUrl = '/';
+                }
+                // Chặn URL tuyệt đối
+                if (strpos($redirectUrl, '://') !== false) {
+                    $redirectUrl = '/';
+                }
+                // Chuẩn hóa đầu vào
+                $redirectUrl = '/' . ltrim($redirectUrl, '/');
+                // Chặn các đường dẫn không tồn tại phổ biến
+                $blocked = ['/dashboard', '/dashboard/'];
+                if (in_array(rtrim($redirectUrl, '/'), $blocked, true)) {
+                    $redirectUrl = '/';
+                }
                 
                 // Redirect based on role
                 if (Auth::isAdmin()) {

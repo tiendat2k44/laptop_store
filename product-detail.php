@@ -404,11 +404,15 @@ $page_title = $product['name'];
                     </div>
 
                     <div class="product-price-box">
-                        <div class="current-price"><?= formatPrice($product['price']) ?></div>
-                        <?php if ($product['original_price'] > $product['price']): ?>
+                        <?php 
+                            $hasSale = !empty($product['sale_price']) && $product['sale_price'] < $product['price'];
+                            $discountPercent = $hasSale ? max(0, min(100, round((($product['price'] - $product['sale_price']) / $product['price']) * 100))) : 0;
+                        ?>
+                        <div class="current-price"><?= formatPrice($hasSale ? $product['sale_price'] : $product['price']) ?></div>
+                        <?php if ($hasSale): ?>
                         <div>
-                            <span class="original-price"><?= formatPrice($product['original_price']) ?></span>
-                            <span class="discount-badge">GIẢM <?= $product['discount_percentage'] ?>%</span>
+                            <span class="original-price"><?= formatPrice($product['price']) ?></span>
+                            <span class="discount-badge">GIẢM <?= $discountPercent ?>%</span>
                         </div>
                         <?php endif; ?>
                     </div>
@@ -422,10 +426,10 @@ $page_title = $product['name'];
                                 <td><?= htmlspecialchars($product['brand']) ?></td>
                             </tr>
                             <?php endif; ?>
-                            <?php if ($product['processor']): ?>
+                            <?php if (!empty($product['cpu'])): ?>
                             <tr>
                                 <td><i class="fas fa-microchip"></i> Bộ xử lý</td>
-                                <td><?= htmlspecialchars($product['processor']) ?></td>
+                                <td><?= htmlspecialchars($product['cpu']) ?></td>
                             </tr>
                             <?php endif; ?>
                             <?php if ($product['ram']): ?>
@@ -494,9 +498,7 @@ $page_title = $product['name'];
                     <h6><i class="fas fa-store"></i> Thông tin cửa hàng</h6>
                     <div class="shop-info-item">
                         <i class="fas fa-shop"></i>
-                        <a href="<?= SITE_URL ?>/shop.php?slug=<?= $product['shop_slug'] ?>" class="text-decoration-none fw-bold">
-                            <?= htmlspecialchars($product['shop_name']) ?>
-                        </a>
+                        <span class="fw-bold"><?= htmlspecialchars($product['shop_name']) ?></span>
                     </div>
                     <?php if ($product['shop_phone']): ?>
                     <div class="shop-info-item">
@@ -505,10 +507,7 @@ $page_title = $product['name'];
                     </div>
                     <?php endif; ?>
                     <div class="mt-3">
-                        <a href="<?= SITE_URL ?>/shop.php?slug=<?= $product['shop_slug'] ?>" class="btn btn-outline-primary btn-sm">
-                            <i class="fas fa-store"></i> Xem cửa hàng
-                        </a>
-                        <button class="btn btn-outline-secondary btn-sm ms-2">
+                        <button class="btn btn-outline-secondary btn-sm">
                             <i class="fas fa-comments"></i> Chat ngay
                         </button>
                     </div>
