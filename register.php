@@ -223,8 +223,10 @@ include __DIR__ . '/includes/header.php';
     </div>
 </div>
 
+<?php
+$additionalJS = <<<JS
 <script>
-$(document).ready(function() {
+$(function() {
     function toggleShopField() {
         if ($('#typeShop').is(':checked')) {
             $('#shopNameField').show();
@@ -234,10 +236,12 @@ $(document).ready(function() {
             $('#shop_name').attr('required', false);
         }
     }
-    
+
     $('input[name="account_type"]').on('change', toggleShopField);
     toggleShopField();
 });
 </script>
+JS;
 
-<?php include __DIR__ . '/includes/footer.php'; ?>
+include __DIR__ . '/includes/footer.php';
+?>

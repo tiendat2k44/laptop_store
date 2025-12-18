@@ -12,7 +12,6 @@ require_once 'includes/helpers/functions.php';
 
 Session::start();
 $db = Database::getInstance();
-$auth = Auth::getInstance();
 
 // Lấy tham số tìm kiếm và lọc
 $keyword = isset($_GET['keyword']) ? trim($_GET['keyword']) : (isset($_GET['search']) ? trim($_GET['search']) : '');

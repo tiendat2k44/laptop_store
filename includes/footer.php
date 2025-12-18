@@ -51,9 +51,9 @@
                     <p class="mb-0">&copy; <?php echo date('Y'); ?> <?php echo SITE_NAME; ?>. All rights reserved.</p>
                 </div>
                 <div class="col-md-6 text-center text-md-end">
-                    <img src="https://via.placeholder.com/50x30?text=Visa" alt="Visa" class="me-2">
-                    <img src="https://via.placeholder.com/50x30?text=MC" alt="Mastercard" class="me-2">
-                    <img src="https://via.placeholder.com/50x30?text=MoMo" alt="MoMo">
+                    <span class="badge bg-light text-dark me-2 px-3 py-2">Visa</span>
+                    <span class="badge bg-light text-dark me-2 px-3 py-2">Mastercard</span>
+                    <span class="badge bg-light text-dark px-3 py-2">MoMo</span>
                 </div>
             </div>
         </div>

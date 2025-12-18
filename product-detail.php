@@ -12,7 +12,6 @@ require_once 'includes/helpers/functions.php';
 
 Session::start();
 $db = Database::getInstance();
-$auth = Auth::getInstance();
 
 // Lấy ID sản phẩm
 $product_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
