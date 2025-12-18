@@ -118,51 +118,51 @@ INSERT INTO products (shop_id, category_id, brand_id, name, slug, description, c
 -- =============================================
 -- THÊM HÌNH ẢNH SẢN PHẨM (khớp với tên file thực tế)
 -- =============================================
-INSERT INTO product_images (product_id, image_url, is_primary, display_order) VALUES
+INSERT INTO product_images (product_id, image_url, display_order) VALUES
 -- Sản phẩm 1: Dell Latitude 5430
-(1, 'assets/uploads/products/dell-latitude-5430.jpg', true, 1),
+(1, 'assets/uploads/products/dell-latitude-5430.jpg', 1),
 
 -- Sản phẩm 2: Dell Inspiron 15 3520
-(2, 'assets/uploads/products/dell-inspiron-15-3520.jpg', true, 1),
+(2, 'assets/uploads/products/dell-inspiron-15-3520.jpg', 1),
 
 -- Sản phẩm 3: HP EliteBook 840 G9
-(3, 'assets/uploads/products/hp-elitebook-840-g9.jpg', true, 1),
+(3, 'assets/uploads/products/hp-elitebook-840-g9.jpg', 1),
 
 -- Sản phẩm 4: HP Victus 15
-(4, 'assets/uploads/products/hp-victus-15.jpg', true, 1),
+(4, 'assets/uploads/products/hp-victus-15.jpg', 1),
 
 -- Sản phẩm 5: Lenovo X1 Carbon Gen 10
-(5, 'assets/uploads/products/lenovo-x1-carbon-gen10.jpg', true, 1),
+(5, 'assets/uploads/products/lenovo-x1-carbon-gen10.jpg', 1),
 
 -- Sản phẩm 6: Lenovo Legion 5 Pro
-(6, 'assets/uploads/products/lenovo-legion-5-pro.jpg', true, 1),
+(6, 'assets/uploads/products/lenovo-legion-5-pro.jpg', 1),
 
 -- Sản phẩm 7: ASUS ROG Strix G15
-(7, 'assets/uploads/products/asus-rog-strix-g15.jpg', true, 1),
+(7, 'assets/uploads/products/asus-rog-strix-g15.jpg', 1),
 
 -- Sản phẩm 8: ASUS ZenBook 14 OLED
-(8, 'assets/uploads/products/asus-zenbook-14-oled.jpg', true, 1),
+(8, 'assets/uploads/products/asus-zenbook-14-oled.jpg', 1),
 
 -- Sản phẩm 9: Acer Predator Helios 300
-(9, 'assets/uploads/products/acer-predator-helios-300.jpg', true, 1),
+(9, 'assets/uploads/products/acer-predator-helios-300.jpg', 1),
 
 -- Sản phẩm 10: Acer Aspire 5
-(10, 'assets/uploads/products/acer-aspire-5.jpg', true, 1),
+(10, 'assets/uploads/products/acer-aspire-5.jpg', 1),
 
 -- Sản phẩm 11: MacBook Air M2
-(11, 'assets/uploads/products/macbook-air-m2.jpg', true, 1),
+(11, 'assets/uploads/products/macbook-air-m2.jpg', 1),
 
 -- Sản phẩm 12: MacBook Pro 14 M2
-(12, 'assets/uploads/products/macbook-pro-14-m2.jpg', true, 1),
+(12, 'assets/uploads/products/macbook-pro-14-m2.jpg', 1),
 
 -- Sản phẩm 13: MSI Katana GF66
-(13, 'assets/uploads/products/msi-katana-gf66.jpg', true, 1),
+(13, 'assets/uploads/products/msi-katana-gf66.jpg', 1),
 
 -- Sản phẩm 14: MSI GE76 Raider
-(14, 'assets/uploads/products/msi-ge76-raider.jpg', true, 1),
+(14, 'assets/uploads/products/msi-ge76-raider.jpg', 1),
 
 -- Sản phẩm 15: Razer Blade 15
-(15, 'assets/uploads/products/razer-blade-15.jpg', true, 1);
+(15, 'assets/uploads/products/razer-blade-15.jpg', 1);
 
 -- =============================================
 -- THÊM BANNERS (khớp với tên file thực tế)
