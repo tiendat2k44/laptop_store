@@ -19,11 +19,21 @@ ALTER SEQUENCE shops_id_seq RESTART WITH 1;
 ALTER SEQUENCE product_images_id_seq RESTART WITH 1;
 ALTER SEQUENCE banners_id_seq RESTART WITH 1;
 
--- Thêm shops mẫu
+-- Thêm users mẫu cho shop owners (nếu chưa có)
+INSERT INTO users (id, role_id, email, password_hash, full_name, phone, status, email_verified, created_at)
+VALUES 
+(2, 2, 'shop1@example.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Nguyễn Văn A', '0901234567', 'active', true, CURRENT_TIMESTAMP),
+(3, 2, 'shop2@example.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Trần Thị B', '0909876543', 'active', true, CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO NOTHING;
+
+-- Cập nhật sequence users nếu cần
+SELECT setval('users_id_seq', (SELECT MAX(id) FROM users));
+
+-- Thêm shops mẫu (mỗi shop có user_id riêng)
 INSERT INTO shops (user_id, shop_name, description, phone, email, status, approved_by, approved_at, created_at) VALUES
 (1, 'Tech World Store', 'Cửa hàng chuyên laptop cao cấp', '0901234567', 'techworld@example.com', 'active', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-(1, 'Laptop Pro', 'Laptop gaming và đồ họa chuyên nghiệp', '0909876543', 'laptoppro@example.com', 'active', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-(1, 'Digital Shop', 'Laptop văn phòng giá tốt', '0912345678', 'digitalshop@example.com', 'active', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+(2, 'Laptop Pro', 'Laptop gaming và đồ họa chuyên nghiệp', '0909876543', 'laptoppro@example.com', 'active', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+(3, 'Digital Shop', 'Laptop văn phòng giá tốt', '0912345678', 'digitalshop@example.com', 'active', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 -- Thêm sản phẩm mẫu với URL hình ảnh từ các nguồn miễn phí
 -- Dell Laptops
