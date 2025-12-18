@@ -378,8 +378,8 @@ $page_title = !empty($keyword) ? "Tìm kiếm: $keyword" : "Tất Cả Laptop";
                     <div class="col-md-4 col-sm-6">
                         <div class="card product-card">
                             <div class="product-image">
-                                <?php if ($product['discount_percentage'] > 0): ?>
-                                <span class="product-badge">-<?= $product['discount_percentage'] ?>%</span>
+                                <?php if (!empty($product['sale_price']) && $product['sale_price'] < $product['price']): ?>
+                                <span class="product-badge">-<?= round((($product['price'] - $product['sale_price']) / $product['price']) * 100) ?>%</span>
                                 <?php endif; ?>
                                 
                                 <div class="product-actions">
@@ -403,8 +403,8 @@ $page_title = !empty($keyword) ? "Tìm kiếm: $keyword" : "Tất Cả Laptop";
                                 </a>
 
                                 <div class="product-specs">
-                                    <?php if (!empty($product['processor'])): ?>
-                                    <span><i class="fas fa-microchip"></i> <?= htmlspecialchars($product['processor']) ?></span><br>
+                                    <?php if (!empty($product['cpu'])): ?>
+                                    <span><i class="fas fa-microchip"></i> <?= htmlspecialchars($product['cpu']) ?></span><br>
                                     <?php endif; ?>
                                     <?php if (!empty($product['ram'])): ?>
                                     <span><i class="fas fa-memory"></i> RAM <?= htmlspecialchars($product['ram']) ?></span>
@@ -413,17 +413,22 @@ $page_title = !empty($keyword) ? "Tìm kiếm: $keyword" : "Tất Cả Laptop";
 
                                 <div class="product-rating">
                                     <span class="stars">
-                                        <?php for ($i = 1; $i <= 5; $i++): ?>
-                                            <i class="fas fa-star<?= $i <= $product['rating'] ? '' : '-o' ?>"></i>
+                                        <?php 
+                                        $rating = round($product['rating_average'] ?? 0);
+                                        for ($i = 1; $i <= 5; $i++): 
+                                        ?>
+                                            <i class="fas fa-star<?= $i <= $rating ? '' : '-o' ?>"></i>
                                         <?php endfor; ?>
                                     </span>
-                                    <span>(<?= $product['review_count'] ?>)</span>
+                                    <span>(<?= $product['review_count'] ?? 0 ?>)</span>
                                 </div>
 
                                 <div class="product-price">
-                                    <?= formatPrice($product['price']) ?>
-                                    <?php if ($product['original_price'] > $product['price']): ?>
-                                    <small class="text-muted text-decoration-line-through"><?= formatPrice($product['original_price']) ?></small>
+                                    <?php if (!empty($product['sale_price']) && $product['sale_price'] < $product['price']): ?>
+                                        <?= formatPrice($product['sale_price']) ?>
+                                        <small class="text-muted text-decoration-line-through"><?= formatPrice($product['price']) ?></small>
+                                    <?php else: ?>
+                                        <?= formatPrice($product['price']) ?>
                                     <?php endif; ?>
                                 </div>
 
@@ -433,9 +438,7 @@ $page_title = !empty($keyword) ? "Tìm kiếm: $keyword" : "Tất Cả Laptop";
 
                                 <div class="shop-info">
                                     <i class="fas fa-store"></i>
-                                    <a href="<?= SITE_URL ?>/shop.php?slug=<?= $product['shop_slug'] ?>" class="text-decoration-none">
-                                        <?= htmlspecialchars($product['shop_name']) ?>
-                                    </a>
+                                    <span><?= htmlspecialchars($product['shop_name']) ?></span>
                                 </div>
                             </div>
                         </div>
