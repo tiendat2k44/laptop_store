@@ -597,7 +597,7 @@ $page_title = $product['name'];
                     <div class="card related-product-card">
                         <div class="related-product-image">
                             <a href="<?= SITE_URL ?>/product-detail.php?id=<?= $rp['id'] ?>">
-                                <img src="<?= !empty($rp['main_image']) ? SITE_URL . '/' . $rp['main_image'] : SITE_URL . '/assets/images/no-image.jpg' ?>" alt="<?= htmlspecialchars($rp['name']) ?>">
+                                <img src="<?= !empty($rp['main_image']) ? SITE_URL . '/' . $rp['main_image'] : SITE_URL . '/assets/images/no-image.svg' ?>" alt="<?= htmlspecialchars($rp['name']) ?>">
                             </a>
                         </div>
                         <div class="card-body">
