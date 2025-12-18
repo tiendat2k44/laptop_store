@@ -1,7 +1,7 @@
 <?php
 /**
- * Database Class
- * Handles database connection and operations using PDO
+ * Lớp Cơ Sở Dữ Liệu
+ * Xử lý kết nối và thao tác cơ sở dữ liệu sử dụng PDO
  */
 
 class Database {
@@ -9,7 +9,7 @@ class Database {
     private $connection;
     
     /**
-     * Private constructor to prevent direct instantiation
+     * Hàm khởi tạo private để ngăn khởi tạo trực tiếp
      */
     private function __construct() {
         try {
@@ -25,13 +25,13 @@ class Database {
             $this->connection = new PDO($dsn, DB_USER, DB_PASS, $options);
             
         } catch (PDOException $e) {
-            error_log("Database Connection Error: " . $e->getMessage());
-            die("Database connection failed. Please try again later.");
+            error_log("Lỗi Kết Nối Database: " . $e->getMessage());
+            die("Kết nối cơ sở dữ liệu thất bại. Vui lòng thử lại sau.");
         }
     }
     
     /**
-     * Get singleton instance
+     * Lấy singleton instance
      * @return Database
      */
     public static function getInstance() {
@@ -42,7 +42,7 @@ class Database {
     }
     
     /**
-     * Get PDO connection
+     * Lấy kết nối PDO
      * @return PDO
      */
     public function getConnection() {
@@ -50,9 +50,9 @@ class Database {
     }
     
     /**
-     * Execute a query and return results
-     * @param string $sql SQL query
-     * @param array $params Parameters for prepared statement
+     * Thực thi truy vấn và trả về kết quả
+     * @param string $sql Câu truy vấn SQL
+     * @param array $params Tham số cho prepared statement
      * @return array|false
      */
     public function query($sql, $params = []) {
@@ -61,15 +61,15 @@ class Database {
             $stmt->execute($params);
             return $stmt->fetchAll();
         } catch (PDOException $e) {
-            error_log("Query Error: " . $e->getMessage() . " | SQL: " . $sql);
+            error_log("Lỗi Truy Vấn: " . $e->getMessage() . " | SQL: " . $sql);
             return false;
         }
     }
     
     /**
-     * Execute a query and return single row
-     * @param string $sql SQL query
-     * @param array $params Parameters for prepared statement
+     * Thực thi truy vấn và trả về một dòng dữ liệu
+     * @param string $sql Câu truy vấn SQL
+     * @param array $params Tham số cho prepared statement
      * @return array|false
      */
     public function queryOne($sql, $params = []) {
@@ -78,16 +78,16 @@ class Database {
             $stmt->execute($params);
             return $stmt->fetch();
         } catch (PDOException $e) {
-            error_log("Query Error: " . $e->getMessage() . " | SQL: " . $sql);
+            error_log("Lỗi Truy Vấn: " . $e->getMessage() . " | SQL: " . $sql);
             return false;
         }
     }
     
     /**
-     * Execute insert/update/delete query
-     * @param string $sql SQL query
-     * @param array $params Parameters for prepared statement
-     * @return bool|int Returns affected rows or false on error
+     * Thực thi câu lệnh insert/update/delete
+     * @param string $sql Câu truy vấn SQL
+     * @param array $params Tham số cho prepared statement
+     * @return bool|int Trả về số dòng bị ảnh hưởng hoặc false nếu lỗi
      */
     public function execute($sql, $params = []) {
         try {
@@ -95,16 +95,16 @@ class Database {
             $result = $stmt->execute($params);
             return $result ? $stmt->rowCount() : false;
         } catch (PDOException $e) {
-            error_log("Execute Error: " . $e->getMessage() . " | SQL: " . $sql);
+            error_log("Lỗi Thực Thi: " . $e->getMessage() . " | SQL: " . $sql);
             return false;
         }
     }
     
     /**
-     * Insert data and return last insert ID
-     * @param string $sql SQL query
-     * @param array $params Parameters for prepared statement
-     * @return int|false Last insert ID or false on error
+     * Chèn dữ liệu và trả về ID vừa chèn
+     * @param string $sql Câu truy vấn SQL
+     * @param array $params Tham số cho prepared statement
+     * @return int|false ID vừa chèn hoặc false nếu lỗi
      */
     public function insert($sql, $params = []) {
         try {
@@ -112,34 +112,34 @@ class Database {
             $stmt->execute($params);
             return $this->connection->lastInsertId();
         } catch (PDOException $e) {
-            error_log("Insert Error: " . $e->getMessage() . " | SQL: " . $sql);
+            error_log("Lỗi Chèn Dữ Liệu: " . $e->getMessage() . " | SQL: " . $sql);
             return false;
         }
     }
     
     /**
-     * Begin transaction
+     * Bắt đầu giao dịch
      */
     public function beginTransaction() {
         return $this->connection->beginTransaction();
     }
     
     /**
-     * Commit transaction
+     * Xác nhận giao dịch
      */
     public function commit() {
         return $this->connection->commit();
     }
     
     /**
-     * Rollback transaction
+     * Hủy bỏ giao dịch
      */
     public function rollback() {
         return $this->connection->rollBack();
     }
     
     /**
-     * Escape string (though prepared statements are preferred)
+     * Escape chuỗi (tuy nhiên nên dùng prepared statements)
      * @param string $string
      * @return string
      */
@@ -148,14 +148,14 @@ class Database {
     }
     
     /**
-     * Prevent cloning
+     * Ngăn chặn nhân bản
      */
     private function __clone() {}
     
     /**
-     * Prevent unserialization
+     * Ngăn chặn deserialization
      */
     public function __wakeup() {
-        throw new Exception("Cannot unserialize singleton");
+        throw new Exception("Không thể unserialize singleton");
     }
 }
