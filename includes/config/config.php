@@ -18,9 +18,18 @@ define('DB_NAME', 'laptop_store');
 define('DB_USER', 'postgres');
 define('DB_PASS', 'your_password_here');
 
-// Cấu hình Website
+// Cấu hình Website (tự động nhận thư mục triển khai để tránh sai base URL)
 define('SITE_NAME', 'Laptop Store');
-define('SITE_URL', 'http://localhost/laptop_store');
+$defaultSiteUrl = 'http://localhost/laptop_store';
+if (PHP_SAPI === 'cli' || empty($_SERVER['HTTP_HOST'])) {
+	define('SITE_URL', $defaultSiteUrl);
+} else {
+	$scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+	$host = $_SERVER['HTTP_HOST'];
+	$scriptDir = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/')), '/');
+	$scriptDir = $scriptDir === '/' ? '' : $scriptDir;
+	define('SITE_URL', $scheme . '://' . $host . $scriptDir);
+}
 define('SITE_EMAIL', 'support@laptopstore.com');
 
 // Cấu hình Đường dẫn
