@@ -82,7 +82,10 @@
                 <!-- Search Form -->
                 <form class="d-flex me-3" method="GET" action="<?php echo SITE_URL; ?>/products.php">
                     <div class="input-group">
-                        <input class="form-control" type="search" name="search" placeholder="Tìm kiếm laptop..." value="<?php echo isset($_GET['search']) ? escape($_GET['search']) : ''; ?>">
+                        <input class="form-control" type="search" name="keyword" placeholder="Tìm kiếm laptop..." value="<?php 
+                            $kw = $_GET['keyword'] ?? ($_GET['search'] ?? '');
+                            echo escape($kw);
+                        ?>">
                         <button class="btn btn-outline-primary" type="submit"><i class="bi bi-search"></i></button>
                     </div>
                 </form>

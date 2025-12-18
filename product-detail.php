@@ -368,7 +368,7 @@ $page_title = $product['name'];
                 <div class="product-gallery">
                     <div class="main-image" id="mainImage">
                         <?php 
-                        $mainImage = !empty($images) ? $images[0]['image_url'] : 'assets/images/no-image.jpg';
+                        $mainImage = !empty($images) ? $images[0]['image_url'] : 'assets/images/no-image.svg';
                         ?>
                         <img src="<?= SITE_URL ?>/<?= $mainImage ?>" alt="<?= htmlspecialchars($product['name']) ?>" id="mainImg">
                     </div>

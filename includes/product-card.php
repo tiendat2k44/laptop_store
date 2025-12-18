@@ -11,9 +11,9 @@
     
     <a href="<?php echo SITE_URL; ?>/product-detail.php?id=<?php echo $product['id']; ?>">
         <?php if (!empty($product['main_image'])): ?>
-            <img src="<?php echo UPLOAD_URL . '/' . escape($product['main_image']); ?>" class="card-img-top" alt="<?php echo escape($product['name']); ?>">
+            <img src="<?php echo SITE_URL . '/' . escape($product['main_image']); ?>" class="card-img-top" alt="<?php echo escape($product['name']); ?>">
         <?php else: ?>
-            <img src="https://via.placeholder.com/300x250?text=No+Image" class="card-img-top" alt="No image">
+            <img src="<?php echo SITE_URL; ?>/assets/images/no-image.svg" class="card-img-top" alt="No image">
         <?php endif; ?>
     </a>
     

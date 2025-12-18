@@ -15,7 +15,7 @@ $db = Database::getInstance();
 $auth = Auth::getInstance();
 
 // Lấy tham số tìm kiếm và lọc
-$keyword = isset($_GET['keyword']) ? trim($_GET['keyword']) : '';
+$keyword = isset($_GET['keyword']) ? trim($_GET['keyword']) : (isset($_GET['search']) ? trim($_GET['search']) : '');
 $category_id = isset($_GET['category']) ? intval($_GET['category']) : 0;
 $brand = isset($_GET['brand']) ? trim($_GET['brand']) : '';
 $min_price = isset($_GET['min_price']) ? floatval($_GET['min_price']) : 0;
@@ -392,7 +392,7 @@ $page_title = !empty($keyword) ? "Tìm kiếm: $keyword" : "Tất Cả Laptop";
                                 </div>
 
                                 <a href="<?= SITE_URL ?>/product-detail.php?id=<?= $product['id'] ?>">
-                                    <img src="<?= !empty($product['main_image']) ? SITE_URL . '/' . $product['main_image'] : SITE_URL . '/assets/images/no-image.jpg' ?>" alt="<?= htmlspecialchars($product['name']) ?>">
+                                    <img src="<?= !empty($product['main_image']) ? SITE_URL . '/' . $product['main_image'] : SITE_URL . '/assets/images/no-image.svg' ?>" alt="<?= htmlspecialchars($product['name']) ?>">
                                 </a>
                             </div>
 
