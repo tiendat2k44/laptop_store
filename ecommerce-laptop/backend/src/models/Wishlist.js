@@ -1,1 +1,0 @@
-// Wishlist.js placeholder

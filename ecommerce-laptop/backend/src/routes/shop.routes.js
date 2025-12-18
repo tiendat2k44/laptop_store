@@ -1,1 +1,0 @@
-// shop.routes.js placeholder

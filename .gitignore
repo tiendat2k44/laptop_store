@@ -1,0 +1,47 @@
+# Ignore system files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Logs
+*.log
+error.log
+access.log
+
+# Temporary files
+tmp/
+temp/
+cache/
+
+# Uploaded files (optional - uncomment if you don't want to commit uploads)
+# assets/uploads/*
+# !assets/uploads/.gitkeep
+
+# Vendor (if using Composer)
+vendor/
+
+# Environment files
+.env
+.env.local
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Backup files
+*.bak
+*.backup
+*.sql.gz

@@ -1,0 +1,38 @@
+<?php
+require_once __DIR__ . '/../includes/init.php';
+
+header('Content-Type: application/json');
+
+// Check if user is logged in
+if (!Auth::check()) {
+    jsonResponse(['success' => false, 'message' => 'Vui lòng đăng nhập'], 401);
+}
+
+// Check CSRF token
+if (!Session::verifyToken($_POST['csrf_token'] ?? '')) {
+    jsonResponse(['success' => false, 'message' => 'Invalid CSRF token'], 403);
+}
+
+$itemId = intval($_POST['item_id'] ?? 0);
+
+if ($itemId <= 0) {
+    jsonResponse(['success' => false, 'message' => 'Dữ liệu không hợp lệ']);
+}
+
+$db = Database::getInstance();
+
+try {
+    // Verify item belongs to user and delete
+    $sql = "DELETE FROM cart_items WHERE id = :id AND user_id = :user_id";
+    $result = $db->execute($sql, ['id' => $itemId, 'user_id' => Auth::id()]);
+    
+    if ($result) {
+        jsonResponse(['success' => true, 'message' => 'Đã xóa sản phẩm khỏi giỏ hàng']);
+    } else {
+        jsonResponse(['success' => false, 'message' => 'Sản phẩm không tồn tại trong giỏ hàng']);
+    }
+    
+} catch (Exception $e) {
+    error_log("Remove cart error: " . $e->getMessage());
+    jsonResponse(['success' => false, 'message' => 'Có lỗi xảy ra'], 500);
+}
