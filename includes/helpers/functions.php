@@ -391,3 +391,28 @@ function timeAgo($datetime) {
         return formatDate($datetime);
     }
 }
+
+/**
+ * Chuẩn hóa đường dẫn ảnh thành URL đầy đủ
+ * Hỗ trợ các trường hợp:
+ * - Đã là URL tuyệt đối (http/https)
+ * - Đường dẫn bắt đầu bằng assets/...
+ * - Đường dẫn tương đối trong uploads: products/..., banners/...
+ * - Rỗng: trả về ảnh placeholder
+ * @param string $path
+ * @return string
+ */
+function image_url($path) {
+    $path = trim((string)$path);
+    if ($path === '') {
+        return SITE_URL . '/assets/images/no-image.svg';
+    }
+    if (preg_match('#^https?://#i', $path)) {
+        return $path;
+    }
+    if (strpos($path, 'assets/') === 0) {
+        return SITE_URL . '/' . $path;
+    }
+    // Mặc định: coi như đường dẫn trong uploads
+    return UPLOAD_URL . '/' . ltrim($path, '/');
+}

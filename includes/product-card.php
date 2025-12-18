@@ -10,11 +10,10 @@
     <?php endif; ?>
     
     <a href="<?php echo SITE_URL; ?>/product-detail.php?id=<?php echo $product['id']; ?>">
-        <?php if (!empty($product['main_image'])): ?>
-            <img src="<?php echo SITE_URL . '/' . escape($product['main_image']); ?>" class="card-img-top" alt="<?php echo escape($product['name']); ?>">
-        <?php else: ?>
-            <img src="<?php echo SITE_URL; ?>/assets/images/no-image.svg" class="card-img-top" alt="No image">
-        <?php endif; ?>
+        <?php 
+            $img = image_url($product['main_image'] ?? '');
+        ?>
+        <img src="<?php echo $img; ?>" class="card-img-top" alt="<?php echo escape($product['name']); ?>">
     </a>
     
     <div class="product-card-body">

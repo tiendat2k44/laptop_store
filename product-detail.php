@@ -370,14 +370,14 @@ $page_title = $product['name'];
                         <?php 
                         $mainImage = !empty($images) ? $images[0]['image_url'] : 'assets/images/no-image.svg';
                         ?>
-                        <img src="<?= SITE_URL ?>/<?= $mainImage ?>" alt="<?= htmlspecialchars($product['name']) ?>" id="mainImg">
+                        <img src="<?= image_url($mainImage) ?>" alt="<?= htmlspecialchars($product['name']) ?>" id="mainImg">
                     </div>
                     
                     <?php if (count($images) > 1): ?>
                     <div class="thumbnail-gallery">
                         <?php foreach ($images as $index => $img): ?>
-                        <div class="thumbnail <?= $index == 0 ? 'active' : '' ?>" onclick="changeImage('<?= SITE_URL ?>/<?= $img['image_url'] ?>', this)">
-                            <img src="<?= SITE_URL ?>/<?= $img['image_url'] ?>" alt="">
+                        <div class="thumbnail <?= $index == 0 ? 'active' : '' ?>" onclick="changeImage('<?= image_url($img['image_url']) ?>', this)">
+                            <img src="<?= image_url($img['image_url']) ?>" alt="">
                         </div>
                         <?php endforeach; ?>
                     </div>
@@ -597,7 +597,7 @@ $page_title = $product['name'];
                     <div class="card related-product-card">
                         <div class="related-product-image">
                             <a href="<?= SITE_URL ?>/product-detail.php?id=<?= $rp['id'] ?>">
-                                <img src="<?= !empty($rp['main_image']) ? SITE_URL . '/' . $rp['main_image'] : SITE_URL . '/assets/images/no-image.svg' ?>" alt="<?= htmlspecialchars($rp['name']) ?>">
+                                <img src="<?= image_url($rp['main_image'] ?? '') ?>" alt="<?= htmlspecialchars($rp['name']) ?>">
                             </a>
                         </div>
                         <div class="card-body">

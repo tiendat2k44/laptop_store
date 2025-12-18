@@ -392,7 +392,8 @@ $page_title = !empty($keyword) ? "Tìm kiếm: $keyword" : "Tất Cả Laptop";
                                 </div>
 
                                 <a href="<?= SITE_URL ?>/product-detail.php?id=<?= $product['id'] ?>">
-                                    <img src="<?= !empty($product['main_image']) ? SITE_URL . '/' . $product['main_image'] : SITE_URL . '/assets/images/no-image.svg' ?>" alt="<?= htmlspecialchars($product['name']) ?>">
+                                    <?php $img = image_url($product['main_image'] ?? ''); ?>
+                                    <img src="<?= $img ?>" alt="<?= htmlspecialchars($product['name']) ?>">
                                 </a>
                             </div>
 
