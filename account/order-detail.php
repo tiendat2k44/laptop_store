@@ -1,29 +1,24 @@
 <?php
-/**
- * ============================================================================
- * CHI TIẾT ĐƠN HÀNG - Xem chi tiết một đơn hàng
- * ============================================================================
- */
-
 require_once __DIR__ . '/../includes/init.php';
 
-// 🔐 Yêu cầu đăng nhập
+// Kiểm tra đăng nhập
 if (!Auth::check()) {
     Session::setFlash('error', 'Vui lòng đăng nhập để xem chi tiết đơn hàng');
     redirect('/login.php?redirect=/account/orders.php');
 }
 
-// 📦 Khởi tạo service
+// Khởi tạo service
 $db = Database::getInstance();
 require_once __DIR__ . '/../includes/services/OrderService.php';
 
+// Lấy ID đơn hàng từ URL
 $orderId = intval($_GET['id'] ?? 0);
 if ($orderId <= 0) {
     Session::setFlash('error', 'Đơn hàng không hợp lệ');
     redirect('/account/orders.php');
 }
 
-// ✅ Lấy đơn hàng
+// Lấy thông tin đơn hàng
 $orderService = new OrderService($db, Auth::id());
 $order = $orderService->getOrderDetail($orderId);
 
@@ -32,12 +27,10 @@ if (!$order) {
     redirect('/account/orders.php');
 }
 
-// ✅ Lấy sản phẩm trong đơn
+// Lấy danh sách sản phẩm trong đơn
 $items = $orderService->getOrderItems($orderId);
 
-// ============================================================================
-// MAPPING: Trạng thái & Badge
-// ============================================================================
+// Định nghĩa trạng thái đơn hàng
 $orderStatuses = [
     'pending' => ['⏳', 'Chờ xác nhận', 'warning'],
     'confirmed' => ['✓', 'Đã xác nhận', 'info'],

@@ -1,19 +1,13 @@
 <?php
-/**
- * ============================================================================
- * THANH TOÁN - Nhập thông tin giao hàng & tạo đơn hàng
- * ============================================================================
- */
-
 require_once __DIR__ . '/includes/init.php';
 
-// 🔐 Yêu cầu đăng nhập
+// Kiểm tra đăng nhập
 if (!Auth::check()) {
     Session::setFlash('error', 'Vui lòng đăng nhập để thanh toán');
     redirect('/login.php?redirect=/checkout.php');
 }
 
-// 📦 Khởi tạo services
+// Khởi tạo services
 $db = Database::getInstance();
 require_once __DIR__ . '/includes/services/CartService.php';
 require_once __DIR__ . '/includes/services/OrderService.php';
@@ -21,14 +15,14 @@ require_once __DIR__ . '/includes/services/OrderService.php';
 $cart = new CartService($db, Auth::id());
 $orderService = new OrderService($db, Auth::id());
 
-// ✅ Lấy giỏ hàng
+// Lấy giỏ hàng
 $items = $cart->getItems();
 if (empty($items)) {
     Session::setFlash('error', 'Giỏ hàng trống, vui lòng thêm sản phẩm trước khi thanh toán');
     redirect('/products.php');
 }
 
-// 💰 Tính tiền
+// Tính toán số tiền
 $subtotal = 0;
 foreach ($items as $item) {
     $price = getDisplayPrice($item['price'], $item['sale_price']);
@@ -42,19 +36,17 @@ $amounts = [
     'total_amount' => $subtotal
 ];
 
-// ============================================================================
-// XỬ LÝ FORM ĐẶT HÀNG
-// ============================================================================
+// Xử lý form đặt hàng
 $errors = [];
 $orderSuccess = false;
 $orderNumber = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // 1️⃣ Kiểm tra CSRF token
+    // Kiểm tra CSRF token
     if (!Session::verifyToken($_POST['csrf_token'] ?? '')) {
         $errors[] = 'Lỗi bảo mật: CSRF token không hợp lệ';
     } else {
-        // 2️⃣ Lấy & chuẩn hóa dữ liệu
+        // Lấy & chuẩn hóa dữ liệu từ form
         $shipping = [
             'name' => trim($_POST['recipient_name'] ?? ''),
             'phone' => trim($_POST['recipient_phone'] ?? ''),
@@ -66,30 +58,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'notes' => trim($_POST['notes'] ?? '')
         ];
 
-        // 3️⃣ Validation
+        // Validation
         if (empty($shipping['name'])) {
-            $errors[] = '❌ Họ tên người nhận không được để trống';
+            $errors[] = 'Họ tên người nhận không được để trống';
         }
         if (empty($shipping['phone'])) {
-            $errors[] = '❌ Số điện thoại không được để trống';
+            $errors[] = 'Số điện thoại không được để trống';
         } elseif (!isValidPhone($shipping['phone'])) {
-            $errors[] = '❌ Số điện thoại không hợp lệ (phải là số Việt)';
+            $errors[] = 'Số điện thoại không hợp lệ';
         }
         if (empty($shipping['address']) || empty($shipping['city'])) {
-            $errors[] = '❌ Địa chỉ giao hàng không đủ thông tin';
+            $errors[] = 'Địa chỉ giao hàng không đủ thông tin';
         }
         if (!in_array($shipping['payment_method'], ['COD', 'MOMO', 'VNPAY'], true)) {
-            $errors[] = '❌ Phương thức thanh toán không hợp lệ';
+            $errors[] = 'Phương thức thanh toán không hợp lệ';
         }
 
-        // 4️⃣ Nếu hợp lệ, tạo đơn hàng
+        // Nếu hợp lệ, tạo đơn hàng
         if (empty($errors)) {
             $orderId = $orderService->createOrder($shipping, $items, $amounts);
 
             if ($orderId) {
-                // ✅ Đặt hàng thành công
+                // Đặt hàng thành công
                 $orderSuccess = true;
-                $orderNumber = ORDER_PREFIX . date('YmdHis'); // Sẽ get từ DB thực tế
+                $orderNumber = ORDER_PREFIX . date('YmdHis');
                 
                 // Xóa giỏ hàng
                 $cart->clear();
@@ -97,7 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Log
                 error_log("Order created: ID=$orderId, User=" . Auth::id());
             } else {
-                $errors[] = '❌ Không thể tạo đơn hàng. Vui lòng thử lại.';
+                $errors[] = 'Không thể tạo đơn hàng. Vui lòng thử lại.';
             }
         }
     }

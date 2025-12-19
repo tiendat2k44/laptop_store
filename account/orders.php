@@ -1,28 +1,20 @@
 <?php
-/**
- * ============================================================================
- * ĐƠN HÀNG CỦA TÔI - Danh sách tất cả đơn hàng của khách hàng
- * ============================================================================
- */
-
 require_once __DIR__ . '/../includes/init.php';
 
-// 🔐 Yêu cầu đăng nhập
+// Kiểm tra đăng nhập
 if (!Auth::check()) {
     Session::setFlash('error', 'Vui lòng đăng nhập để xem đơn hàng');
     redirect('/login.php?redirect=/account/orders.php');
 }
 
-// 📦 Khởi tạo service
+// Khởi tạo service và lấy dữ liệu
 $db = Database::getInstance();
 require_once __DIR__ . '/../includes/services/OrderService.php';
 
 $orderService = new OrderService($db, Auth::id());
 $orders = $orderService->getUserOrders();
 
-// ============================================================================
-// MAPPING: Trạng thái đơn hàng & thanh toán
-// ============================================================================
+// Định nghĩa trạng thái đơn hàng
 $orderStatuses = [
     'pending' => ['⏳', 'Chờ xác nhận', 'warning'],
     'confirmed' => ['✓', 'Đã xác nhận', 'info'],

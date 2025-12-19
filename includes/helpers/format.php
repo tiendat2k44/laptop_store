@@ -1,22 +1,12 @@
 <?php
-/**
- * ============================================================================
- * UTILITY FUNCTIONS - Các hàm tiện ích chung cho toàn ứng dụng
- * ============================================================================
- */
+// Các hàm tiện ích chung
 
-// ============ XSS PROTECTION ============
-/**
- * Chuyển đổi đầu vào an toàn để hiển thị trên HTML (ngăn chặn XSS)
- */
+// XSS PROTECTION
+// Chuyển đổi đầu vào an toàn để hiển thị trên HTML (ngăn chặn XSS)
 function escape($text) {
     return htmlspecialchars($text ?? '', ENT_QUOTES, 'UTF-8');
-}
 
-// ============ REDIRECT & NAVIGATION ============
-/**
- * Chuyển hướng trang - tự động thêm SITE_URL cho đường dẫn tương đối
- */
+// Chuyển hướng trang - tự động thêm SITE_URL cho đường dẫn tương đối
 function redirect($url, $status = 302) {
     if (strpos($url, '/') === 0 && strpos($url, 'http') !== 0) {
         $url = SITE_URL . $url;
@@ -25,10 +15,7 @@ function redirect($url, $status = 302) {
     exit;
 }
 
-// ============ FORMATTING & DISPLAY ============
-/**
- * Định dạng giá thành tiền Việt (VND)
- */
+// Định dạng giá thành tiền Việt (VND)
 function formatPrice($amount) {
     return number_format($amount, 0, ',', '.') . ' ₫';
 }
@@ -47,11 +34,7 @@ function formatNumber($num) {
     return number_format($num, 0, ',', '.');
 }
 
-// ============ URL & IMAGE HANDLING ============
-/**
- * Chuyển đổi đường dẫn ảnh thành URL đầy đủ (xử lý cả URL tuyệt đối, assets/, uploads/)
- * Fallback: assets/images/no-image.svg nếu ảnh không tồn tại
- */
+// Chuyển đổi đường dẫn ảnh thành URL đầy đủ (xử lý cả URL tuyệt đối, assets/, uploads/)
 function image_url($path) {
     if (empty($path)) {
         return SITE_URL . '/assets/images/no-image.svg';
@@ -76,10 +59,7 @@ function image_url($path) {
     return SITE_URL . '/' . $path;
 }
 
-// ============ SLUG & TEXT CONVERSION ============
-/**
- * Tạo slug từ chuỗi (chuyển về lowercase, bỏ diacritics, thay khoảng trắng bằng -)
- */
+// Tạo slug từ chuỗi (chuyển về lowercase, bỏ diacritics, thay khoảng trắng bằng -)
 function generateSlug($text) {
     // Chuyển thường
     $text = mb_strtolower($text, 'UTF-8');
@@ -108,10 +88,7 @@ function generateSlug($text) {
 // ============ VALIDATION ============
 /**
  * Kiểm tra email hợp lệ
- */
-function isValidEmail($email) {
-    return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
-}
+ */Kiểm tra email hợp lệ
 
 /**
  * Kiểm tra số điện thoại Việt (10-11 số)
@@ -123,10 +100,7 @@ function isValidPhone($phone) {
 // ============ PRICING CALCULATION ============
 /**
  * Tính giá bán (nếu có sale_price, lấy sale_price, ngược lại lấy price)
- */
-function getDisplayPrice($price, $salePrice) {
-    return (!empty($salePrice) && $salePrice < $price) ? $salePrice : $price;
-}
+ */Tính giá bán (nếu có sale_price, lấy sale_price, ngược lại lấy price)
 
 /**
  * Tính phần trăm giảm giá
@@ -138,9 +112,8 @@ function calculateDiscount($originalPrice, $salePrice) {
     return max(0, min(100, round((($originalPrice - $salePrice) / $originalPrice) * 100)));
 }
 
-// ============ COMMON CONSTANTS ============
+// Hằng số
 if (!defined('ORDER_PREFIX')) {
     define('ORDER_PREFIX', 'ORD');
 }
-
 ?>
