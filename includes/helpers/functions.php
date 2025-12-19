@@ -453,12 +453,29 @@ function image_url($path) {
     if ($path === '') {
         return SITE_URL . '/assets/images/no-image.svg';
     }
+    // URL tuyệt đối
     if (preg_match('#^https?://#i', $path)) {
         return $path;
     }
+
+    // Trường hợp chỉ định trong assets tĩnh
     if (strpos($path, 'assets/') === 0) {
-        return SITE_URL . '/' . $path;
+        $url = SITE_URL . '/' . $path;
+        $fs = ROOT_PATH . '/' . $path;
+        return file_exists($fs) ? $url : (SITE_URL . '/assets/images/no-image.svg');
     }
-    // Mặc định: coi như đường dẫn trong uploads
-    return UPLOAD_URL . '/' . ltrim($path, '/');
+
+    // Chuẩn hóa đường dẫn uploads
+    // Hỗ trợ: products/..., banners/..., uploads/...
+    $relative = ltrim($path, '/');
+    if (strpos($relative, 'uploads/') === 0) {
+        $relative = substr($relative, strlen('uploads/'));
+    }
+
+    // Xây URL trong thư mục uploads
+    $url = UPLOAD_URL . '/' . $relative; // => /assets/uploads/{relative}
+    $fs  = UPLOAD_PATH . '/' . $relative; // => {ROOT}/assets/uploads/{relative}
+
+    // Nếu file không tồn tại, trả về ảnh mặc định
+    return file_exists($fs) ? $url : (SITE_URL . '/assets/images/no-image.svg');
 }

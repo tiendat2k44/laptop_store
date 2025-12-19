@@ -222,6 +222,42 @@ $(document).ready(function() {
 });
 
 // Helper functions
+function addToCart(productId, quantity = 1) {
+    try {
+        if (!isLoggedIn()) {
+            window.location.href = window.SITE_URL + '/login.php?redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
+            return;
+        }
+
+        $.ajax({
+            url: window.SITE_URL + '/ajax/cart-add.php',
+            method: 'POST',
+            data: {
+                product_id: productId,
+                quantity: quantity,
+                csrf_token: getCsrfToken()
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    showNotification('success', response.message || 'Đã thêm vào giỏ hàng!');
+                    if (typeof response.cart_count !== 'undefined') {
+                        updateCartCount(response.cart_count);
+                    }
+                } else {
+                    showNotification('error', response.message || 'Không thể thêm vào giỏ hàng');
+                }
+            },
+            error: function() {
+                showNotification('error', 'Có lỗi xảy ra. Vui lòng thử lại.');
+            }
+        });
+    } catch (e) {
+        console.error(e);
+        showNotification('error', 'Có lỗi xảy ra. Vui lòng thử lại.');
+    }
+}
+
 function isLoggedIn() {
     // This should be set from PHP
     return typeof window.userLoggedIn !== 'undefined' && window.userLoggedIn;

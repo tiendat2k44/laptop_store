@@ -52,7 +52,7 @@ echo "Banners active: " . ($bn['c'] ?? 0) . "\n\n";
 
 echo "=== RECOMMENDATIONS ===\n";
 echo "- Nếu Password verify FAIL: chạy lệnh UPDATE mật khẩu admin -> 123456:\n";
-echo "  UPDATE users SET password_hash = '$2y$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', email_verified = TRUE, status = 'active', role_id = 1 WHERE email = 'admin@laptopstore.com';\n\n";
+echo "  UPDATE users SET password_hash = '\$2y$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', email_verified = TRUE, status = 'active', role_id = 1 WHERE email = 'admin@laptopstore.com';\n\n";
 
 echo "- Nếu Products featured = 0 nhưng active > 0: bật featured cho vài sản phẩm:\n";
 echo "  UPDATE products SET featured = TRUE WHERE status='active' LIMIT 8;\n\n";
