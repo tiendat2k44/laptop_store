@@ -1,90 +1,131 @@
 <?php
+/**
+ * ============================================================================
+ * ĐƠN HÀNG CỦA TÔI - Danh sách tất cả đơn hàng của khách hàng
+ * ============================================================================
+ */
+
 require_once __DIR__ . '/../includes/init.php';
 
+// 🔐 Yêu cầu đăng nhập
 if (!Auth::check()) {
     Session::setFlash('error', 'Vui lòng đăng nhập để xem đơn hàng');
     redirect('/login.php?redirect=/account/orders.php');
 }
 
+// 📦 Khởi tạo service
 $db = Database::getInstance();
+require_once __DIR__ . '/../includes/services/OrderService.php';
 
-// Lấy danh sách đơn hàng của user
-$orders = $db->query(
-    "SELECT id, order_number, total_amount, status, payment_status, created_at
-     FROM orders
-     WHERE user_id = :user_id
-     ORDER BY created_at DESC",
-    ['user_id' => Auth::id()]
-);
+$orderService = new OrderService($db, Auth::id());
+$orders = $orderService->getUserOrders();
+
+// ============================================================================
+// MAPPING: Trạng thái đơn hàng & thanh toán
+// ============================================================================
+$orderStatuses = [
+    'pending' => ['⏳', 'Chờ xác nhận', 'warning'],
+    'confirmed' => ['✓', 'Đã xác nhận', 'info'],
+    'processing' => ['⚙️', 'Đang xử lý', 'primary'],
+    'shipping' => ['🚚', 'Đang giao', 'primary'],
+    'delivered' => ['✅', 'Đã giao', 'success'],
+    'cancelled' => ['❌', 'Đã hủy', 'danger']
+];
+
+$paymentStatuses = [
+    'pending' => ['⏳', 'Chờ thanh toán', 'warning'],
+    'paid' => ['💰', 'Đã thanh toán', 'success'],
+    'failed' => ['❌', 'Thất bại', 'danger'],
+    'refunded' => ['↩️', 'Hoàn tiền', 'secondary']
+];
 
 $pageTitle = 'Đơn hàng của tôi';
 include __DIR__ . '/../includes/header.php';
 ?>
 
-<div class="container my-4">
-    <h3 class="mb-4"><i class="bi bi-bag-check"></i> Đơn hàng của tôi</h3>
-    
+<div class="container my-5">
+    <!-- Tiêu đề -->
+    <div class="mb-4">
+        <h2><i class="bi bi-bag-check"></i> Đơn hàng của tôi</h2>
+        <hr>
+    </div>
+
+    <!-- Trường hợp: Không có đơn hàng -->
     <?php if (empty($orders)): ?>
-        <div class="alert alert-info">
-            Bạn chưa có đơn hàng nào. <a href="<?= SITE_URL ?>/products.php" class="alert-link">Bắt đầu mua sắm</a>.
-        </div>
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>
+        Bạn chưa có đơn hàng nào.
+        <a href="<?= SITE_URL ?>/products.php" class="alert-link fw-bold">Bắt đầu mua sắm →</a>
+    </div>
+
+    <!-- Trường hợp: Có đơn hàng -->
     <?php else: ?>
-        <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>Mã đơn hàng</th>
-                        <th>Ngày đặt</th>
-                        <th>Tổng tiền</th>
-                        <th>Trạng thái</th>
-                        <th>Thanh toán</th>
-                        <th>Hành động</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($orders as $order): ?>
-                    <tr>
-                        <td class="fw-bold"><?= escape($order['order_number']) ?></td>
-                        <td><?= date('d/m/Y H:i', strtotime($order['created_at'])) ?></td>
-                        <td class="text-danger fw-bold"><?= formatPrice($order['total_amount']) ?></td>
-                        <td>
-                            <?php
-                            $statusBadge = [
-                                'pending' => ['bg-warning', 'Chờ xác nhận'],
-                                'confirmed' => ['bg-info', 'Đã xác nhận'],
-                                'processing' => ['bg-primary', 'Đang xử lý'],
-                                'shipping' => ['bg-primary', 'Đang giao'],
-                                'delivered' => ['bg-success', 'Đã giao'],
-                                'cancelled' => ['bg-danger', 'Đã hủy']
-                            ];
-                            $status = $order['status'] ?? 'pending';
-                            [$badgeClass, $badgeText] = $statusBadge[$status] ?? ['bg-secondary', 'Không xác định'];
-                            ?>
-                            <span class="badge <?= $badgeClass ?>"><?= $badgeText ?></span>
-                        </td>
-                        <td>
-                            <?php
-                            $paymentBadge = [
-                                'pending' => ['bg-warning', 'Chờ thanh toán'],
-                                'paid' => ['bg-success', 'Đã thanh toán'],
-                                'failed' => ['bg-danger', 'Thất bại'],
-                                'refunded' => ['bg-secondary', 'Hoàn tiền']
-                            ];
-                            $paymentStatus = $order['payment_status'] ?? 'pending';
-                            [$pbClass, $pbText] = $paymentBadge[$paymentStatus] ?? ['bg-secondary', 'Không xác định'];
-                            ?>
-                            <span class="badge <?= $pbClass ?>"><?= $pbText ?></span>
-                        </td>
-                        <td>
-                            <a href="<?= SITE_URL ?>/account/order-detail.php?id=<?= (int)$order['id'] ?>" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-eye"></i> Chi tiết
-                            </a>
-                        </td>
-                    </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Mã đơn hàng</th>
+                    <th>Ngày đặt</th>
+                    <th>Tổng tiền</th>
+                    <th>Trạng thái</th>
+                    <th>Thanh toán</th>
+                    <th style="width: 100px;">Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($orders as $order):
+                    $status = $order['status'] ?? 'pending';
+                    $paymentStatus = $order['payment_status'] ?? 'pending';
+                    
+                    [$statusEmoji, $statusText, $statusBadge] = $orderStatuses[$status] ?? ['❓', 'Không xác định', 'secondary'];
+                    [$payEmoji, $payText, $payBadge] = $paymentStatuses[$paymentStatus] ?? ['❓', 'Không xác định', 'secondary'];
+                ?>
+                <tr>
+                    <!-- Mã đơn hàng -->
+                    <td>
+                        <span class="badge bg-light text-dark">
+                            <?= escape($order['order_number']) ?>
+                        </span>
+                    </td>
+
+                    <!-- Ngày đặt -->
+                    <td class="text-muted">
+                        <small><?= formatDate($order['created_at']) ?></small>
+                    </td>
+
+                    <!-- Tổng tiền -->
+                    <td>
+                        <span class="fw-bold text-danger">
+                            <?= formatPrice($order['total_amount']) ?>
+                        </span>
+                    </td>
+
+                    <!-- Trạng thái đơn hàng -->
+                    <td>
+                        <span class="badge bg-<?= $statusBadge ?>">
+                            <?= $statusEmoji ?> <?= $statusText ?>
+                        </span>
+                    </td>
+
+                    <!-- Trạng thái thanh toán -->
+                    <td>
+                        <span class="badge bg-<?= $payBadge ?>">
+                            <?= $payEmoji ?> <?= $payText ?>
+                        </span>
+                    </td>
+
+                    <!-- Chi tiết -->
+                    <td>
+                        <a href="<?= SITE_URL ?>/account/order-detail.php?id=<?= (int)$order['id'] ?>" 
+                           class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye"></i> Chi tiết
+                        </a>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
     <?php endif; ?>
 </div>
 
