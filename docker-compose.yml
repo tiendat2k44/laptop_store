@@ -1,0 +1,35 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:16
+    container_name: laptop_store_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: your_password_here
+      POSTGRES_DB: laptop_store
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./database:/docker-entrypoint-initdb.d:ro
+
+  web:
+    image: php:8.3-apache
+    container_name: laptop_store_web
+    depends_on:
+      - db
+    ports:
+      - "8080:80"
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: laptop_store
+      DB_USER: postgres
+      DB_PASS: your_password_here
+    volumes:
+      - ./:/var/www/html
+    working_dir: /var/www/html
+    command: bash -lc "docker-php-ext-install pdo pdo_pgsql && apache2-foreground"
+
+volumes:
+  db_data:
