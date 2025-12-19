@@ -396,13 +396,14 @@ CREATE INDEX idx_coupons_status ON coupons(status);
 
 -- =============================================
 -- CREATE DEFAULT ADMIN USER
--- Password: Admin@123 (hashed with PASSWORD_BCRYPT)
+-- Email: admin@laptopstore.com
+-- Password: 123456
 -- =============================================
 INSERT INTO users (role_id, email, password_hash, full_name, email_verified, status) 
 VALUES (
     1, 
     'admin@laptopstore.com', 
-    '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 
+    '$2y$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 
     'System Administrator',
     TRUE,
     'active'
