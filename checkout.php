@@ -160,8 +160,8 @@ include __DIR__ . '/includes/header.php';
         <div class="alert alert-success">
             <i class="bi bi-check-circle"></i> Đặt hàng thành công! Mã đơn hàng: <strong><?= escape($orderNumber) ?></strong>
         </div>
-        <a href="<?= SITE_URL ?>/products.php" class="btn btn-primary">Tiếp tục mua sắm</a>
-        <a href="<?= SITE_URL ?>/cart.php" class="btn btn-outline-secondary ms-2">Xem giỏ hàng</a>
+        <a href="<?= SITE_URL ?>/account/orders.php" class="btn btn-success"><i class="bi bi-list-check"></i> Xem đơn hàng của tôi</a>
+        <a href="<?= SITE_URL ?>/products.php" class="btn btn-outline-primary ms-2">Tiếp tục mua sắm</a>
     <?php else: ?>
         <?php if (!empty($errors)): ?>
             <div class="alert alert-danger">
@@ -196,15 +196,24 @@ include __DIR__ . '/includes/header.php';
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label">Tỉnh/Thành phố <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" name="city" required>
+                                    <select class="form-select" id="citySelect" name="city" required onchange="loadDistricts()">
+                                        <option value="">-- Chọn Tỉnh/Thành phố --</option>
+                                        <option value="Hà Nội">Hà Nội</option>
+                                        <option value="Hải Phòng">Hải Phòng</option>
+                                        <option value="TP Hồ Chí Minh">TP Hồ Chí Minh</option>
+                                    </select>
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label">Quận/Huyện</label>
-                                    <input type="text" class="form-control" name="district">
+                                    <select class="form-select" id="districtSelect" name="district" onchange="loadWards()">
+                                        <option value="">-- Chọn Quận/Huyện --</option>
+                                    </select>
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label">Phường/Xã</label>
-                                    <input type="text" class="form-control" name="ward">
+                                    <select class="form-select" id="wardSelect" name="ward">
+                                        <option value="">-- Chọn Phường/Xã --</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
