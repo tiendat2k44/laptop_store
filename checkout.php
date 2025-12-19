@@ -115,7 +115,7 @@ include __DIR__ . '/includes/header.php';
                     <div class="mb-4">
                         <i class="bi bi-check-circle text-success" style="font-size: 3rem;"></i>
                     </div>
-                    <h3 class="mb-3">🎉 Đặt hàng thành công!</h3>
+                    <h3 class="mb-3">Đặt hàng thành công!</h3>
                     <p class="text-muted mb-4">
                         Cảm ơn bạn đã mua hàng. Vui lòng kiểm tra email hoặc theo dõi đơn hàng.
                     </p>
@@ -272,7 +272,7 @@ include __DIR__ . '/includes/header.php';
             <!-- Tóm tắt -->
             <div class="card shadow-sm sticky-top" style="top: 20px;">
                 <div class="card-header bg-light">
-                    <h5 class="mb-0">📋 Tóm tắt đơn hàng</h5>
+                    <h5 class="mb-0">Tóm tắt đơn hàng</h5>
                 </div>
                 <div class="card-body">
                     <!-- Danh sách sản phẩm -->
@@ -315,7 +315,7 @@ include __DIR__ . '/includes/header.php';
 
                     <!-- Tổng cộng -->
                     <div class="d-flex justify-content-between fs-5 fw-bold">
-                        <span>💰 Tổng cộng:</span>
+                        <span>Tổng cộng</span>
                         <span class="text-danger"><?= formatPrice($amounts['total_amount']) ?></span>
                     </div>
                 </div>
