@@ -1,149 +1,103 @@
 <?php
+/**
+ * ============================================================================
+ * THANH TOÁN - Nhập thông tin giao hàng & tạo đơn hàng
+ * ============================================================================
+ */
+
 require_once __DIR__ . '/includes/init.php';
 
+// 🔐 Yêu cầu đăng nhập
 if (!Auth::check()) {
     Session::setFlash('error', 'Vui lòng đăng nhập để thanh toán');
     redirect('/login.php?redirect=/checkout.php');
 }
 
+// 📦 Khởi tạo services
 $db = Database::getInstance();
+require_once __DIR__ . '/includes/services/CartService.php';
+require_once __DIR__ . '/includes/services/OrderService.php';
 
-// Lấy items trong giỏ
-$items = $db->query(
-    "SELECT ci.id as item_id, ci.quantity, 
-            p.id as product_id, p.name, p.price, p.sale_price, p.stock_quantity, p.shop_id,
-            (SELECT image_url FROM product_images WHERE product_id = p.id ORDER BY display_order LIMIT 1) AS main_image
-     FROM cart_items ci
-     JOIN products p ON ci.product_id = p.id
-     WHERE ci.user_id = :user_id
-     ORDER BY ci.created_at DESC",
-    ['user_id' => Auth::id()]
-);
+$cart = new CartService($db, Auth::id());
+$orderService = new OrderService($db, Auth::id());
 
+// ✅ Lấy giỏ hàng
+$items = $cart->getItems();
 if (empty($items)) {
     Session::setFlash('error', 'Giỏ hàng trống, vui lòng thêm sản phẩm trước khi thanh toán');
     redirect('/products.php');
 }
 
-// Tính tổng tiền
+// 💰 Tính tiền
 $subtotal = 0;
-foreach ($items as $it) {
-    $price = (!empty($it['sale_price']) && $it['sale_price'] < $it['price']) ? $it['sale_price'] : $it['price'];
-    $subtotal += $price * $it['quantity'];
+foreach ($items as $item) {
+    $price = getDisplayPrice($item['price'], $item['sale_price']);
+    $subtotal += $price * $item['quantity'];
 }
-$shipping_fee = 0;
-$discount_amount = 0;
-$total_amount = $subtotal + $shipping_fee - $discount_amount;
 
-// Xử lý submit đặt hàng
+$amounts = [
+    'subtotal' => $subtotal,
+    'shipping_fee' => 0,
+    'discount_amount' => 0,
+    'total_amount' => $subtotal
+];
+
+// ============================================================================
+// XỬ LÝ FORM ĐẶT HÀNG
+// ============================================================================
 $errors = [];
 $orderSuccess = false;
 $orderNumber = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // 1️⃣ Kiểm tra CSRF token
     if (!Session::verifyToken($_POST['csrf_token'] ?? '')) {
-        $errors[] = 'Invalid CSRF token';
+        $errors[] = 'Lỗi bảo mật: CSRF token không hợp lệ';
     } else {
-        $recipient_name = trim($_POST['recipient_name'] ?? '');
-        $recipient_phone = trim($_POST['recipient_phone'] ?? '');
-        $shipping_address = trim($_POST['shipping_address'] ?? '');
-        $city = trim($_POST['city'] ?? '');
-        $district = trim($_POST['district'] ?? '');
-        $ward = trim($_POST['ward'] ?? '');
-        $payment_method = trim($_POST['payment_method'] ?? 'COD');
-        $notes = trim($_POST['notes'] ?? '');
-        
-        if ($recipient_name === '') $errors[] = 'Họ tên người nhận không được để trống';
-        if ($recipient_phone === '') $errors[] = 'Số điện thoại không được để trống';
-        if ($shipping_address === '' || $city === '') $errors[] = 'Địa chỉ giao hàng không được để trống';
-        if (!in_array($payment_method, ['COD','MOMO','VNPAY'], true)) $errors[] = 'Phương thức thanh toán không hợp lệ';
-        
+        // 2️⃣ Lấy & chuẩn hóa dữ liệu
+        $shipping = [
+            'name' => trim($_POST['recipient_name'] ?? ''),
+            'phone' => trim($_POST['recipient_phone'] ?? ''),
+            'address' => trim($_POST['shipping_address'] ?? ''),
+            'city' => trim($_POST['city'] ?? ''),
+            'district' => trim($_POST['district'] ?? ''),
+            'ward' => trim($_POST['ward'] ?? ''),
+            'payment_method' => trim($_POST['payment_method'] ?? 'COD'),
+            'notes' => trim($_POST['notes'] ?? '')
+        ];
+
+        // 3️⃣ Validation
+        if (empty($shipping['name'])) {
+            $errors[] = '❌ Họ tên người nhận không được để trống';
+        }
+        if (empty($shipping['phone'])) {
+            $errors[] = '❌ Số điện thoại không được để trống';
+        } elseif (!isValidPhone($shipping['phone'])) {
+            $errors[] = '❌ Số điện thoại không hợp lệ (phải là số Việt)';
+        }
+        if (empty($shipping['address']) || empty($shipping['city'])) {
+            $errors[] = '❌ Địa chỉ giao hàng không đủ thông tin';
+        }
+        if (!in_array($shipping['payment_method'], ['COD', 'MOMO', 'VNPAY'], true)) {
+            $errors[] = '❌ Phương thức thanh toán không hợp lệ';
+        }
+
+        // 4️⃣ Nếu hợp lệ, tạo đơn hàng
         if (empty($errors)) {
-            try {
-                $db->beginTransaction();
-                
-                // Tạo mã đơn hàng
-                $orderNumber = 'ORD' . date('YmdHis') . substr(strval(random_int(1000, 9999)), -4);
-                
-                // Tạo đơn hàng
-                $sqlOrder = "INSERT INTO orders (
-                    order_number, user_id,
-                    recipient_name, recipient_phone, shipping_address, city, district, ward,
-                    subtotal, shipping_fee, discount_amount, total_amount,
-                    payment_method, payment_status, status, notes, created_at
-                ) VALUES (
-                    :order_number, :user_id,
-                    :recipient_name, :recipient_phone, :shipping_address, :city, :district, :ward,
-                    :subtotal, :shipping_fee, :discount_amount, :total_amount,
-                    :payment_method, 'pending', 'pending', :notes, CURRENT_TIMESTAMP
-                ) RETURNING id";
-                
-                $orderRow = $db->queryOne($sqlOrder, [
-                    'order_number' => $orderNumber,
-                    'user_id' => Auth::id(),
-                    'recipient_name' => $recipient_name,
-                    'recipient_phone' => $recipient_phone,
-                    'shipping_address' => $shipping_address,
-                    'city' => $city,
-                    'district' => $district,
-                    'ward' => $ward,
-                    'subtotal' => $subtotal,
-                    'shipping_fee' => $shipping_fee,
-                    'discount_amount' => $discount_amount,
-                    'total_amount' => $total_amount,
-                    'payment_method' => $payment_method,
-                    'notes' => $notes
-                ]);
-                
-                $orderId = $orderRow['id'] ?? null;
-                if (!$orderId) {
-                    throw new Exception('Không thể tạo đơn hàng');
-                }
-                
-                // Thêm order items + cập nhật tồn kho, sold_count
-                foreach ($items as $it) {
-                    $unitPrice = (!empty($it['sale_price']) && $it['sale_price'] < $it['price']) ? $it['sale_price'] : $it['price'];
-                    $itemSubtotal = $unitPrice * $it['quantity'];
-                    
-                    // Lấy thumbnail
-                    $thumb = $it['main_image'] ?? null;
-                    
-                    $sqlItem = "INSERT INTO order_items (
-                        order_id, product_id, shop_id, product_name, product_thumbnail,
-                        price, quantity, subtotal, status, created_at
-                    ) VALUES (
-                        :order_id, :product_id, :shop_id, :product_name, :product_thumbnail,
-                        :price, :quantity, :subtotal, 'pending', CURRENT_TIMESTAMP
-                    )";
-                    
-                    $db->insert($sqlItem, [
-                        'order_id' => $orderId,
-                        'product_id' => $it['product_id'],
-                        'shop_id' => $it['shop_id'],
-                        'product_name' => $it['name'],
-                        'product_thumbnail' => $thumb,
-                        'price' => $unitPrice,
-                        'quantity' => $it['quantity'],
-                        'subtotal' => $itemSubtotal
-                    ]);
-                    
-                    // Cập nhật tồn kho và sold_count
-                    $db->execute(
-                        "UPDATE products SET stock_quantity = stock_quantity - :qty, sold_count = sold_count + :qty WHERE id = :pid AND stock_quantity >= :qty",
-                        ['qty' => $it['quantity'], 'pid' => $it['product_id']]
-                    );
-                }
+            $orderId = $orderService->createOrder($shipping, $items, $amounts);
+
+            if ($orderId) {
+                // ✅ Đặt hàng thành công
+                $orderSuccess = true;
+                $orderNumber = ORDER_PREFIX . date('YmdHis'); // Sẽ get từ DB thực tế
                 
                 // Xóa giỏ hàng
-                $db->execute("DELETE FROM cart_items WHERE user_id = :user_id", ['user_id' => Auth::id()]);
+                $cart->clear();
                 
-                $db->commit();
-                $orderSuccess = true;
-                
-            } catch (Exception $e) {
-                $db->rollback();
-                error_log('Checkout error: ' . $e->getMessage());
-                $errors[] = 'Có lỗi xảy ra khi tạo đơn hàng. Vui lòng thử lại.';
+                // Log
+                error_log("Order created: ID=$orderId, User=" . Auth::id());
+            } else {
+                $errors[] = '❌ Không thể tạo đơn hàng. Vui lòng thử lại.';
             }
         }
     }
@@ -153,136 +107,279 @@ $pageTitle = 'Thanh toán';
 include __DIR__ . '/includes/header.php';
 ?>
 
-<div class="container my-4">
-    <h3 class="mb-4"><i class="bi bi-credit-card"></i> Thanh toán</h3>
-    
+<div class="container my-5">
+    <!-- Tiêu đề -->
+    <div class="mb-4">
+        <h2><i class="bi bi-credit-card"></i> Thanh toán</h2>
+        <hr>
+    </div>
+
+    <!-- ✅ TRƯỜNG HỢP: ĐẶT HÀNG THÀNH CÔNG -->
     <?php if ($orderSuccess): ?>
-        <div class="alert alert-success">
-            <i class="bi bi-check-circle"></i> Đặt hàng thành công! Mã đơn hàng: <strong><?= escape($orderNumber) ?></strong>
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card border-success shadow-sm">
+                <div class="card-body text-center py-5">
+                    <div class="mb-4">
+                        <i class="bi bi-check-circle text-success" style="font-size: 3rem;"></i>
+                    </div>
+                    <h3 class="mb-3">🎉 Đặt hàng thành công!</h3>
+                    <p class="text-muted mb-4">
+                        Cảm ơn bạn đã mua hàng. Vui lòng kiểm tra email hoặc theo dõi đơn hàng.
+                    </p>
+                    <p class="mb-4">
+                        <strong>Mã đơn hàng:</strong><br>
+                        <span class="fs-5 badge bg-primary"><?= escape($orderNumber) ?></span>
+                    </p>
+
+                    <!-- Nút hành động -->
+                    <a href="<?= SITE_URL ?>/account/orders.php" class="btn btn-success mb-2 w-100">
+                        <i class="bi bi-list-check"></i> Xem đơn hàng của tôi
+                    </a>
+                    <a href="<?= SITE_URL ?>/products.php" class="btn btn-outline-primary w-100">
+                        <i class="bi bi-shop"></i> Tiếp tục mua sắm
+                    </a>
+                </div>
+            </div>
         </div>
-        <a href="<?= SITE_URL ?>/account/orders.php" class="btn btn-success"><i class="bi bi-list-check"></i> Xem đơn hàng của tôi</a>
-        <a href="<?= SITE_URL ?>/products.php" class="btn btn-outline-primary ms-2">Tiếp tục mua sắm</a>
+    </div>
+
+    <!-- ❌ TRƯỜNG HỢP: CÓ LỖI -->
     <?php else: ?>
-        <?php if (!empty($errors)): ?>
-            <div class="alert alert-danger">
-                <ul class="mb-0">
+    <div class="row">
+        <!-- Cột trái: Form nhập thông tin -->
+        <div class="col-lg-7">
+            <!-- Thông báo lỗi -->
+            <?php if (!empty($errors)): ?>
+            <div class="alert alert-danger mb-4">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                <strong>Vui lòng sửa các lỗi sau:</strong>
+                <ul class="mb-0 mt-2">
                     <?php foreach ($errors as $err): ?>
                         <li><?= escape($err) ?></li>
                     <?php endforeach; ?>
                 </ul>
             </div>
-        <?php endif; ?>
-        
-        <div class="row">
-            <div class="col-lg-7">
-                <form method="POST" action="">
-                    <input type="hidden" name="csrf_token" value="<?= Session::getToken() ?>">
-                    
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <h5 class="card-title">Thông tin giao hàng</h5>
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label class="form-label">Họ tên người nhận <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" name="recipient_name" value="<?= escape(Auth::user()['full_name'] ?? '') ?>" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Số điện thoại <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" name="recipient_phone" value="<?= escape(Auth::user()['phone'] ?? '') ?>" required>
-                                </div>
-                                <div class="col-md-12">
-                                    <label class="form-label">Địa chỉ <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" name="shipping_address" placeholder="Số nhà, đường, phường/xã" required>
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label">Tỉnh/Thành phố <span class="text-danger">*</span></label>
-                                    <select class="form-select" id="citySelect" name="city" required onchange="loadDistricts()">
-                                        <option value="">-- Chọn Tỉnh/Thành phố --</option>
-                                        <option value="Hà Nội">Hà Nội</option>
-                                        <option value="Hải Phòng">Hải Phòng</option>
-                                        <option value="TP Hồ Chí Minh">TP Hồ Chí Minh</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label">Quận/Huyện</label>
-                                    <select class="form-select" id="districtSelect" name="district" onchange="loadWards()">
-                                        <option value="">-- Chọn Quận/Huyện --</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label">Phường/Xã</label>
-                                    <select class="form-select" id="wardSelect" name="ward">
-                                        <option value="">-- Chọn Phường/Xã --</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
+            <?php endif; ?>
+
+            <!-- Form đặt hàng -->
+            <form method="POST" action="" class="needs-validation">
+                <input type="hidden" name="csrf_token" value="<?= Session::getToken() ?>">
+
+                <!-- 📍 Thông tin giao hàng -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">📍 Thông tin giao hàng</h5>
                     </div>
-                    
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <h5 class="card-title">Phương thức thanh toán</h5>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="payment_method" id="pmCOD" value="COD" checked>
-                                <label class="form-check-label" for="pmCOD">Thanh toán khi nhận hàng (COD)</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="payment_method" id="pmMOMO" value="MOMO" disabled>
-                                <label class="form-check-label" for="pmMOMO">Ví MoMo (đang phát triển)</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="payment_method" id="pmVNPAY" value="VNPAY" disabled>
-                                <label class="form-check-label" for="pmVNPAY">VNPAY (đang phát triển)</label>
-                            </div>
-                            <div class="mt-3">
-                                <label class="form-label">Ghi chú (tuỳ chọn)</label>
-                                <textarea name="notes" class="form-control" rows="3"></textarea>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <button type="submit" class="btn btn-success"><i class="bi bi-check2-circle"></i> Đặt hàng</button>
-                </form>
-            </div>
-            <div class="col-lg-5">
-                <div class="card">
                     <div class="card-body">
-                        <h5 class="card-title">Tóm tắt đơn hàng</h5>
-                        <?php foreach ($items as $it):
-                            $img = image_url($it['main_image'] ?? '');
-                            $unitPrice = (!empty($it['sale_price']) && $it['sale_price'] < $it['price']) ? $it['sale_price'] : $it['price'];
-                        ?>
-                        <div class="d-flex align-items-center mb-3">
-                            <img src="<?= $img ?>" style="width:60px;height:60px;object-fit:cover;border-radius:8px;" class="me-2">
-                            <div class="flex-grow-1">
-                                <div class="fw-bold"><?= escape($it['name']) ?></div>
-                                <div class="text-muted small">Số lượng: <?= (int)$it['quantity'] ?></div>
+                        <div class="row g-3">
+                            <!-- Họ tên -->
+                            <div class="col-md-6">
+                                <label class="form-label">Họ và tên <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="recipient_name" 
+                                       value="<?= escape(Auth::user()['full_name'] ?? '') ?>" required>
                             </div>
-                            <div class="text-danger fw-bold ms-2"><?= formatPrice($unitPrice * $it['quantity']) ?></div>
+
+                            <!-- Số điện thoại -->
+                            <div class="col-md-6">
+                                <label class="form-label">Số điện thoại <span class="text-danger">*</span></label>
+                                <input type="tel" class="form-control" name="recipient_phone" 
+                                       value="<?= escape(Auth::user()['phone'] ?? '') ?>" required>
+                            </div>
+
+                            <!-- Địa chỉ chi tiết -->
+                            <div class="col-12">
+                                <label class="form-label">Địa chỉ chi tiết <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="shipping_address" 
+                                       placeholder="Số nhà, tên đường..." required>
+                            </div>
+
+                            <!-- Tỉnh/Thành phố -->
+                            <div class="col-md-4">
+                                <label class="form-label">Tỉnh/Thành phố <span class="text-danger">*</span></label>
+                                <select class="form-select" id="citySelect" name="city" 
+                                        onchange="loadDistricts()" required>
+                                    <option value="">-- Chọn --</option>
+                                    <option value="Hà Nội">Hà Nội</option>
+                                    <option value="Hải Phòng">Hải Phòng</option>
+                                    <option value="TP Hồ Chí Minh">TP Hồ Chí Minh</option>
+                                </select>
+                            </div>
+
+                            <!-- Quận/Huyện -->
+                            <div class="col-md-4">
+                                <label class="form-label">Quận/Huyện</label>
+                                <select class="form-select" id="districtSelect" name="district" onchange="loadWards()">
+                                    <option value="">-- Chọn --</option>
+                                </select>
+                            </div>
+
+                            <!-- Phường/Xã -->
+                            <div class="col-md-4">
+                                <label class="form-label">Phường/Xã</label>
+                                <select class="form-select" id="wardSelect" name="ward">
+                                    <option value="">-- Chọn --</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 💳 Phương thức thanh toán -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">💳 Phương thức thanh toán</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="radio" name="payment_method" 
+                                   id="pmCOD" value="COD" checked>
+                            <label class="form-check-label" for="pmCOD">
+                                <strong>Thanh toán khi nhận hàng (COD)</strong>
+                                <br>
+                                <small class="text-muted">Không cần trả tiền trước</small>
+                            </label>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="radio" name="payment_method" 
+                                   id="pmMOMO" value="MOMO" disabled>
+                            <label class="form-check-label text-muted" for="pmMOMO">
+                                <strong>Ví MoMo</strong> (đang phát triển)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="payment_method" 
+                                   id="pmVNPAY" value="VNPAY" disabled>
+                            <label class="form-check-label text-muted" for="pmVNPAY">
+                                <strong>VNPAY</strong> (đang phát triển)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 📝 Ghi chú -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">📝 Ghi chú thêm</h5>
+                    </div>
+                    <div class="card-body">
+                        <textarea name="notes" class="form-control" rows="3" 
+                                  placeholder="Ghi chú cho người giao (tuỳ chọn)"></textarea>
+                    </div>
+                </div>
+
+                <!-- Nút hành động -->
+                <button type="submit" class="btn btn-success btn-lg w-100">
+                    <i class="bi bi-check2-circle"></i> Đặt hàng
+                </button>
+            </form>
+        </div>
+
+        <!-- Cột phải: Tóm tắt đơn hàng -->
+        <div class="col-lg-5">
+            <!-- Tóm tắt -->
+            <div class="card shadow-sm sticky-top" style="top: 20px;">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">📋 Tóm tắt đơn hàng</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Danh sách sản phẩm -->
+                    <div class="mb-4" style="max-height: 400px; overflow-y: auto;">
+                        <?php foreach ($items as $item):
+                            $price = getDisplayPrice($item['price'], $item['sale_price']);
+                            $img = image_url($item['main_image'] ?? '');
+                        ?>
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            <img src="<?= $img ?>" alt="" class="rounded" 
+                                 style="width: 60px; height: 60px; object-fit: cover;">
+                            <div class="flex-grow-1 small">
+                                <div class="fw-bold"><?= escape($item['name']) ?></div>
+                                <div class="text-muted">x<?= (int)$item['quantity'] ?></div>
+                            </div>
+                            <div class="text-danger fw-bold"><?= formatPrice($price * $item['quantity']) ?></div>
                         </div>
                         <?php endforeach; ?>
-                        <hr>
-                        <div class="d-flex justify-content-between">
-                            <span>Tạm tính</span>
-                            <span><?= formatPrice($subtotal) ?></span>
+                    </div>
+
+                    <hr>
+
+                    <!-- Chi tiết tiền -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Tạm tính:</span>
+                            <strong><?= formatPrice($amounts['subtotal']) ?></strong>
                         </div>
-                        <div class="d-flex justify-content-between">
-                            <span>Phí vận chuyển</span>
-                            <span><?= formatPrice($shipping_fee) ?></span>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Phí vận chuyển:</span>
+                            <strong><?= formatPrice($amounts['shipping_fee']) ?></strong>
                         </div>
-                        <div class="d-flex justify-content-between">
-                            <span>Giảm giá</span>
-                            <span>-<?= formatPrice($discount_amount) ?></span>
+                        <div class="d-flex justify-content-between text-success">
+                            <span>Giảm giá:</span>
+                            <strong>-<?= formatPrice($amounts['discount_amount']) ?></strong>
                         </div>
-                        <div class="d-flex justify-content-between fw-bold fs-5 mt-2">
-                            <span>Tổng cộng</span>
-                            <span class="text-danger"><?= formatPrice($total_amount) ?></span>
-                        </div>
+                    </div>
+
+                    <hr class="my-3">
+
+                    <!-- Tổng cộng -->
+                    <div class="d-flex justify-content-between fs-5 fw-bold">
+                        <span>💰 Tổng cộng:</span>
+                        <span class="text-danger"><?= formatPrice($amounts['total_amount']) ?></span>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
     <?php endif; ?>
 </div>
+
+<!-- JavaScript: Region Dropdown -->
+<script>
+const regions = {
+    'Hà Nội': {
+        'Hoàn Kiếm': ['Cửa Đông', 'Cửa Nam', 'Thanh Nhan'],
+        'Ba Đình': ['Phúc Tân', 'Trúc Bạch', 'Cầu Giấy'],
+        'Đống Đa': ['Láng Hạ', 'Ngã Tư Sở', 'Phương Mai'],
+    },
+    'Hải Phòng': {
+        'Hồng Bàng': ['Máy Tơ', 'Máy Chai'],
+        'Ngô Quyền': ['Chợ Mới', 'Cát Dài'],
+    },
+    'TP Hồ Chí Minh': {
+        'Quận 1': ['Bến Nghé', 'Bến Thành', 'Cầu Kho'],
+        'Quận 2': ['An Khánh', 'An Phú', 'Bình An'],
+        'Quận 3': ['Võ Thị Sáu', 'Phường 1', 'Phường 9'],
+    }
+};
+
+function loadDistricts() {
+    const city = document.getElementById('citySelect').value;
+    const districtSelect = document.getElementById('districtSelect');
+    const wardSelect = document.getElementById('wardSelect');
+    
+    districtSelect.innerHTML = '<option value="">-- Chọn --</option>';
+    wardSelect.innerHTML = '<option value="">-- Chọn --</option>';
+    
+    if (city && regions[city]) {
+        Object.keys(regions[city]).forEach(district => {
+            districtSelect.innerHTML += `<option value="${district}">${district}</option>`;
+        });
+    }
+}
+
+function loadWards() {
+    const city = document.getElementById('citySelect').value;
+    const district = document.getElementById('districtSelect').value;
+    const wardSelect = document.getElementById('wardSelect');
+    
+    wardSelect.innerHTML = '<option value="">-- Chọn --</option>';
+    
+    if (city && district && regions[city] && regions[city][district]) {
+        regions[city][district].forEach(ward => {
+            wardSelect.innerHTML += `<option value="${ward}">${ward}</option>`;
+        });
+    }
+}
+</script>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>
