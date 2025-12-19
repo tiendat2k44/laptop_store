@@ -1,53 +1,44 @@
 <?php
 require_once __DIR__ . '/../includes/init.php';
 
-// Require admin access
-Auth::requireRole(ROLE_ADMIN, '/login.php');
+// Kiểm tra quyền admin
+if (!Auth::check() || !Auth::isAdmin()) {
+    Session::setFlash('error', 'Bạn không có quyền truy cập trang này');
+    redirect('/login.php');
+}
 
-$pageTitle = 'Dashboard';
 $db = Database::getInstance();
 
-// Get statistics
+// Lấy thống kê tổng quan
 $stats = [
-    'total_users' => $db->queryOne("SELECT COUNT(*) as count FROM users WHERE role_id = :role", ['role' => ROLE_CUSTOMER])['count'] ?? 0,
+    'total_users' => $db->queryOne("SELECT COUNT(*) as count FROM users")['count'] ?? 0,
     'total_shops' => $db->queryOne("SELECT COUNT(*) as count FROM shops WHERE status = 'active'")['count'] ?? 0,
     'total_products' => $db->queryOne("SELECT COUNT(*) as count FROM products WHERE status = 'active'")['count'] ?? 0,
     'total_orders' => $db->queryOne("SELECT COUNT(*) as count FROM orders")['count'] ?? 0,
-    'pending_orders' => $db->queryOne("SELECT COUNT(*) as count FROM orders WHERE status = 'pending'")['count'] ?? 0,
     'pending_shops' => $db->queryOne("SELECT COUNT(*) as count FROM shops WHERE status = 'pending'")['count'] ?? 0,
+    'total_revenue' => $db->queryOne("SELECT SUM(total_amount) as total FROM orders WHERE payment_status = 'paid'")['total'] ?? 0
 ];
 
-// Get revenue data
-$revenueToday = $db->queryOne("
-    SELECT COALESCE(SUM(total_amount), 0) as revenue 
-    FROM orders 
-    WHERE DATE(created_at) = CURRENT_DATE AND payment_status = 'paid'
-")['revenue'] ?? 0;
+// Lấy đơn hàng mới nhất
+$recentOrders = $db->query(
+    "SELECT o.id, o.order_number, o.total_amount, o.status, o.created_at, u.full_name
+     FROM orders o
+     JOIN users u ON o.user_id = u.id
+     ORDER BY o.created_at DESC
+     LIMIT 10"
+);
 
-$revenueThisMonth = $db->queryOne("
-    SELECT COALESCE(SUM(total_amount), 0) as revenue 
-    FROM orders 
-    WHERE DATE_TRUNC('month', created_at) = DATE_TRUNC('month', CURRENT_DATE) AND payment_status = 'paid'
-")['revenue'] ?? 0;
+// Lấy shop đang chờ duyệt
+$pendingShops = $db->query(
+    "SELECT s.id, s.shop_name, s.created_at, u.full_name, u.email
+     FROM shops s
+     JOIN users u ON s.user_id = u.id
+     WHERE s.status = 'pending'
+     ORDER BY s.created_at DESC
+     LIMIT 5"
+);
 
-$revenueThisYear = $db->queryOne("
-    SELECT COALESCE(SUM(total_amount), 0) as revenue 
-    FROM orders 
-    WHERE DATE_TRUNC('year', created_at) = DATE_TRUNC('year', CURRENT_DATE) AND payment_status = 'paid'
-")['revenue'] ?? 0;
-
-// Get recent orders
-$recentOrders = $db->query("
-    SELECT o.*, u.full_name as customer_name 
-    FROM orders o 
-    JOIN users u ON o.user_id = u.id 
-    ORDER BY o.created_at DESC 
-    LIMIT 10
-");
-
-// Get chart data (last 7 days revenue)
-$chartData = $db->query("
-    SELECT DATE(created_at) as date, COALESCE(SUM(total_amount), 0) as revenue 
+$pageTitle = 'Admin Dashboard'; 
     FROM orders 
     WHERE created_at >= CURRENT_DATE - INTERVAL '6 days' AND payment_status = 'paid'
     GROUP BY DATE(created_at) 
