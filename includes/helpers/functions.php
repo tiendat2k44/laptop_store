@@ -88,6 +88,8 @@ function formatDate($date, $format = 'd/m/Y H:i') {
     return date($format, strtotime($date));
 }
 
+// image_url() đã có ở cuối file với logic nâng cao; không định nghĩa lại ở đây
+
 /**
  * Generate order number
  * @return string
@@ -106,6 +108,13 @@ function validateEmail($email) {
 }
 
 /**
+ * Alias dùng trong code mới: isValidEmail
+ */
+function isValidEmail($email) {
+    return validateEmail($email);
+}
+
+/**
  * Validate phone number (Vietnamese format)
  * @param string $phone
  * @return bool
@@ -113,6 +122,33 @@ function validateEmail($email) {
 function validatePhone($phone) {
     $pattern = '/^(0|\+84)(3|5|7|8|9)[0-9]{8}$/';
     return preg_match($pattern, $phone);
+}
+
+/**
+ * Alias dùng trong code mới: isValidPhone (10-11 số, bắt đầu 0)
+ */
+function isValidPhone($phone) {
+    return preg_match('/^0\d{9,10}$/', (string)$phone) === 1;
+}
+
+/**
+ * Giá hiển thị ưu tiên sale_price nếu hợp lệ
+ */
+function getDisplayPrice($price, $salePrice = null) {
+    if (!empty($salePrice) && (float)$salePrice > 0 && (float)$salePrice < (float)$price) {
+        return (float)$salePrice;
+    }
+    return (float)$price;
+}
+
+/**
+ * Tính % giảm giá
+ */
+function calculateDiscount($originalPrice, $salePrice) {
+    if (empty($salePrice) || $salePrice >= $originalPrice) {
+        return 0;
+    }
+    return max(0, min(100, (int)round((($originalPrice - $salePrice) / $originalPrice) * 100)));
 }
 
 /**
