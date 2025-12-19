@@ -1,77 +1,138 @@
 <?php
 require_once __DIR__ . '/includes/init.php';
 
+// Kiểm tra đăng nhập
 if (!Auth::check()) {
     Session::setFlash('error', 'Vui lòng đăng nhập để xem giỏ hàng');
-        redirect('/login.php?redirect=/cart.php');
-        }
+    redirect('/login.php?redirect=/cart.php');
+}
 
-        $db = Database::getInstance();
+// Khởi tạo service
+$db = Database::getInstance();
+require_once __DIR__ . '/includes/services/CartService.php';
 
-        // Lấy danh sách sản phẩm trong giỏ
-        $items = $db->query(
-            "SELECT ci.id as item_id, ci.quantity, ci.created_at, 
-                        p.id as product_id, p.name, p.price, p.sale_price, p.stock_quantity,
-                                    (SELECT image_url FROM product_images WHERE product_id = p.id ORDER BY display_order LIMIT 1) AS main_image
-                                         FROM cart_items ci
-                                              JOIN products p ON ci.product_id = p.id
-                                                   WHERE ci.user_id = :user_id
-                                                        ORDER BY ci.created_at DESC",
-                                                            ['user_id' => Auth::id()]
-                                                            );
+$cart = new CartService($db, Auth::id());
+$items = $cart->getItems();
+$total = $cart->getTotal();
 
-                                                            // Tính tổng tiền
-                                                            $total = 0;
-                                                            foreach ($items as $it) {
-                                                                $price = (!empty($it['sale_price']) && $it['sale_price'] < $it['price']) ? $it['sale_price'] : $it['price'];
-                                                                    $total += $price * $it['quantity'];
-                                                                    }
+$pageTitle = 'Giỏ hàng';
+include __DIR__ . '/includes/header.php';
+?>
 
-                                                                    $pageTitle = 'Giỏ hàng của bạn';
-                                                                    include __DIR__ . '/includes/header.php';
-                                                                    ?>
+<div class="container my-4">
+    <div class="mb-4">
+        <h2><i class="bi bi-cart"></i> Giỏ hàng</h2>
+        <hr>
+    </div>
 
-                                                                    <div class="container my-4">
-                                                                        <h3 class="mb-4"><i class="bi bi-cart"></i> Giỏ hàng</h3>
-                                                                            <?php if (empty($items)): ?>
-                                                                                    <div class="alert alert-info">Giỏ hàng của bạn đang trống. <a href="<?= SITE_URL ?>/products.php" class="alert-link">Tiếp tục mua sắm</a>.</div>
-                                                                                        <?php else: ?>
-                                                                                                <div class="row">
-                                                                                                            <div class="col-lg-8">
-                                                                                                                            <div class="list-group">
-                                                                                                                                                <?php foreach ($items as $it): 
-                                                                                                                                                                        $img = image_url($it['main_image'] ?? '');
-                                                                                                                                                                                                $price = (!empty($it['sale_price']) && $it['sale_price'] < $it['price']) ? $it['sale_price'] : $it['price'];
-                                                                                                                                                                                                                    ?>
-                                                                                                                                                                                                                                        <div class="list-group-item d-flex align-items-center">
-                                                                                                                                                                                                                                                                <img src="<?= $img ?>" alt="<?= escape($it['name']) ?>" class="me-3" style="width:80px;height:80px;object-fit:cover;border-radius:8px;">
-                                                                                                                                                                                                                                                                                        <div class="flex-grow-1">
-                                                                                                                                                                                                                                                                                                                    <a href="<?= SITE_URL ?>/product-detail.php?id=<?= $it['product_id'] ?>" class="text-decoration-none fw-bold"><?= escape($it['name']) ?></a>
-                                                                                                                                                                                                                                                                                                                                                <div class="text-muted small">Còn <?= (int)$it['stock_quantity'] ?> trong kho</div>
-                                                                                                                                                                                                                                                                                                                                                                            <div class="d-flex align-items-center mt-2">
-                                                                                                                                                                                                                                                                                                                                                                                                            <span class="text-danger fw-bold me-3"><?= formatPrice($price) ?></span>
-                                                                                                                                                                                                                                                                                                                                                                                                                                            <input type="number" class="form-control form-control-sm cart-quantity-input" style="width:90px" value="<?= (int)$it['quantity'] ?>" min="1" max="<?= (int)$it['stock_quantity'] ?>" data-item-id="<?= (int)$it['item_id'] ?>">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <button class="btn btn-sm btn-outline-danger ms-2 btn-remove-cart-item" data-item-id="<?= (int)$it['item_id'] ?>"><i class="bi bi-trash"></i></button>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        </div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <?php endforeach; ?>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        </div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <div class="col-lg-4">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <div class="card">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <div class="card-body">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <h5 class="card-title">Tổng kết</h5>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <p class="card-text">Tạm tính: <strong class="text-danger"><?= formatPrice($total) ?></strong></p>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <a class="btn btn-success w-100" href="<?= SITE_URL ?>/checkout.php">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <i class="bi bi-credit-card"></i> Tiến hành thanh toán
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                </a>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        </div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <?php endif; ?>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            </div>
+    <!-- Trường hợp: Giỏ hàng trống -->
+    <?php if (empty($items)): ?>
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>
+        Giỏ hàng của bạn đang trống.
+        <a href="<?= SITE_URL ?>/products.php" class="alert-link fw-bold">Tiếp tục mua sắm →</a>
+    </div>
 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <?php include __DIR__ . '/includes/footer.php'; ?>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+    <!-- Trường hợp: Có sản phẩm trong giỏ -->
+    <?php else: ?>
+    <div class="row">
+        <!-- Cột trái: Danh sách sản phẩm -->
+        <div class="col-lg-8 mb-4">
+            <div class="list-group">
+                <?php foreach ($items as $item):
+                    $price = getDisplayPrice($item['price'], $item['sale_price']);
+                    $itemTotal = $price * $item['quantity'];
+                ?>
+                <div class="list-group-item d-flex align-items-center gap-3 p-3">
+                    <!-- Ảnh sản phẩm -->
+                    <img src="<?= image_url($item['product_thumbnail']) ?>" 
+                         alt="<?= escape($item['product_name']) ?>" 
+                         class="rounded flex-shrink-0" 
+                         style="width: 80px; height: 80px; object-fit: cover;">
+
+                    <!-- Thông tin sản phẩm -->
+                    <div class="flex-grow-1">
+                        <a href="<?= SITE_URL ?>/product-detail.php?id=<?= (int)$item['product_id'] ?>" 
+                           class="text-decoration-none fw-bold text-dark">
+                            <?= escape($item['product_name']) ?>
+                        </a>
+                        <div class="text-muted small mt-1">
+                            Còn <?= (int)$item['stock_quantity'] ?> trong kho
+                        </div>
+                        <div class="text-danger fw-bold mt-2">
+                            <?= formatPrice($price) ?>
+                        </div>
+                    </div>
+
+                    <!-- Số lượng & xóa -->
+                    <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                        <input type="number" 
+                               class="form-control form-control-sm cart-quantity-input" 
+                               style="width: 80px;" 
+                               value="<?= (int)$item['quantity'] ?>" 
+                               min="1" 
+                               max="<?= (int)$item['stock_quantity'] ?>" 
+                               data-item-id="<?= (int)$item['item_id'] ?>">
+                        
+                        <button class="btn btn-sm btn-outline-danger btn-remove-cart-item" 
+                                data-item-id="<?= (int)$item['item_id'] ?>" 
+                                title="Xóa khỏi giỏ">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+
+                    <!-- Tổng cộng sản phẩm -->
+                    <div class="text-end flex-shrink-0" style="min-width: 100px;">
+                        <small class="text-muted">Tổng</small>
+                        <p class="mb-0 fw-bold text-danger">
+                            <?= formatPrice($itemTotal) ?>
+                        </p>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+
+        <!-- Cột phải: Tóm tắt tiền -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm sticky-top" style="top: 20px;">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Tóm tắt giỏ hàng</h5>
+
+                    <!-- Chi tiết -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Tạm tính:</span>
+                            <strong><?= formatPrice($total) ?></strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2 text-muted small">
+                            <span>Vận chuyển:</span>
+                            <span>Tính khi thanh toán</span>
+                        </div>
+                    </div>
+
+                    <hr class="my-3">
+
+                    <!-- Tổng cộng -->
+                    <div class="d-flex justify-content-between fs-5 fw-bold mb-4">
+                        <span>Tổng cộng</span>
+                        <span class="text-danger"><?= formatPrice($total) ?></span>
+                    </div>
+
+                    <!-- Nút thanh toán -->
+                    <a href="<?= SITE_URL ?>/checkout.php" class="btn btn-success w-100 mb-2">
+                        <i class="bi bi-credit-card"></i> Tiến hành thanh toán
+                    </a>
+
+                    <!-- Nút tiếp tục mua -->
+                    <a href="<?= SITE_URL ?>/products.php" class="btn btn-outline-primary w-100">
+                        <i class="bi bi-shop"></i> Tiếp tục mua sắm
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+</div>
+
+<?php include __DIR__ . '/includes/footer.php'; ?>

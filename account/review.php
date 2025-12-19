@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/init.php';
 
+// Kiểm tra đăng nhập
 if (!Auth::check()) {
     Session::setFlash('error', 'Vui lòng đăng nhập để đánh giá sản phẩm');
     redirect('/login.php?redirect=/account/orders.php');
@@ -8,6 +9,7 @@ if (!Auth::check()) {
 
 $db = Database::getInstance();
 
+// Lấy thông tin từ URL
 $productId = intval($_GET['product_id'] ?? 0);
 $orderId = intval($_GET['order_id'] ?? 0);
 
@@ -36,8 +38,13 @@ $existingReview = $db->queryOne(
 );
 
 // Lấy thông tin sản phẩm
-$product = $db->queryOne("SELECT id, name FROM products WHERE id = :id", ['id' => $productId]);
+$product = $db->queryOne(
+    "SELECT id, name, (SELECT image_url FROM product_images WHERE product_id = :id ORDER BY display_order LIMIT 1) as image 
+     FROM products WHERE id = :id",
+    ['id' => $productId]
+);
 
+// Xử lý form
 $errors = [];
 $success = false;
 
@@ -47,33 +54,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $rating = intval($_POST['rating'] ?? 0);
         $comment = trim($_POST['comment'] ?? '');
-        
+
+        // Validation
         if ($rating < 1 || $rating > 5) {
             $errors[] = 'Đánh giá phải từ 1 đến 5 sao';
         }
-        
-        if (empty($comment)) {
-            $errors[] = 'Bình luận không được để trống';
+        if (strlen($comment) < 10) {
+            $errors[] = 'Bình luận phải có ít nhất 10 ký tự';
         }
-        
+        if (strlen($comment) > 1000) {
+            $errors[] = 'Bình luận không được vượt quá 1000 ký tự';
+        }
+
         if (empty($errors)) {
             try {
                 if ($existingReview) {
-                    // Update
+                    // Cập nhật đánh giá
                     $db->execute(
                         "UPDATE reviews SET rating = :rating, comment = :comment, updated_at = CURRENT_TIMESTAMP 
                          WHERE id = :id",
                         ['rating' => $rating, 'comment' => $comment, 'id' => $existingReview['id']]
                     );
+                    $msg = 'Cập nhật đánh giá thành công';
                 } else {
-                    // Insert
+                    // Thêm đánh giá mới
                     $db->insert(
                         "INSERT INTO reviews (product_id, user_id, order_id, rating, comment, status, created_at)
                          VALUES (:pid, :uid, :oid, :rating, :comment, 'approved', CURRENT_TIMESTAMP)",
                         ['pid' => $productId, 'uid' => Auth::id(), 'oid' => $orderId, 'rating' => $rating, 'comment' => $comment]
                     );
+                    $msg = 'Thêm đánh giá thành công';
                 }
-                Session::setFlash('success', 'Đánh giá sản phẩm thành công');
+
+                Session::setFlash('success', $msg);
                 redirect('/product-detail.php?id=' . $productId);
             } catch (Exception $e) {
                 error_log('Review error: ' . $e->getMessage());
@@ -83,58 +96,90 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$pageTitle = 'Đánh giá ' . escape($product['name']);
+$pageTitle = 'Đánh giá sản phẩm';
 include __DIR__ . '/../includes/header.php';
 ?>
 
-<div class="container my-4">
+<div class="container my-5">
     <div class="row justify-content-center">
         <div class="col-lg-6">
-            <div class="card">
+            <div class="card shadow-sm">
                 <div class="card-body">
-                    <h3 class="card-title mb-4">Đánh giá sản phẩm</h3>
-                    <p class="text-muted"><strong><?= escape($product['name']) ?></strong></p>
-                    
+                    <!-- Tiêu đề -->
+                    <div class="mb-4">
+                        <h3 class="mb-2">Đánh giá sản phẩm</h3>
+                        <p class="text-muted mb-0">
+                            <strong><?= escape($product['name']) ?></strong>
+                        </p>
+                    </div>
+
+                    <!-- Thông báo lỗi -->
                     <?php if (!empty($errors)): ?>
-                        <div class="alert alert-danger">
-                            <ul class="mb-0">
-                                <?php foreach ($errors as $err): ?>
-                                    <li><?= escape($err) ?></li>
-                                <?php endforeach; ?>
-                            </ul>
-                        </div>
+                    <div class="alert alert-danger alert-dismissible fade show">
+                        <strong>Có lỗi xảy ra:</strong>
+                        <ul class="mb-0 mt-2">
+                            <?php foreach ($errors as $err): ?>
+                            <li><?= escape($err) ?></li>
+                            <?php endforeach; ?>
+                        </ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
                     <?php endif; ?>
-                    
-                    <form method="POST" action="">
+
+                    <!-- Form đánh giá -->
+                    <form method="POST">
                         <input type="hidden" name="csrf_token" value="<?= Session::getToken() ?>">
-                        
-                        <div class="mb-3">
-                            <label class="form-label">Xếp hạng <span class="text-danger">*</span></label>
-                            <div>
+
+                        <!-- Sao đánh giá -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Đánh giá của bạn</label>
+                            <div class="d-flex gap-2">
                                 <?php for ($i = 1; $i <= 5; $i++): ?>
-                                    <div class="form-check form-check-inline">
-                                        <input class="form-check-input" type="radio" name="rating" id="rating<?= $i ?>" value="<?= $i ?>">
-                                        <label class="form-check-label" for="rating<?= $i ?>">
-                                            <?php for ($j = 0; $j < $i; $j++): ?>
-                                                <i class="bi bi-star-fill text-warning"></i>
-                                            <?php endfor; ?>
-                                        </label>
-                                    </div>
+                                <input type="radio" 
+                                       class="btn-check" 
+                                       name="rating" 
+                                       id="star<?= $i ?>" 
+                                       value="<?= $i ?>">
+                                <label for="star<?= $i ?>" 
+                                       class="btn btn-lg p-0" 
+                                       style="font-size: 2rem; color: #ffc107;">
+                                    <i class="bi bi-star-fill"></i>
+                                </label>
                                 <?php endfor; ?>
                             </div>
+                            <small class="text-muted d-block mt-2">Chọn số sao từ 1 đến 5</small>
                         </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label">Bình luận <span class="text-danger">*</span></label>
-                            <textarea name="comment" class="form-control" rows="5" placeholder="Chia sẻ cảm nhận của bạn về sản phẩm..." required></textarea>
+
+                        <!-- Bình luận -->
+                        <div class="mb-4">
+                            <label for="comment" class="form-label fw-bold">Bình luận</label>
+                            <textarea class="form-control" 
+                                      id="comment" 
+                                      name="comment" 
+                                      rows="5" 
+                                      placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm này (tối thiểu 10 ký tự)"
+                                      minlength="10" 
+                                      maxlength="1000"></textarea>
+                            <small class="text-muted">Tối thiểu 10 ký tự, tối đa 1000 ký tự</small>
                         </div>
-                        
-                        <button type="submit" class="btn btn-primary w-100">
-                            <i class="bi bi-check2"></i> Gửi đánh giá
-                        </button>
-                        <a href="<?= SITE_URL ?>/account/order-detail.php?id=<?= $orderId ?>" class="btn btn-outline-secondary w-100 mt-2">
-                            Quay lại
-                        </a>
+
+                        <!-- Nút hành động -->
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary flex-grow-1">
+                                <i class="bi bi-check-circle"></i> 
+                                <?= $existingReview ? 'Cập nhật đánh giá' : 'Gửi đánh giá' ?>
+                            </button>
+                            <a href="<?= SITE_URL ?>/product-detail.php?id=<?= $productId ?>" 
+                               class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Quay lại
+                            </a>
+                        </div>
+
+                        <?php if ($existingReview): ?>
+                        <small class="text-muted d-block mt-3 text-center">
+                            Bạn đã đánh giá sản phẩm này. Bạn có thể cập nhật đánh giá của mình bên dưới.
+                        </small>
+                        <?php endif; ?>
                     </form>
                 </div>
             </div>
