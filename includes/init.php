@@ -14,6 +14,11 @@ require_once __DIR__ . '/core/Auth.php';
 
 // Load helper functions
 require_once __DIR__ . '/helpers/functions.php';
+// Mailer + Email templates (nhẹ, không cần thư viện ngoài)
+require_once __DIR__ . '/helpers/mailer.php';
+require_once __DIR__ . '/helpers/email_templates.php';
+// SEO helper
+require_once __DIR__ . '/helpers/seo.php';
 
 // Start session
 Session::start();

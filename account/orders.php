@@ -12,7 +12,15 @@ $db = Database::getInstance();
 require_once __DIR__ . '/../includes/services/OrderService.php';
 
 $orderService = new OrderService($db, Auth::id());
-$orders = $orderService->getUserOrders();
+
+// Lọc theo trạng thái (tùy chọn)
+$currentStatus = isset($_GET['status']) ? trim($_GET['status']) : '';
+$validStatuses = ['pending','confirmed','processing','shipping','delivered','cancelled'];
+if ($currentStatus !== '' && !in_array($currentStatus, $validStatuses, true)) {
+    $currentStatus = '';
+}
+$orders = $orderService->getUserOrders($currentStatus ?: null);
+$counts = $orderService->getUserOrderCounts();
 
 // Định nghĩa trạng thái đơn hàng
 $orderStatuses = [
@@ -42,6 +50,32 @@ include __DIR__ . '/../includes/header.php';
         <hr>
     </div>
 
+    <!-- Bộ lọc trạng thái -->
+    <ul class="nav nav-pills mb-4">
+        <?php
+            $tabs = [
+                'all' => 'Tất cả',
+                'pending' => 'Chờ xác nhận',
+                'confirmed' => 'Đã xác nhận',
+                'processing' => 'Đang xử lý',
+                'shipping' => 'Đang giao',
+                'delivered' => 'Đã giao',
+                'cancelled' => 'Đã hủy',
+            ];
+        ?>
+        <?php foreach ($tabs as $key => $label):
+            $active = ($key === 'all' && $currentStatus === '') || ($key !== 'all' && $currentStatus === $key);
+            $url = SITE_URL . '/account/orders.php' . ($key === 'all' ? '' : ('?status=' . $key));
+        ?>
+        <li class="nav-item me-2 mb-2">
+            <a class="nav-link <?= $active ? 'active' : '' ?>" href="<?= $url ?>">
+                <?= $label ?>
+                <span class="badge bg-light text-dark ms-1"><?= (int)($counts[$key] ?? 0) ?></span>
+            </a>
+        </li>
+        <?php endforeach; ?>
+    </ul>
+
     <!-- Trường hợp: Không có đơn hàng -->
     <?php if (empty($orders)): ?>
     <div class="alert alert-info">
@@ -61,7 +95,7 @@ include __DIR__ . '/../includes/header.php';
                     <th>Tổng tiền</th>
                     <th>Trạng thái</th>
                     <th>Thanh toán</th>
-                    <th style="width: 100px;">Hành động</th>
+                    <th style="width: 180px;">Hành động</th>
                 </tr>
             </thead>
             <tbody>
@@ -106,12 +140,17 @@ include __DIR__ . '/../includes/header.php';
                         </span>
                     </td>
 
-                    <!-- Chi tiết -->
+                    <!-- Hành động -->
                     <td>
                         <a href="<?= SITE_URL ?>/account/order-detail.php?id=<?= (int)$order['id'] ?>" 
-                           class="btn btn-sm btn-outline-primary">
+                           class="btn btn-sm btn-outline-primary me-2">
                             <i class="bi bi-eye"></i> Chi tiết
                         </a>
+                        <?php if (in_array($status, ['pending','confirmed'], true) && $paymentStatus !== 'paid'): ?>
+                        <button type="button" class="btn btn-sm btn-outline-danger btn-cancel-order" data-order-id="<?= (int)$order['id'] ?>">
+                            <i class="bi bi-x-circle"></i> Hủy đơn
+                        </button>
+                        <?php endif; ?>
                     </td>
                 </tr>
                 <?php endforeach; ?>
@@ -122,3 +161,29 @@ include __DIR__ . '/../includes/header.php';
 </div>
 
 <?php include __DIR__ . '/../includes/footer.php'; ?>
+
+<script>
+(function(){
+    const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    document.addEventListener('click', function(e){
+        const btn = e.target.closest('.btn-cancel-order');
+        if (!btn) return;
+        const id = btn.getAttribute('data-order-id');
+        if (!id) return;
+        if (!confirm('Bạn có chắc muốn hủy đơn hàng này?')) return;
+        btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang hủy...';
+        fetch('<?= SITE_URL ?>/ajax/order-cancel.php', {
+            method: 'POST',
+            headers: {'Content-Type':'application/x-www-form-urlencoded'},
+            body: new URLSearchParams({order_id: id, csrf_token: csrf})
+        }).then(r=>r.json()).then(data=>{
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message||'Không thể hủy đơn.');
+            }
+        }).catch(()=>{ alert('Có lỗi xảy ra.'); })
+          .finally(()=>{ btn.disabled=false; btn.innerHTML='<i class="bi bi-x-circle"></i> Hủy đơn'; });
+    });
+})();
+</script>

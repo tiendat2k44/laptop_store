@@ -13,7 +13,7 @@
         <?php 
             $img = image_url($product['main_image'] ?? '');
         ?>
-        <img src="<?php echo $img; ?>" class="card-img-top" alt="<?php echo escape($product['name']); ?>">
+        <img src="<?php echo $img; ?>" class="card-img-top" alt="<?php echo escape($product['name']); ?>" loading="lazy">
     </a>
     
     <div class="product-card-body">

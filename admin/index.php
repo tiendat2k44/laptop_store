@@ -21,7 +21,8 @@ $stats = [
 
 // Lấy đơn hàng mới nhất
 $recentOrders = $db->query(
-    "SELECT o.id, o.order_number, o.total_amount, o.status, o.created_at, u.full_name
+    "SELECT o.id, o.order_number, o.total_amount, o.status, o.payment_status, o.created_at,
+            u.full_name AS customer_name
      FROM orders o
      JOIN users u ON o.user_id = u.id
      ORDER BY o.created_at DESC
@@ -38,12 +39,36 @@ $pendingShops = $db->query(
      LIMIT 5"
 );
 
-$pageTitle = 'Admin Dashboard'; 
-    FROM orders 
-    WHERE created_at >= CURRENT_DATE - INTERVAL '6 days' AND payment_status = 'paid'
-    GROUP BY DATE(created_at) 
-    ORDER BY date
-");
+$pageTitle = 'Admin Dashboard';
+
+// Doanh thu tổng hợp
+$revenueToday = $db->queryOne(
+    "SELECT COALESCE(SUM(total_amount),0) AS total FROM orders 
+     WHERE payment_status = 'paid' AND created_at::date = CURRENT_DATE"
+);
+$revenueToday = $revenueToday ? (float)$revenueToday['total'] : 0;
+
+$revenueThisMonth = $db->queryOne(
+    "SELECT COALESCE(SUM(total_amount),0) AS total FROM orders 
+     WHERE payment_status = 'paid' AND date_trunc('month', created_at) = date_trunc('month', CURRENT_DATE)"
+);
+$revenueThisMonth = $revenueThisMonth ? (float)$revenueThisMonth['total'] : 0;
+
+$revenueThisYear = $db->queryOne(
+    "SELECT COALESCE(SUM(total_amount),0) AS total FROM orders 
+     WHERE payment_status = 'paid' AND date_trunc('year', created_at) = date_trunc('year', CURRENT_DATE)"
+);
+$revenueThisYear = $revenueThisYear ? (float)$revenueThisYear['total'] : 0;
+
+// Dữ liệu biểu đồ 7 ngày gần đây
+$chartData = $db->query(
+    "SELECT to_char(created_at::date, 'YYYY-MM-DD') AS date,
+            COALESCE(SUM(total_amount),0) AS revenue
+     FROM orders 
+     WHERE created_at >= CURRENT_DATE - INTERVAL '6 days' AND payment_status = 'paid'
+     GROUP BY created_at::date
+     ORDER BY date"
+);
 
 $chartLabels = [];
 $chartValues = [];

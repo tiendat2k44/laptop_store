@@ -11,35 +11,64 @@ if (!Auth::check()) {
 $db = Database::getInstance();
 require_once __DIR__ . '/includes/services/CartService.php';
 require_once __DIR__ . '/includes/services/OrderService.php';
+require_once __DIR__ . '/includes/services/CouponService.php';
 
 $cart = new CartService($db, Auth::id());
 $orderService = new OrderService($db, Auth::id());
+$couponService = new CouponService($db);
 
-// Lấy giỏ hàng
-$items = $cart->getItems();
-if (empty($items)) {
-    Session::setFlash('error', 'Giỏ hàng trống, vui lòng thêm sản phẩm trước khi thanh toán');
-    redirect('/products.php');
+// Coupon session tracking
+$couponCode = Session::get('checkout_coupon_code');
+$couponDiscount = (float)Session::get('checkout_coupon_discount', 0);
+
+// Cờ trạng thái và thông tin đơn hàng thành công (PRG)
+$orderSuccess = false;
+$orderNumber = null;
+$successOrderId = null;
+
+// Nếu quay lại bằng URL thành công, bỏ qua kiểm tra giỏ hàng trống
+if (isset($_GET['success']) && intval($_GET['success']) === 1) {
+    $successOrderId = intval($_GET['order_id'] ?? 0);
+    if ($successOrderId <= 0) {
+        $successOrderId = intval(Session::get('last_order_id') ?? 0);
+    }
+    if ($successOrderId > 0) {
+        $order = $orderService->getOrderDetail($successOrderId);
+        if ($order) {
+            $orderSuccess = true;
+            $orderNumber = $order['order_number'];
+            // Dọn session để tránh hiển thị sai khi refresh/quay lại
+            Session::set('last_order_id', null);
+        }
+    }
 }
 
-// Tính toán số tiền
-$subtotal = 0;
-foreach ($items as $item) {
-    $price = getDisplayPrice($item['price'], $item['sale_price']);
-    $subtotal += $price * $item['quantity'];
-}
+// Chỉ tải giỏ hàng và tính tiền nếu chưa ở màn hình thành công
+if (!$orderSuccess) {
+    // Lấy giỏ hàng
+    $items = $cart->getItems();
+    if (empty($items)) {
+        Session::setFlash('error', 'Giỏ hàng trống, vui lòng thêm sản phẩm trước khi thanh toán');
+        redirect('/products.php');
+    }
 
-$amounts = [
-    'subtotal' => $subtotal,
-    'shipping_fee' => 0,
-    'discount_amount' => 0,
-    'total_amount' => $subtotal
-];
+    // Tính toán số tiền
+    $subtotal = 0;
+    foreach ($items as $item) {
+        $price = getDisplayPrice($item['price'], $item['sale_price']);
+        $subtotal += $price * $item['quantity'];
+    }
+
+    $amounts = [
+        'subtotal' => $subtotal,
+        'shipping_fee' => 0,
+        'discount_amount' => $couponDiscount,
+        'total_amount' => max(0, $subtotal - $couponDiscount)
+    ];
+}
 
 // Xử lý form đặt hàng
 $errors = [];
-$orderSuccess = false;
-$orderNumber = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Kiểm tra CSRF token
@@ -76,18 +105,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Nếu hợp lệ, tạo đơn hàng
         if (empty($errors)) {
-            $orderId = $orderService->createOrder($shipping, $items, $amounts);
+            // Xử lý coupon nếu có
+            $appliedCoupon = trim($_POST['applied_coupon_code'] ?? '');
+            $appliedDiscount = (float)($_POST['applied_discount'] ?? 0);
+            if ($appliedCoupon !== '' && $appliedDiscount > 0) {
+                $coupon = $db->queryOne(
+                    "SELECT id FROM coupons WHERE code = :code",
+                    ['code' => strtoupper($appliedCoupon)]
+                );
+                if ($coupon) {
+                    $couponService->incrementUsage($coupon['id']);
+                }
+                $amounts['discount_amount'] = $appliedDiscount;
+                $amounts['total_amount'] = max(0, $amounts['subtotal'] - $appliedDiscount);
+            }
 
-            if ($orderId) {
-                // Đặt hàng thành công
-                $orderSuccess = true;
-                $orderNumber = ORDER_PREFIX . date('YmdHis');
-                
-                // Xóa giỏ hàng
+            $result = $orderService->createOrder($shipping, $items, $amounts);
+
+            if (is_array($result) && !empty($result['id'])) {
+                // Xóa giỏ hàng sau khi tạo đơn
                 $cart->clear();
                 
-                // Log
-                error_log("Order created: ID=$orderId, User=" . Auth::id());
+                // Clear coupon session
+                Session::set('checkout_coupon_code', null);
+                Session::set('checkout_coupon_discount', 0);
+
+                // Redirect theo phương thức thanh toán
+                if ($shipping['payment_method'] === 'VNPAY') {
+                    redirect('/payment/vnpay-return.php?id=' . (int)$result['id']);
+                } elseif ($shipping['payment_method'] === 'MOMO') {
+                    redirect('/payment/momo-return.php?id=' . (int)$result['id']);
+                } else {
+                    // COD: chuyển sang trang thành công
+                    Session::set('last_order_id', (int)$result['id']);
+                    redirect('/order-success.php?order_id=' . (int)$result['id']);
+                }
             } else {
                 $errors[] = 'Không thể tạo đơn hàng. Vui lòng thử lại.';
             }
@@ -125,6 +177,11 @@ include __DIR__ . '/includes/header.php';
                     </p>
 
                     <!-- Nút hành động -->
+                    <?php if (!empty($successOrderId)): ?>
+                    <a href="<?= SITE_URL ?>/account/order-detail.php?id=<?= (int)$successOrderId ?>" class="btn btn-outline-primary mb-2 w-100">
+                        <i class="bi bi-eye"></i> Xem chi tiết đơn hàng
+                    </a>
+                    <?php endif; ?>
                     <a href="<?= SITE_URL ?>/account/orders.php" class="btn btn-success mb-2 w-100">
                         <i class="bi bi-list-check"></i> Xem đơn hàng của tôi
                     </a>
@@ -164,6 +221,9 @@ include __DIR__ . '/includes/header.php';
                         <h5 class="mb-0">📍 Thông tin giao hàng</h5>
                     </div>
                     <div class="card-body">
+                        <!-- Danh sách địa chỉ đã lưu -->
+                        <div id="savedAddressesList" class="mb-4"></div>
+
                         <div class="row g-3">
                             <!-- Họ tên -->
                             <div class="col-md-6">
@@ -234,18 +294,37 @@ include __DIR__ . '/includes/header.php';
                         </div>
                         <div class="form-check mb-3">
                             <input class="form-check-input" type="radio" name="payment_method" 
-                                   id="pmMOMO" value="MOMO" disabled>
-                            <label class="form-check-label text-muted" for="pmMOMO">
-                                <strong>Ví MoMo</strong> (đang phát triển)
+                                   id="pmMOMO" value="MOMO">
+                            <label class="form-check-label" for="pmMOMO">
+                                <strong>Ví MoMo</strong>
+                                <br>
+                                <small class="text-muted">Thanh toán qua ví MoMo</small>
                             </label>
                         </div>
                         <div class="form-check">
                             <input class="form-check-input" type="radio" name="payment_method" 
-                                   id="pmVNPAY" value="VNPAY" disabled>
-                            <label class="form-check-label text-muted" for="pmVNPAY">
-                                <strong>VNPAY</strong> (đang phát triển)
+                                   id="pmVNPAY" value="VNPAY">
+                            <label class="form-check-label" for="pmVNPAY">
+                                <strong>VNPAY</strong>
+                                <br>
+                                <small class="text-muted">Thanh toán qua VNPAY</small>
                             </label>
                         </div>
+                    </div>
+                </div>
+
+                <!-- 🎟️ Mã giảm giá -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">🎟️ Mã giảm giá</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="couponCode" placeholder="Nhập mã giảm giá..." 
+                                   value="<?= escape($couponCode ?? '') ?>">
+                            <button class="btn btn-outline-primary" type="button" onclick="applyCoupon()"><i class="bi bi-tag"></i> Áp dụng</button>
+                        </div>
+                        <div id="couponMessage" class="mt-2"></div>
                     </div>
                 </div>
 
@@ -299,7 +378,7 @@ include __DIR__ . '/includes/header.php';
                     <div class="mb-3">
                         <div class="d-flex justify-content-between mb-2">
                             <span>Tạm tính:</span>
-                            <strong><?= formatPrice($amounts['subtotal']) ?></strong>
+                            <strong id="summarySubtotal"><?= formatPrice($amounts['subtotal']) ?></strong>
                         </div>
                         <div class="d-flex justify-content-between mb-2">
                             <span>Phí vận chuyển:</span>
@@ -307,7 +386,7 @@ include __DIR__ . '/includes/header.php';
                         </div>
                         <div class="d-flex justify-content-between text-success">
                             <span>Giảm giá:</span>
-                            <strong>-<?= formatPrice($amounts['discount_amount']) ?></strong>
+                            <strong id="summaryDiscount">-<?= formatPrice($amounts['discount_amount']) ?></strong>
                         </div>
                     </div>
 
@@ -316,7 +395,7 @@ include __DIR__ . '/includes/header.php';
                     <!-- Tổng cộng -->
                     <div class="d-flex justify-content-between fs-5 fw-bold">
                         <span>Tổng cộng</span>
-                        <span class="text-danger"><?= formatPrice($amounts['total_amount']) ?></span>
+                        <span class="text-danger" id="summaryTotal"><?= formatPrice($amounts['total_amount']) ?></span>
                     </div>
                 </div>
             </div>
@@ -371,6 +450,90 @@ function loadWards() {
             wardSelect.innerHTML += `<option value="${ward}">${ward}</option>`;
         });
     }
+}
+
+// Load saved addresses
+function loadSavedAddresses() {
+    fetch('/ajax/address-action.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest'},
+        body: new URLSearchParams({
+            action: 'get_list',
+            csrf_token: document.querySelector('input[name="csrf_token"]').value
+        })
+    })
+    .then(r => r.json())
+    .then(res => {
+        const container = document.getElementById('savedAddressesList');
+        if (res.success && res.addresses.length > 0) {
+            let html = '<div class="mb-3"><label class="form-label">Hoặc chọn địa chỉ đã lưu</label><div class="row g-2">';
+            res.addresses.forEach(addr => {
+                html += `<div class="col-md-6">
+                    <div class="border rounded p-3 cursor-pointer" onclick="selectAddress(event, ${addr.id}, '${addr.recipient_name.replace(/'/g,"\\'")}', '${addr.phone.replace(/'/g,"\\'")}', '${addr.address_line.replace(/'/g,"\\'")}', '${addr.city.replace(/'/g,"\\'")}', '${(addr.district || '').replace(/'/g,"\\'")}', '${(addr.ward || '').replace(/'/g,"\\'")}')" style="cursor:pointer">
+                        <div class="fw-bold">${addr.recipient_name}</div>
+                        <div class="small text-muted">${addr.phone}</div>
+                        <div class="small">${addr.address_line}</div>
+                    </div>
+                </div>`;
+            });
+            html += '</div></div><hr>';
+            container.innerHTML = html;
+        }
+    });
+}
+
+function selectAddress(e, id, name, phone, addr, city, dist, ward) {
+    document.querySelector('input[name="recipient_name"]').value = name;
+    document.querySelector('input[name="recipient_phone"]').value = phone;
+    document.querySelector('input[name="shipping_address"]').value = addr;
+    document.getElementById('citySelect').value = city;
+    loadDistricts();
+    setTimeout(() => {
+        document.getElementById('districtSelect').value = dist;
+        loadWards();
+        setTimeout(() => {
+            document.getElementById('wardSelect').value = ward;
+        }, 50);
+    }, 50);
+}
+
+document.addEventListener('DOMContentLoaded', loadSavedAddresses);
+
+// Coupon validation & apply
+function applyCoupon() {
+    const code = document.getElementById('couponCode').value.trim();
+    const subtotal = parseFloat(<?= json_encode($amounts['subtotal'] ?? 0) ?>);
+    const msgDiv = document.getElementById('couponMessage');
+    
+    if (!code) {
+        msgDiv.innerHTML = '<div class="alert alert-warning alert-sm py-2">Vui lòng nhập mã</div>';
+        return;
+    }
+    
+    fetch('/ajax/validate-coupon.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest'},
+        body: new URLSearchParams({
+            code: code,
+            subtotal: subtotal,
+            csrf_token: document.querySelector('input[name="csrf_token"]').value
+        })
+    })
+    .then(r => r.json())
+    .then(res => {
+        if (res.success) {
+            msgDiv.innerHTML = '<div class="alert alert-success alert-sm py-2"><i class="bi bi-check-circle"></i> ' + (res.message || 'Mã hợp lệ') + '</div>';
+            document.getElementById('summaryDiscount').textContent = '-' + new Intl.NumberFormat('vi-VN', {style:'currency',currency:'VND'}).format(res.discount);
+            document.getElementById('summaryTotal').textContent = new Intl.NumberFormat('vi-VN', {style:'currency',currency:'VND'}).format(subtotal - res.discount);
+            // Lưu coupon vào session server-side thông qua hidden field
+            document.querySelector('form').insertAdjacentHTML('beforeend', '<input type="hidden" name="applied_coupon_code" value="' + code.replace(/"/g,'&quot;') + '"><input type="hidden" name="applied_discount" value="' + res.discount + '">');
+        } else {
+            msgDiv.innerHTML = '<div class="alert alert-danger alert-sm py-2"><i class="bi bi-exclamation-circle"></i> ' + res.message + '</div>';
+        }
+    })
+    .catch(e => {
+        msgDiv.innerHTML = '<div class="alert alert-danger alert-sm py-2">Lỗi: ' + e.message + '</div>';
+    });
 }
 </script>
 

@@ -11,12 +11,12 @@ ini_set('display_errors', 1);
 // Múi giờ
 date_default_timezone_set('Asia/Ho_Chi_Minh');
 
-// Cấu hình Database (cho phép override bằng biến môi trường)
-define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
-define('DB_PORT', getenv('DB_PORT') ?: '5432');
-define('DB_NAME', getenv('DB_NAME') ?: 'laptop_store');
-define('DB_USER', getenv('DB_USER') ?: 'postgres');
-define('DB_PASS', getenv('DB_PASS') ?: 'your_password_here');
+// Cấu hình Database
+define('DB_HOST', 'localhost');
+define('DB_PORT', '5432');
+define('DB_NAME', 'laptop_store');
+define('DB_USER', 'postgres');
+define('DB_PASS', 'your_password_here');
 
 // Cấu hình Website (tự động nhận thư mục triển khai để tránh sai base URL)
 define('SITE_NAME', 'Laptop Store');

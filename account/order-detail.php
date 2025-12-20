@@ -53,9 +53,19 @@ $status = $order['status'] ?? 'pending';
     <!-- Tiêu đề & Nút quay lại -->
     <div class="mb-4 d-flex align-items-center justify-content-between">
         <h2><i class="bi bi-bag-check"></i> Đơn hàng <?= escape($order['order_number']) ?></h2>
+        <div class="d-flex gap-2">
+        <a href="<?= SITE_URL ?>/invoice.php?id=<?= (int)$orderId ?>" class="btn btn-outline-success" target="_blank">
+            <i class="bi bi-file-pdf"></i> Hóa đơn
+        </a>
+        <?php if (in_array($status, ['pending','confirmed'], true) && ($order['payment_status'] ?? 'pending') !== 'paid'): ?>
+            <button type="button" class="btn btn-outline-danger" id="btnCancelOrder" data-order-id="<?= (int)$orderId ?>">
+                <i class="bi bi-x-circle"></i> Hủy đơn
+            </button>
+        <?php endif; ?>
         <a href="<?= SITE_URL ?>/account/orders.php" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left"></i> Quay lại
         </a>
+        </div>
     </div>
     <hr>
 
@@ -212,3 +222,28 @@ $status = $order['status'] ?? 'pending';
 </div>
 
 <?php include __DIR__ . '/../includes/footer.php'; ?>
+
+<script>
+(function(){
+    const btn = document.getElementById('btnCancelOrder');
+    if (!btn) return;
+    const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    btn.addEventListener('click', function(){
+        if (!confirm('Bạn có chắc muốn hủy đơn hàng này?')) return;
+        const id = btn.getAttribute('data-order-id');
+        btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang hủy...';
+        fetch('<?= SITE_URL ?>/ajax/order-cancel.php', {
+            method: 'POST',
+            headers: {'Content-Type':'application/x-www-form-urlencoded'},
+            body: new URLSearchParams({order_id: id, csrf_token: csrf})
+        }).then(r=>r.json()).then(data=>{
+            if (data.success) {
+                window.location.href = '<?= SITE_URL ?>/account/orders.php';
+            } else {
+                alert(data.message||'Không thể hủy đơn.');
+            }
+        }).catch(()=>{ alert('Có lỗi xảy ra.'); })
+          .finally(()=>{ btn.disabled=false; btn.innerHTML='<i class="bi bi-x-circle"></i> Hủy đơn'; });
+    });
+})();
+</script>

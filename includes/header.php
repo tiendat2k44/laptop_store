@@ -4,8 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="<?php echo Session::getToken(); ?>">
-    <title><?php echo isset($pageTitle) ? escape($pageTitle) . ' - ' : ''; ?><?php echo SITE_NAME; ?></title>
-    <meta name="description" content="<?php echo isset($pageDescription) ? escape($pageDescription) : 'Mua sắm laptop chính hãng, giá tốt nhất'; ?>">
+    
+    <?php
+    // SEO Meta Tags
+    $seoTitle = $pageTitle ?? '';
+    $seoDescription = $pageDescription ?? '';
+    $seoImage = $pageImage ?? '';
+    $seoUrl = $pageUrl ?? '';
+    seo_meta_tags($seoTitle, $seoDescription, $seoImage, $seoUrl);
+    ?>
     
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -87,14 +94,15 @@
                 </ul>
                 
                 <!-- Search Form -->
-                <form class="d-flex me-3" method="GET" action="<?php echo SITE_URL; ?>/products.php">
-                    <div class="input-group">
-                        <input class="form-control" type="search" name="keyword" placeholder="Tìm kiếm laptop..." value="<?php 
+                <form class="d-flex me-3 position-relative" method="GET" action="<?php echo SITE_URL; ?>/products.php" style="min-width:340px;">
+                    <div class="input-group w-100">
+                        <input id="searchInput" class="form-control" type="search" name="keyword" placeholder="Tìm kiếm laptop..." value="<?php 
                             $kw = $_GET['keyword'] ?? ($_GET['search'] ?? '');
                             echo escape($kw);
                         ?>">
                         <button class="btn btn-outline-primary" type="submit"><i class="bi bi-search"></i></button>
                     </div>
+                    <div id="searchSuggestions" class="w-100" style="display:none;"></div>
                 </form>
                 
                 <!-- Cart & Wishlist -->

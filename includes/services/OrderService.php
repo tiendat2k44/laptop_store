@@ -89,26 +89,130 @@ class OrderService {
             }
             
             $this->db->commit();
-            return $orderId;
+            
+            // Gửi email xác nhận đơn hàng (không chặn luồng nếu lỗi)
+            try {
+                $user = $this->db->queryOne("SELECT id, email, full_name FROM users WHERE id = :id", ['id' => $this->userId]);
+                if ($user && !empty($user['email'])) {
+                    $order = $this->db->queryOne("SELECT * FROM orders WHERE id = :id", ['id' => $orderId]);
+                    $items = $this->db->query("SELECT product_name, quantity, subtotal FROM order_items WHERE order_id = :oid", ['oid' => $orderId]);
+                    $body = tpl_order_created($order, $items);
+                    @send_mail($user['email'], '[".SITE_NAME."] Xác nhận đơn '. $order['order_number'], $body);
+                }
+            } catch (Throwable $mailEx) {
+                error_log('OrderService::mail createOrder - ' . $mailEx->getMessage());
+            }
+
+            return ['id' => $orderId, 'order_number' => $orderNumber];
             
         } catch (Exception $e) {
             $this->db->rollback();
             error_log('OrderService::createOrder - ' . $e->getMessage());
-            return null;
+                return null;
         }
     }
     
     /**
-     * Lấy danh sách đơn hàng của người dùng
+     * Lấy danh sách đơn hàng của người dùng (có thể lọc theo trạng thái)
+     * @param string|null $status
      */
-    public function getUserOrders() {
+    public function getUserOrders($status = null) {
+        $params = ['user_id' => $this->userId];
+        $where = 'user_id = :user_id';
+        if ($status) {
+            $where .= ' AND status = :status';
+            $params['status'] = $status;
+        }
         return $this->db->query(
             "SELECT id, order_number, total_amount, status, payment_status, created_at
              FROM orders
-             WHERE user_id = :user_id
+             WHERE $where
              ORDER BY created_at DESC",
+            $params
+        );
+    }
+
+    /**
+     * Đếm số lượng đơn theo trạng thái cho người dùng
+     */
+    public function getUserOrderCounts() {
+        $rows = $this->db->query(
+            "SELECT status, COUNT(*) AS cnt
+             FROM orders
+             WHERE user_id = :user_id
+             GROUP BY status",
             ['user_id' => $this->userId]
         );
+        $counts = [
+            'all' => 0,
+            'pending' => 0,
+            'confirmed' => 0,
+            'processing' => 0,
+            'shipping' => 0,
+            'delivered' => 0,
+            'cancelled' => 0,
+        ];
+        foreach ($rows as $r) {
+            $counts[$r['status']] = (int)$r['cnt'];
+            $counts['all'] += (int)$r['cnt'];
+        }
+        return $counts;
+    }
+
+    /**
+     * Hủy đơn hàng của người dùng (chỉ cho phép khi pending/confirmed và chưa thanh toán)
+     */
+    public function cancelOrder($orderId) {
+        try {
+            // Kiểm tra quyền và trạng thái
+            $order = $this->db->queryOne(
+                "SELECT id, status, payment_status FROM orders WHERE id = :id AND user_id = :uid",
+                ['id' => $orderId, 'uid' => $this->userId]
+            );
+            if (!$order) {
+                throw new Exception('Đơn hàng không tồn tại');
+            }
+            if (!in_array($order['status'], ['pending', 'confirmed'], true)) {
+                throw new Exception('Không thể hủy đơn ở trạng thái hiện tại');
+            }
+            if ($order['payment_status'] === 'paid') {
+                throw new Exception('Đơn đã thanh toán, vui lòng liên hệ hỗ trợ');
+            }
+
+            $this->db->beginTransaction();
+
+            // Hoàn kho và trừ sold_count
+            $items = $this->db->query(
+                "SELECT product_id, quantity FROM order_items WHERE order_id = :oid",
+                ['oid' => $orderId]
+            );
+            foreach ($items as $it) {
+                $this->db->execute(
+                    "UPDATE products
+                     SET stock_quantity = stock_quantity + :qty,
+                         sold_count = GREATEST(sold_count - :qty, 0)
+                     WHERE id = :pid",
+                    ['qty' => (int)$it['quantity'], 'pid' => (int)$it['product_id']]
+                );
+            }
+
+            // Cập nhật trạng thái items và đơn
+            $this->db->execute(
+                "UPDATE order_items SET status = 'cancelled' WHERE order_id = :oid",
+                ['oid' => $orderId]
+            );
+            $this->db->execute(
+                "UPDATE orders SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP WHERE id = :oid",
+                ['oid' => $orderId]
+            );
+
+            $this->db->commit();
+            return true;
+        } catch (Exception $e) {
+            $this->db->rollback();
+            error_log('OrderService::cancelOrder - ' . $e->getMessage());
+            return false;
+        }
     }
     
     /**

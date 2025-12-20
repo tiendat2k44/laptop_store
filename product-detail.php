@@ -68,10 +68,14 @@ if (Auth::check()) {
     $canReview = ($orderCheck['count'] ?? 0) > 0;
 }
 
+// SEO meta data
 $pageTitle = $product['name'];
+$pageDescription = mb_substr(strip_tags($product['description'] ?? ''), 0, 160) . '... - Giá: ' . formatPrice($displayPrice = getDisplayPrice($product['price'], $product['sale_price']));
+$pageImage = image_url(!empty($images) ? $images[0]['image_url'] : ($product['thumbnail'] ?? ''));
+$pageUrl = SITE_URL . '/product-detail.php?id=' . $productId;
+
 include __DIR__ . '/includes/header.php';
 
-$displayPrice = getDisplayPrice($product['price'], $product['sale_price']);
 $discount = calculateDiscount($product['price'], $product['sale_price']);
 ?>
 
@@ -85,7 +89,8 @@ $discount = calculateDiscount($product['price'], $product['sale_price']);
                     <img id="mainImage" 
                          src="<?= image_url($images[0]['image_url'] ?? $product['thumbnail']) ?>" 
                          alt="<?= escape($product['name']) ?>"
-                         style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                         style="max-width: 100%; max-height: 100%; object-fit: contain;"
+                         loading="lazy">
                 </div>
 
                 <!-- Ảnh nhỏ -->
@@ -96,7 +101,8 @@ $discount = calculateDiscount($product['price'], $product['sale_price']);
                          alt="" 
                          class="rounded cursor-pointer border <?= $idx === 0 ? 'border-primary border-2' : '' ?>"
                          style="height: 80px; object-fit: cover; cursor: pointer;"
-                         onclick="document.getElementById('mainImage').src='<?= image_url($img['image_url']) ?>';">
+                         onclick="document.getElementById('mainImage').src='<?= image_url($img['image_url']) ?>';"
+                         loading="lazy">
                     <?php endforeach; ?>
                 </div>
                 <?php endif; ?>

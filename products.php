@@ -167,7 +167,8 @@ include __DIR__ . '/includes/header.php';
                             <img src="<?= image_url($prod['main_image']) ?>" 
                                  alt="<?= escape($prod['name']) ?>" 
                                  class="card-img-top h-100" 
-                                 style="object-fit: cover;">
+                                 style="object-fit: cover;"
+                                 loading="lazy">
                             
                             <!-- Badge giảm giá -->
                             <?php if ($discount > 0): ?>
