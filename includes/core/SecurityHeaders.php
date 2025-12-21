@@ -69,11 +69,14 @@ class SecurityHeaders {
             // Styles - allow from self and CDNs
             "style-src 'self' 'unsafe-inline' cdn.jsdelivr.net fonts.googleapis.com",
             
-            // Fonts
-            "font-src 'self' fonts.gstatic.com cdn.jsdelivr.net",
+            // Fonts - allow from CDNs and self
+            "font-src 'self' fonts.gstatic.com cdn.jsdelivr.net data:",
             
             // Images - allow from self and data URIs
             "img-src 'self' data: https:",
+            
+            // Connect - allow AJAX to self and CDN source maps
+            "connect-src 'self' cdn.jsdelivr.net",
             
             // Forms - prevent form submission to unauthorized domains
             "form-action 'self'",
@@ -81,8 +84,8 @@ class SecurityHeaders {
             // Frame ancestors - prevent embedding in iframes
             "frame-ancestors 'none'",
             
-            // Report violations (optional, for monitoring)
-            "report-uri /security/csp-report",
+            // TẮT report-uri để tránh lỗi 404 (endpoint chưa tồn tại)
+            // "report-uri /security/csp-report",
         ]);
     }
 
