@@ -5,9 +5,9 @@
  */
 require_once __DIR__ . '/../includes/init.php';
 
-// Chỉ cho phép admin hoặc khi đang dev
-if (!Auth::check() || (!Auth::isAdmin() && !defined('DEBUG_MODE'))) {
-    die('Access denied. Login as admin or enable DEBUG_MODE in config.');
+// Cho phép bất kỳ user đã login (để debug checkout của họ)
+if (!Auth::check()) {
+    die('Access denied. Please login first. <a href="' . SITE_URL . '/login.php">Login here</a>');
 }
 
 header('Content-Type: text/html; charset=utf-8');
