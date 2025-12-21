@@ -7,13 +7,6 @@ if (!Auth::check()) {
 
 $db = Database::getInstance();
 
-try {
-    require_once __DIR__ . '/../includes/payment/MoMoGateway.php';
-} catch (Throwable $e) {
-    Session::setFlash('error', 'Lỗi tải gateway: ' . $e->getMessage());
-    redirect('/checkout.php');
-}
-
 $orderId = (int)($_GET['id'] ?? 0);
 if ($orderId <= 0) {
     Session::setFlash('error', 'Đơn hàng không hợp lệ');
@@ -30,17 +23,35 @@ if (!$order) {
     redirect('/checkout.php');
 }
 
-if ($order['payment_status'] === 'paid') {
-    Session::setFlash('success', 'Thanh toán thành công!');
-    redirect('/account/order-detail.php?id=' . $orderId);
-}
-
-// Kiểm tra response từ MoMo
+// ========================================
+// XỬ LÝ KẾT QUẢ TRẢ VỀ TỪ MOMO
+// ========================================
 if (!empty($_GET['resultCode'])) {
     $resultCode = (int)$_GET['resultCode'];
-    $transId = $_GET['transId'] ?? '';
+    $transId = $_GET['transId'] ?? 'MOMO' . time();
+    $amount = (float)($_GET['amount'] ?? 0);
+    $message = $_GET['message'] ?? '';
+    
+    // Ghi log giao dịch
+    try {
+        $db->execute(
+            "INSERT INTO payment_transactions (order_id, gateway, status, transaction_id, amount, message, ip_address)
+             VALUES (:order_id, 'momo', :status, :txn_id, :amount, :message, :ip)",
+            [
+                'order_id' => $orderId,
+                'status' => ($resultCode === 0 ? 'success' : 'failed'),
+                'txn_id' => $transId,
+                'amount' => $amount,
+                'message' => 'MoMo Result Code: ' . $resultCode . ' - ' . $message,
+                'ip' => $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0'
+            ]
+        );
+    } catch (Exception $e) {
+        error_log('MoMo log transaction error: ' . $e->getMessage());
+    }
     
     if ($resultCode === 0) {
+        // Thanh toán thành công
         $db->execute(
             "UPDATE orders
              SET payment_status = 'paid',
@@ -51,29 +62,38 @@ if (!empty($_GET['resultCode'])) {
              WHERE id = :id",
             ['txn' => $transId, 'id' => $orderId]
         );
-        Session::setFlash('success', 'Thanh toán thành công!');
+        Session::set('last_order_id', $orderId);
+        redirect('/checkout.php?order_id=' . $orderId);
     } else {
-        Session::setFlash('error', 'Thanh toán thất bại. Mã lỗi: ' . escape($resultCode));
+        // Thanh toán thất bại
+        Session::setFlash('error', 'Thanh toán thất bại: ' . escape($message));
+        redirect('/checkout.php');
     }
-    redirect('/account/order-detail.php?id=' . $orderId);
 }
 
-// Tạo request MoMo
+// ========================================
+// TẠO REQUEST THANH TOÁN MOMO
+// ========================================
 try {
-    // Validate config
-    if (strpos(MOMO_PARTNER_CODE, 'your_') === 0) {
-        throw new Exception('MoMo chưa được cấu hình. Hãy cập nhật MOMO_PARTNER_CODE, MOMO_ACCESS_KEY, MOMO_SECRET_KEY trong config.');
+    require_once __DIR__ . '/../includes/payment/MoMoGateway.php';
+    
+    // Kiểm tra config
+    if (!defined('MOMO_PARTNER_CODE') || strpos(MOMO_PARTNER_CODE, 'your_') === 0) {
+        throw new Exception('MoMo chưa được cấu hình. Vui lòng cập nhật thông tin trong config hoặc admin panel.');
     }
     
     $momo = new MoMoGateway();
-    $paymentRequest = $momo->createPaymentRequest($order);
+    $paymentRequest = $momo->createPayment($order);
     
     if (!$paymentRequest['success']) {
-        throw new Exception('Không thể tạo request thanh toán: ' . ($paymentRequest['message'] ?? 'Unknown error'));
+        throw new Exception('Không thể tạo request thanh toán: ' . ($paymentRequest['error'] ?? 'Unknown error'));
     }
+    
+    $paymentData = $paymentRequest['data'];
+    $endpoint = $paymentRequest['endpoint'];
 } catch (Throwable $e) {
     error_log('MoMo payment error: ' . $e->getMessage());
-    Session::setFlash('error', 'Lỗi: ' . $e->getMessage());
+    Session::setFlash('error', 'Lỗi thanh toán: ' . $e->getMessage());
     redirect('/checkout.php');
 }
 

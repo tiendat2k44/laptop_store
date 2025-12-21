@@ -7,13 +7,6 @@ if (!Auth::check()) {
 
 $db = Database::getInstance();
 
-try {
-    require_once __DIR__ . '/../includes/payment/VNPayGateway.php';
-} catch (Throwable $e) {
-    Session::setFlash('error', 'Lỗi tải gateway: ' . $e->getMessage());
-    redirect('/checkout.php');
-}
-
 $orderId = (int)($_GET['id'] ?? 0);
 if ($orderId <= 0) {
     Session::setFlash('error', 'Đơn hàng không hợp lệ');
@@ -30,19 +23,35 @@ if (!$order) {
     redirect('/checkout.php');
 }
 
-// Nếu payment_status đã là paid, không cần redirect lại
-if ($order['payment_status'] === 'paid') {
-    Session::setFlash('success', 'Thanh toán thành công!');
-    redirect('/account/order-detail.php?id=' . $orderId);
-}
-
-// Kiểm tra response từ VNPay
+// ========================================
+// XỬ LÝ KẾT QUẢ TRẢ VỀ TỪ VNPAY
+// ========================================
 if (!empty($_GET['vnp_ResponseCode'])) {
     $responseCode = $_GET['vnp_ResponseCode'];
-    $transactionId = $_GET['vnp_TransactionNo'] ?? '';
+    $transactionId = $_GET['vnp_TransactionNo'] ?? 'VNP' . time();
+    $amount = (float)($_GET['vnp_Amount'] ?? 0) / 100;
+    $txnRef = $_GET['vnp_TxnRef'] ?? '';
+    
+    // Ghi log giao dịch
+    try {
+        $db->execute(
+            "INSERT INTO payment_transactions (order_id, gateway, status, transaction_id, amount, message, ip_address)
+             VALUES (:order_id, 'vnpay', :status, :txn_id, :amount, :message, :ip)",
+            [
+                'order_id' => $orderId,
+                'status' => ($responseCode === '00' ? 'success' : 'failed'),
+                'txn_id' => $transactionId,
+                'amount' => $amount,
+                'message' => 'VNPay Response Code: ' . $responseCode,
+                'ip' => $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0'
+            ]
+        );
+    } catch (Exception $e) {
+        error_log('VNPay log transaction error: ' . $e->getMessage());
+    }
     
     if ($responseCode === '00') {
-        // Thanh toán thành công - cập nhật trạng thái
+        // Thanh toán thành công
         $db->execute(
             "UPDATE orders 
              SET payment_status = 'paid',
@@ -53,18 +62,24 @@ if (!empty($_GET['vnp_ResponseCode'])) {
              WHERE id = :id",
             ['txn' => $transactionId, 'id' => $orderId]
         );
-        Session::setFlash('success', 'Thanh toán thành công!');
+        Session::set('last_order_id', $orderId);
+        redirect('/checkout.php?order_id=' . $orderId);
     } else {
+        // Thanh toán thất bại
         Session::setFlash('error', 'Thanh toán thất bại. Mã lỗi: ' . escape($responseCode));
+        redirect('/checkout.php');
     }
-    redirect('/account/order-detail.php?id=' . $orderId);
 }
 
-// Nếu chưa có response, tạo link thanh toán
+// ========================================
+// TẠO URL THANH TOÁN VNPAY
+// ========================================
 try {
-    // Validate config
-    if (strpos(VNPAY_TMN_CODE, 'your_') === 0) {
-        throw new Exception('VNPay chưa được cấu hình. Hãy cập nhật VNPAY_TMN_CODE và VNPAY_HASH_SECRET trong config.');
+    require_once __DIR__ . '/../includes/payment/VNPayGateway.php';
+    
+    // Kiểm tra config
+    if (!defined('VNPAY_TMN_CODE') || strpos(VNPAY_TMN_CODE, 'your_') === 0) {
+        throw new Exception('VNPay chưa được cấu hình. Vui lòng cập nhật thông tin trong config hoặc admin panel.');
     }
     
     $vnpay = new VNPayGateway();
@@ -75,7 +90,7 @@ try {
     }
 } catch (Throwable $e) {
     error_log('VNPay payment error: ' . $e->getMessage());
-    Session::setFlash('error', 'Lỗi: ' . $e->getMessage());
+    Session::setFlash('error', 'Lỗi thanh toán: ' . $e->getMessage());
     redirect('/checkout.php');
 }
 
