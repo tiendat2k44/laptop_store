@@ -187,15 +187,18 @@ function updateTotal() {
     let total = 0;
     document.querySelectorAll('.item-checkbox:checked').forEach(cb => {
         const itemDiv = cb.closest('.list-group-item');
-        const priceText = itemDiv.querySelector('.text-danger.fw-bold').textContent;
-        const price = parseInt(priceText.replace(/[^0-9]/g, ''));
+        // Lấy tổng tiền sản phẩm (đã nhân quantity)
+        const totalPriceText = itemDiv.querySelector('.text-end .text-danger').textContent;
+        const price = parseInt(totalPriceText.replace(/[^0-9]/g, ''));
         total += price;
     });
     
-    // Cập nhật hiển thị
-    const totalElements = document.querySelectorAll('.text-danger');
-    totalElements[totalElements.length - 1].textContent = 
-        new Intl.NumberFormat('vi-VN', {style: 'currency', currency: 'VND'}).format(total);
+    // Cập nhật hiển thị tổng cộng
+    const summaryTotal = document.querySelector('.card-body .fs-5.fw-bold .text-danger');
+    if (summaryTotal) {
+        summaryTotal.textContent = 
+            new Intl.NumberFormat('vi-VN', {style: 'currency', currency: 'VND'}).format(total);
+    }
 }
 
 // Kiểm tra before submit
