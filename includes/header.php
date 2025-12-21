@@ -6,6 +6,11 @@
     <meta name="csrf-token" content="<?php echo Session::getToken(); ?>">
     
     <?php
+    // Initialize Database if not already done
+    if (!isset($db)) {
+        $db = Database::getInstance();
+    }
+    
     // SEO Meta Tags
     $seoTitle = $pageTitle ?? '';
     $seoDescription = $pageDescription ?? '';
@@ -45,8 +50,13 @@
                     </small>
                 </div>
                 <div class="col-md-6 text-end">
-                    <?php if (Auth::check()): ?>
-                        <span>Xin chào, <strong><?php echo escape(Auth::user()['full_name']); ?></strong></span>
+                    <?php 
+                    $currentUser = null;
+                    if (Auth::check()) {
+                        $currentUser = Auth::user();
+                    }
+                    if ($currentUser): ?>
+                        <span>Xin chào, <strong><?php echo escape($currentUser['full_name'] ?? 'Người dùng'); ?></strong></span>
                         <a href="<?php echo SITE_URL; ?>/account/profile.php" class="text-white ms-2"><i class="bi bi-person-circle"></i> Tài khoản</a>
                         <a href="<?php echo SITE_URL; ?>/logout.php" class="text-white ms-2"><i class="bi bi-box-arrow-right"></i> Đăng xuất</a>
                     <?php else: ?>
