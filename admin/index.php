@@ -15,6 +15,7 @@ $stats = [
     'total_shops' => $db->queryOne("SELECT COUNT(*) as count FROM shops WHERE status = 'active'")['count'] ?? 0,
     'total_products' => $db->queryOne("SELECT COUNT(*) as count FROM products WHERE status = 'active'")['count'] ?? 0,
     'total_orders' => $db->queryOne("SELECT COUNT(*) as count FROM orders")['count'] ?? 0,
+    'pending_orders' => $db->queryOne("SELECT COUNT(*) as count FROM orders WHERE status IN ('pending', 'confirmed')")['count'] ?? 0,
     'pending_shops' => $db->queryOne("SELECT COUNT(*) as count FROM shops WHERE status = 'pending'")['count'] ?? 0,
     'total_revenue' => $db->queryOne("SELECT SUM(total_amount) as total FROM orders WHERE payment_status = 'paid'")['total'] ?? 0
 ];
