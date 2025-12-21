@@ -20,8 +20,9 @@ define('DB_PASS', 'your_password_here');
 
 // Cấu hình Website (cố định base URL theo XAMPP của bạn)
 define('SITE_NAME', 'Laptop Store');
-// Ví dụ: http://localhost/TienDat123/laptop_store-main
-define('SITE_URL', 'http://localhost/TienDat123/laptop_store-main');
+// Ngrok tunnel: https://jacquetta-recordless-idell.ngrok-free.dev
+// Local dev: http://localhost/TienDat123/laptop_store-main
+define('SITE_URL', 'https://jacquetta-recordless-idell.ngrok-free.dev');
 define('SITE_EMAIL', 'support@laptopstore.com');
 
 // Cấu hình Đường dẫn
