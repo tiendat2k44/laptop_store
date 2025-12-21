@@ -566,7 +566,8 @@ function loadWards() {
 
 // Load saved addresses
 function loadSavedAddresses() {
-    fetch('/ajax/address-action.php', {
+    const siteUrl = '<?= SITE_URL ?>';
+    fetch(siteUrl + '/ajax/address-action.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest'},
         body: new URLSearchParams({
@@ -616,13 +617,14 @@ function applyCoupon() {
     const code = document.getElementById('couponCode').value.trim();
     const subtotal = parseFloat(<?= json_encode($amounts['subtotal'] ?? 0) ?>);
     const msgDiv = document.getElementById('couponMessage');
+    const siteUrl = '<?= SITE_URL ?>';
     
     if (!code) {
         msgDiv.innerHTML = '<div class="alert alert-warning alert-sm py-2">Vui lòng nhập mã</div>';
         return;
     }
     
-    fetch('/ajax/validate-coupon.php', {
+    fetch(siteUrl + '/ajax/validate-coupon.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest'},
         body: new URLSearchParams({
