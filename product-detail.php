@@ -54,7 +54,7 @@ $relatedProducts = $db->query(
 );
 
 // Cập nhật lượt xem
-$db->execute("UPDATE products SET view_count = view_count + 1 WHERE id = :id", [':id' => $productId]);
+$db->execute("UPDATE products SET views = views + 1 WHERE id = :id", [':id' => $productId]);
 
 // Kiểm tra user đã mua sản phẩm này không (để hiện nút đánh giá)
 $canReview = false;
@@ -128,17 +128,17 @@ $discount = calculateDiscount($product['price'], $product['sale_price']);
             <div class="mb-3 d-flex align-items-center gap-3">
                 <div class="d-flex align-items-center gap-1">
                     <span class="text-warning fs-5">
-                        <?php for ($i = 0; $i < round($product['rating_average']); $i++): ?>
+                        <?php for ($i = 0; $i < round($product['rating_average'] ?? 0); $i++): ?>
                         <i class="bi bi-star-fill"></i>
                         <?php endfor; ?>
-                        <?php for ($i = round($product['rating_average']); $i < 5; $i++): ?>
+                        <?php for ($i = round($product['rating_average'] ?? 0); $i < 5; $i++): ?>
                         <i class="bi bi-star"></i>
                         <?php endfor; ?>
                     </span>
-                    <span class="fw-bold text-dark"><?= number_format($product['rating_average'], 1) ?>/5</span>
+                    <span class="fw-bold text-dark"><?= number_format($product['rating_average'] ?? 0, 1) ?>/5</span>
                 </div>
                 <a href="#reviews" class="text-decoration-none text-muted">
-                    <small>(<?= (int)$product['review_count'] ?> đánh giá)</small>
+                    <small>(<?= (int)($product['review_count'] ?? 0) ?> đánh giá)</small>
                 </a>
                 <span class="badge bg-success">Bán chạy</span>
             </div>
@@ -164,25 +164,25 @@ $discount = calculateDiscount($product['price'], $product['sale_price']);
                 <div class="col-6">
                     <div class="p-3 border rounded text-center">
                         <small class="text-muted d-block mb-1">Processor</small>
-                        <strong class="fs-6"><?= escape($product['cpu']) ?></strong>
+                        <strong class="fs-6"><?= escape($product['cpu'] ?? 'N/A') ?></strong>
                     </div>
                 </div>
                 <div class="col-6">
                     <div class="p-3 border rounded text-center">
                         <small class="text-muted d-block mb-1">RAM</small>
-                        <strong class="fs-6"><?= (int)$product['ram'] ?> GB</strong>
+                        <strong class="fs-6"><?= escape($product['ram'] ?? 'N/A') ?></strong>
                     </div>
                 </div>
                 <div class="col-6">
                     <div class="p-3 border rounded text-center">
                         <small class="text-muted d-block mb-1">Storage</small>
-                        <strong class="fs-6"><?= (int)$product['storage_gb'] ?> GB</strong>
+                        <strong class="fs-6"><?= escape($product['storage'] ?? 'N/A') ?></strong>
                     </div>
                 </div>
                 <div class="col-6">
                     <div class="p-3 border rounded text-center">
                         <small class="text-muted d-block mb-1">Màn hình</small>
-                        <strong class="fs-6"><?= escape($product['screen_size']) ?>"</strong>
+                        <strong class="fs-6"><?= escape($product['screen_size'] ?? 'N/A') ?>"</strong>
                     </div>
                 </div>
             </div>
@@ -270,19 +270,19 @@ $discount = calculateDiscount($product['price'], $product['sale_price']);
                         <tbody>
                             <tr>
                                 <td class="text-muted"><strong>Processor:</strong></td>
-                                <td><?= escape($product['cpu']) ?></td>
+                                <td><?= escape($product['cpu'] ?? 'N/A') ?></td>
                             </tr>
                             <tr class="table-light">
                                 <td class="text-muted"><strong>RAM:</strong></td>
-                                <td><?= (int)$product['ram'] ?> GB</td>
+                                <td><?= escape($product['ram'] ?? 'N/A') ?></td>
                             </tr>
                             <tr>
                                 <td class="text-muted"><strong>Storage:</strong></td>
-                                <td><?= (int)$product['storage_gb'] ?> GB</td>
+                                <td><?= escape($product['storage'] ?? 'N/A') ?></td>
                             </tr>
                             <tr class="table-light">
                                 <td class="text-muted"><strong>Màn hình:</strong></td>
-                                <td><?= escape($product['screen_size']) ?>"</td>
+                                <td><?= escape($product['screen_size'] ?? 'N/A') ?>"</td>
                             </tr>
                             <tr>
                                 <td class="text-muted"><strong>Danh mục:</strong></td>
@@ -290,11 +290,11 @@ $discount = calculateDiscount($product['price'], $product['sale_price']);
                             </tr>
                             <tr class="table-light">
                                 <td class="text-muted"><strong>Lượt xem:</strong></td>
-                                <td><?= (int)$product['view_count'] ?></td>
+                                <td><?= (int)($product['views'] ?? 0) ?></td>
                             </tr>
                             <tr>
                                 <td class="text-muted"><strong>Đã bán:</strong></td>
-                                <td class="fw-bold text-success"><?= (int)$product['sold_count'] ?></td>
+                                <td class="fw-bold text-success"><?= (int)($product['sold_count'] ?? 0) ?></td>
                             </tr>
                         </tbody>
                     </table>
@@ -449,8 +449,8 @@ $discount = calculateDiscount($product['price'], $product['sale_price']);
                             </div>
                             <div class="text-warning small mb-2">
                                 <i class="bi bi-star-fill"></i> 
-                                <strong><?= number_format($rel['rating_average'], 1) ?></strong>
-                                <span class="text-muted">(<?= (int)$rel['review_count'] ?? 0 ?>)</span>
+                                <strong><?= number_format($rel['rating_average'] ?? 0, 1) ?></strong>
+                                <span class="text-muted">(<?= (int)($rel['review_count'] ?? 0) ?>)</span>
                             </div>
                         </div>
                     </div>
