@@ -203,12 +203,25 @@ function updateTotal() {
 
 // Kiểm tra before submit
 document.getElementById('checkoutForm')?.addEventListener('submit', function(e) {
-    const selected = document.querySelectorAll('.item-checkbox:checked').length;
-    if (selected === 0) {
+    console.log('Form submit event triggered');
+    const checkboxes = document.querySelectorAll('.item-checkbox');
+    const selected = document.querySelectorAll('.item-checkbox:checked');
+    
+    console.log('Total checkboxes:', checkboxes.length);
+    console.log('Checked checkboxes:', selected.length);
+    
+    if (selected.length === 0) {
+        console.log('No items selected, preventing submit');
         e.preventDefault();
         alert('Vui lòng chọn ít nhất một sản phẩm để thanh toán');
         return false;
     }
+    
+    console.log('Form will submit with', selected.length, 'items');
+    // Log selected item IDs
+    selected.forEach(cb => {
+        console.log('Selected item:', cb.value);
+    });
 });
 
 // Xóa các items đã chọn

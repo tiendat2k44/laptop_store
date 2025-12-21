@@ -43,19 +43,30 @@ if ($successOrderId > 0) {
 
 // Chỉ tải giỏ hàng và tính tiền nếu chưa ở màn hình thành công
 if (!$orderSuccess) {
+    // Debug: log incoming request
+    error_log('=== CHECKOUT PAGE LOAD ===');
+    error_log('Request method: ' . $_SERVER['REQUEST_METHOD']);
+    error_log('POST selected_items: ' . json_encode($_POST['selected_items'] ?? 'NOT SET'));
+    
     // Lấy giỏ hàng
     $allItems = $cart->getItems();
     
     // Nếu có selected_items từ form, chỉ lấy những items được chọn
     $hasSelectedItems = isset($_POST['selected_items']) && is_array($_POST['selected_items']) && !empty($_POST['selected_items']);
     
+    error_log('Has selected items: ' . ($hasSelectedItems ? 'YES' : 'NO'));
+    
     if (!$hasSelectedItems) {
         // Nếu không có selected_items POST, này là lỗi - user phải chọn items trong cart
+        error_log('REJECTED: No selected_items in POST. Redirecting to cart.php');
+        error_log('POST keys: ' . json_encode(array_keys($_POST)));
+        error_log('POST data: ' . json_encode($_POST));
         Session::setFlash('error', 'Vui lòng chọn ít nhất một sản phẩm để thanh toán');
         redirect('/cart.php');
     }
     
     $selectedItemIds = array_map('intval', $_POST['selected_items']);
+    error_log('Selected item IDs: ' . json_encode($selectedItemIds));
     
     // Filter items theo selection
     $items = array_filter($allItems, function($item) use ($selectedItemIds) {
