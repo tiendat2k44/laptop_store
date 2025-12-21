@@ -47,9 +47,15 @@ if (!$orderSuccess) {
     $allItems = $cart->getItems();
     
     // Nếu có selected_items từ form, chỉ lấy những items được chọn
-    $selectedItemIds = isset($_POST['selected_items']) && is_array($_POST['selected_items']) 
-        ? array_map('intval', $_POST['selected_items'])
-        : array_column($allItems, 'item_id'); // Mặc định lấy tất cả
+    $hasSelectedItems = isset($_POST['selected_items']) && is_array($_POST['selected_items']) && !empty($_POST['selected_items']);
+    
+    if (!$hasSelectedItems) {
+        // Nếu không có selected_items POST, này là lỗi - user phải chọn items trong cart
+        Session::setFlash('error', 'Vui lòng chọn ít nhất một sản phẩm để thanh toán');
+        redirect('/cart.php');
+    }
+    
+    $selectedItemIds = array_map('intval', $_POST['selected_items']);
     
     // Filter items theo selection
     $items = array_filter($allItems, function($item) use ($selectedItemIds) {

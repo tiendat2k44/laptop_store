@@ -36,6 +36,7 @@ include __DIR__ . '/includes/header.php';
     <!-- Trường hợp: Có sản phẩm trong giỏ -->
     <?php else: ?>
     <form id="checkoutForm" method="POST" action="<?= SITE_URL ?>/checkout.php">
+    <input type="hidden" name="csrf_token" value="<?= Session::getToken() ?>">
     <div class="row">
         <!-- Cột trái: Danh sách sản phẩm -->
         <div class="col-lg-8 mb-4">
@@ -143,9 +144,9 @@ include __DIR__ . '/includes/header.php';
                     </div>
 
                     <!-- Nút thanh toán -->
-                    <a href="<?= SITE_URL ?>/checkout.php" class="btn btn-success w-100 mb-2">
+                    <button type="submit" class="btn btn-success w-100 mb-2" id="checkoutBtn">
                         <i class="bi bi-credit-card"></i> Tiến hành thanh toán
-                    </a>
+                    </button>
 
                     <!-- Nút tiếp tục mua -->
                     <a href="<?= SITE_URL ?>/products.php" class="btn btn-outline-primary w-100">
@@ -197,6 +198,16 @@ function updateTotal() {
         new Intl.NumberFormat('vi-VN', {style: 'currency', currency: 'VND'}).format(total);
 }
 
+// Kiểm tra before submit
+document.getElementById('checkoutForm')?.addEventListener('submit', function(e) {
+    const selected = document.querySelectorAll('.item-checkbox:checked').length;
+    if (selected === 0) {
+        e.preventDefault();
+        alert('Vui lòng chọn ít nhất một sản phẩm để thanh toán');
+        return false;
+    }
+});
+
 // Xóa các items đã chọn
 document.getElementById('deleteSelected')?.addEventListener('click', function() {
     const selected = document.querySelectorAll('.item-checkbox:checked');
@@ -207,13 +218,14 @@ document.getElementById('deleteSelected')?.addEventListener('click', function() 
     if (!confirm(`Xóa ${selected.length} sản phẩm đã chọn?`)) return;
     
     const itemIds = Array.from(selected).map(cb => cb.value);
+    const csrfToken = document.querySelector('input[name="csrf_token"]').value;
     
     fetch('<?= SITE_URL ?>/ajax/cart-remove.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: new URLSearchParams({
             item_ids: itemIds.join(','),
-            csrf_token: document.querySelector('meta[name="csrf-token"]').content
+            csrf_token: csrfToken
         })
     })
     .then(r => r.json())
