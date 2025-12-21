@@ -1,8 +1,8 @@
 <?php
-require_once __DIR__ . '/../../includes/init.php';
+require_once __DIR__ . '/../includes/init.php';
 
 $db = Database::getInstance();
-require_once __DIR__ . '/../../includes/payment/MoMoGateway.php';
+require_once __DIR__ . '/../includes/payment/MoMoGateway.php';
 
 $momo = new MoMoGateway();
 

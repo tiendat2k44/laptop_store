@@ -1,8 +1,8 @@
 <?php
-require_once __DIR__ . '/../../includes/init.php';
+require_once __DIR__ . '/../includes/init.php';
 
 $db = Database::getInstance();
-require_once __DIR__ . '/../../includes/payment/VNPayGateway.php';
+require_once __DIR__ . '/../includes/payment/VNPayGateway.php';
 
 $vnpay = new VNPayGateway();
 

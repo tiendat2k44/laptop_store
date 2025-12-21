@@ -1,12 +1,12 @@
 <?php
-require_once __DIR__ . '/../../includes/init.php';
+require_once __DIR__ . '/../includes/init.php';
 
 if (!Auth::check()) {
     redirect('/login.php');
 }
 
 $db = Database::getInstance();
-require_once __DIR__ . '/../../includes/payment/MoMoGateway.php';
+require_once __DIR__ . '/../includes/payment/MoMoGateway.php';
 
 $orderId = (int)($_GET['id'] ?? 0);
 if ($orderId <= 0) {
