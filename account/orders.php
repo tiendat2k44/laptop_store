@@ -26,6 +26,24 @@ error_log('OrderService userId: ' . Auth::id());
 $orders = $orderService->getUserOrders($currentStatus ?: null);
 error_log('Orders found: ' . count($orders));
 
+// DEBUG: Hiển thị thông tin debug (XÓA SAU KHI TEST)
+if (isset($_GET['debug'])) {
+    echo '<div class="alert alert-warning">';
+    echo '<strong>DEBUG INFO:</strong><br>';
+    echo 'Current User ID: ' . Auth::id() . '<br>';
+    echo 'Orders count: ' . count($orders) . '<br>';
+    echo 'Current Status Filter: ' . ($currentStatus ?: 'all') . '<br>';
+    
+    // Test query trực tiếp
+    $testOrders = $db->query("SELECT id, order_number, user_id, status, created_at FROM orders ORDER BY created_at DESC LIMIT 5");
+    echo 'Total orders in DB (last 5): <br>';
+    foreach ($testOrders as $o) {
+        echo sprintf('- Order #%s (user_id=%d, status=%s, created=%s)<br>', 
+            $o['order_number'], $o['user_id'], $o['status'], $o['created_at']);
+    }
+    echo '</div>';
+}
+
 $counts = $orderService->getUserOrderCounts();
 
 // Định nghĩa trạng thái đơn hàng
