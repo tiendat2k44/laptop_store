@@ -98,8 +98,10 @@
         /* Main Content */
         main {
             margin-left: 260px;
-            padding-top: 70px;
+            margin-top: 70px;
+            padding: 2rem 1.5rem;
             min-height: 100vh;
+            background: #f8f9fa;
         }
         
         /* Navbar */
@@ -109,9 +111,9 @@
             left: 0;
             right: 0;
             z-index: 1000;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            background: #fff;
-            border-bottom: 1px solid #e9ecef;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            background: linear-gradient(90deg, #1a1d29 0%, #2d3142 100%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             height: 70px;
             display: flex;
             align-items: center;
@@ -120,8 +122,16 @@
         .navbar-admin .navbar-brand {
             font-weight: 700;
             font-size: 1.3rem;
-            color: #0d6efd;
+            color: #fff;
             margin-left: 20px;
+        }
+        
+        .navbar-admin .text-dark {
+            color: #fff !important;
+        }
+        
+        .navbar-admin .text-primary {
+            color: #fff !important;
         }
         
         /* Stat Cards */
@@ -192,21 +202,31 @@
             border: none;
             border-radius: 8px;
             padding: 1rem;
+            margin-bottom: 1rem;
         }
         
         .alert-success {
             background: #d4edda;
             color: #155724;
+            border-left: 4px solid #28a745;
         }
         
         .alert-danger {
             background: #f8d7da;
             color: #721c24;
+            border-left: 4px solid #dc3545;
         }
         
         .alert-info {
             background: #d1ecf1;
             color: #0c5460;
+            border-left: 4px solid #17a2b8;
+        }
+        
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 4px solid #ffc107;
         }
         
         /* Badges */
@@ -259,6 +279,7 @@
             
             main {
                 margin-left: 0;
+                margin-top: 70px;
             }
         }
     </style>
@@ -276,12 +297,12 @@
             </a>
             
             <div class="ms-auto d-flex align-items-center gap-3">
-                <div class="d-flex align-items-center">
-                    <i class="bi bi-person-circle text-primary me-2 fs-5"></i>
-                    <span class="text-dark fw-500"><?php echo escape(Auth::user()['full_name']); ?></span>
+                <div class="d-flex align-items-center text-white">
+                    <i class="bi bi-person-circle text-info me-2 fs-5"></i>
+                    <span class="fw-500"><?php echo escape(Auth::user()['full_name']); ?></span>
                 </div>
-                <div class="vr"></div>
-                <a href="<?php echo SITE_URL; ?>" class="btn btn-sm btn-outline-primary" target="_blank">
+                <div class="vr text-white opacity-50"></div>
+                <a href="<?php echo SITE_URL; ?>" class="btn btn-sm btn-outline-light" target="_blank">
                     <i class="bi bi-globe"></i> Xem trang chủ
                 </a>
                 <a href="<?php echo SITE_URL; ?>/logout.php" class="btn btn-sm btn-outline-danger">
