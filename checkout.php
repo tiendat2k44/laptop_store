@@ -51,21 +51,23 @@ if (!$orderSuccess) {
     // Lấy giỏ hàng
     $allItems = $cart->getItems();
     
-    // Nếu có selected_items từ form, chỉ lấy những items được chọn
-    $hasSelectedItems = isset($_POST['selected_items']) && is_array($_POST['selected_items']) && !empty($_POST['selected_items']);
+    // Nếu có selected_items từ POST, lưu vào session để persist across form resubmission
+    if (isset($_POST['selected_items']) && is_array($_POST['selected_items']) && !empty($_POST['selected_items'])) {
+        Session::set('checkout_selected_items', $_POST['selected_items']);
+        error_log('Saved selected_items to session: ' . json_encode($_POST['selected_items']));
+    }
     
-    error_log('Has selected items: ' . ($hasSelectedItems ? 'YES' : 'NO'));
-    
-    if (!$hasSelectedItems) {
-        // Nếu không có selected_items POST, này là lỗi - user phải chọn items trong cart
-        error_log('REJECTED: No selected_items in POST. Redirecting to cart.php');
+    // Lấy selected_items từ session hoặc POST
+    $selectedItemIds = Session::get('checkout_selected_items', []);
+    if (empty($selectedItemIds)) {
+        // Nếu không có trong session và không có trong POST, redirect về cart
+        error_log('REJECTED: No selected_items in POST or session. Redirecting to cart.php');
         error_log('POST keys: ' . json_encode(array_keys($_POST)));
-        error_log('POST data: ' . json_encode($_POST));
         Session::setFlash('error', 'Vui lòng chọn ít nhất một sản phẩm để thanh toán');
         redirect(SITE_URL . '/cart.php');
     }
     
-    $selectedItemIds = array_map('intval', $_POST['selected_items']);
+    $selectedItemIds = array_map('intval', $selectedItemIds);
     error_log('Selected item IDs: ' . json_encode($selectedItemIds));
     
     // Filter items theo selection
@@ -196,6 +198,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Clear coupon session
                 Session::set('checkout_coupon_code', null);
                 Session::set('checkout_coupon_discount', 0);
+                Session::set('checkout_selected_items', null); // Clear selected items session
 
                 // Redirect theo phương thức thanh toán
                 if ($shipping['payment_method'] === 'VNPAY') {
