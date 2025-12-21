@@ -212,13 +212,14 @@ $discount = calculateDiscount($product['price'], $product['sale_price']);
 
             <!-- Nút hành động -->
             <div class="d-grid gap-2 mb-4">
-                <button id="btnAddCart" class="btn btn-success btn-lg fw-bold py-3" 
-                        onclick="addToCart(<?= (int)$productId ?>); return false;"
+                <button class="btn btn-success btn-lg fw-bold py-3 btn-add-to-cart" 
+                        data-product-id="<?= (int)$productId ?>"
+                        data-quantity="1"
                         <?= $product['stock_quantity'] <= 0 ? 'disabled' : '' ?>>
                     <i class="bi bi-cart-plus fs-5 me-2"></i> Thêm vào giỏ hàng
                 </button>
-                <button id="btnBuyNow" class="btn btn-primary btn-lg fw-bold py-3" 
-                        onclick="buyNow(<?= (int)$productId ?>); return false;"
+                <button class="btn btn-primary btn-lg fw-bold py-3 btn-buy-now" 
+                        data-product-id="<?= (int)$productId ?>"
                         <?= $product['stock_quantity'] <= 0 ? 'disabled' : '' ?>>
                     <i class="bi bi-lightning-charge fs-5 me-2"></i> Mua ngay
                 </button>
@@ -500,38 +501,6 @@ function updateImageSelection(element) {
     element.classList.remove('border-light', 'border-2');
     element.classList.add('border-primary', 'border-3');
     element.style.opacity = '1';
-}
-
-function buyNow(productId) {
-    if (!isLoggedIn()) {
-        window.location.href = window.SITE_URL + '/login.php?redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
-        return false;
-    }
-    
-    // Thêm sản phẩm vào giỏ hàng
-    $.ajax({
-        url: window.SITE_URL + '/ajax/cart-add.php',
-        method: 'POST',
-        data: {
-            product_id: productId,
-            quantity: 1,
-            csrf_token: getCsrfToken()
-        },
-        dataType: 'json',
-        success: function(response) {
-            if (response.success) {
-                // Redirect đến trang thanh toán
-                window.location.href = window.SITE_URL + '/checkout.php';
-            } else {
-                showNotification('error', response.message || 'Không thể thêm vào giỏ hàng');
-            }
-        },
-        error: function() {
-            showNotification('error', 'Có lỗi xảy ra. Vui lòng thử lại.');
-        }
-    });
-    
-    return false;
 }
 </script>
 

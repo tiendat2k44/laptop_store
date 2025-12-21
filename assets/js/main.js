@@ -51,6 +51,46 @@ $(document).ready(function() {
         });
     });
     
+    // Buy now - Direct checkout
+    $(document).on('click', '.btn-buy-now', function(e) {
+        e.preventDefault();
+        
+        const productId = $(this).data('product-id');
+        const button = $(this);
+        
+        // Check if user is logged in
+        if (!isLoggedIn()) {
+            window.location.href = window.SITE_URL + '/login.php?redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
+            return;
+        }
+        
+        button.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Đang xử lý...');
+        
+        $.ajax({
+            url: window.SITE_URL + '/ajax/cart-add.php',
+            method: 'POST',
+            data: {
+                product_id: productId,
+                quantity: 1,
+                csrf_token: getCsrfToken()
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    // Redirect to checkout
+                    window.location.href = window.SITE_URL + '/checkout.php';
+                } else {
+                    showNotification('error', response.message || 'Không thể thêm vào giỏ hàng');
+                    button.prop('disabled', false).html('<i class="bi bi-lightning-charge"></i> Mua ngay');
+                }
+            },
+            error: function() {
+                showNotification('error', 'Có lỗi xảy ra. Vui lòng thử lại.');
+                button.prop('disabled', false).html('<i class="bi bi-lightning-charge"></i> Mua ngay');
+            }
+        });
+    });
+    
     // Add to wishlist
     $(document).on('click', '.btn-wishlist', function(e) {
         e.preventDefault();
