@@ -41,40 +41,65 @@ $pendingShops = $db->query(
 
 $pageTitle = 'Admin Dashboard';
 
-// Doanh thu tổng hợp
-$revenueToday = $db->queryOne(
-    "SELECT COALESCE(SUM(total_amount),0) AS total FROM orders 
-     WHERE payment_status = 'paid' AND created_at::date = CURRENT_DATE"
-);
+// Doanh thu tổng hợp - Compatible với cả PostgreSQL và MySQL
+$driver = $db->getConnection()->getAttribute(PDO::ATTR_DRIVER_NAME);
+
+if ($driver === 'pgsql') {
+    $revenueToday = $db->queryOne(
+        "SELECT COALESCE(SUM(total_amount),0) AS total FROM orders 
+         WHERE payment_status = 'paid' AND created_at::date = CURRENT_DATE"
+    );
+    $revenueThisMonth = $db->queryOne(
+        "SELECT COALESCE(SUM(total_amount),0) AS total FROM orders 
+         WHERE payment_status = 'paid' AND date_trunc('month', created_at) = date_trunc('month', CURRENT_DATE)"
+    );
+    $revenueThisYear = $db->queryOne(
+        "SELECT COALESCE(SUM(total_amount),0) AS total FROM orders 
+         WHERE payment_status = 'paid' AND date_trunc('year', created_at) = date_trunc('year', CURRENT_DATE)"
+    );
+    $chartData = $db->query(
+        "SELECT to_char(created_at::date, 'YYYY-MM-DD') AS date,
+                COALESCE(SUM(total_amount),0) AS revenue
+         FROM orders 
+         WHERE created_at >= CURRENT_DATE - INTERVAL '6 days' AND payment_status = 'paid'
+         GROUP BY created_at::date
+         ORDER BY date"
+    );
+} else {
+    // MySQL
+    $revenueToday = $db->queryOne(
+        "SELECT COALESCE(SUM(total_amount),0) AS total FROM orders 
+         WHERE payment_status = 'paid' AND DATE(created_at) = CURDATE()"
+    );
+    $revenueThisMonth = $db->queryOne(
+        "SELECT COALESCE(SUM(total_amount),0) AS total FROM orders 
+         WHERE payment_status = 'paid' AND MONTH(created_at) = MONTH(NOW()) AND YEAR(created_at) = YEAR(NOW())"
+    );
+    $revenueThisYear = $db->queryOne(
+        "SELECT COALESCE(SUM(total_amount),0) AS total FROM orders 
+         WHERE payment_status = 'paid' AND YEAR(created_at) = YEAR(NOW())"
+    );
+    $chartData = $db->query(
+        "SELECT DATE_FORMAT(created_at, '%Y-%m-%d') AS date,
+                COALESCE(SUM(total_amount),0) AS revenue
+         FROM orders 
+         WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 6 DAY) AND payment_status = 'paid'
+         GROUP BY DATE(created_at)
+         ORDER BY date"
+    );
+}
+
 $revenueToday = $revenueToday ? (float)$revenueToday['total'] : 0;
-
-$revenueThisMonth = $db->queryOne(
-    "SELECT COALESCE(SUM(total_amount),0) AS total FROM orders 
-     WHERE payment_status = 'paid' AND date_trunc('month', created_at) = date_trunc('month', CURRENT_DATE)"
-);
 $revenueThisMonth = $revenueThisMonth ? (float)$revenueThisMonth['total'] : 0;
-
-$revenueThisYear = $db->queryOne(
-    "SELECT COALESCE(SUM(total_amount),0) AS total FROM orders 
-     WHERE payment_status = 'paid' AND date_trunc('year', created_at) = date_trunc('year', CURRENT_DATE)"
-);
 $revenueThisYear = $revenueThisYear ? (float)$revenueThisYear['total'] : 0;
-
-// Dữ liệu biểu đồ 7 ngày gần đây
-$chartData = $db->query(
-    "SELECT to_char(created_at::date, 'YYYY-MM-DD') AS date,
-            COALESCE(SUM(total_amount),0) AS revenue
-     FROM orders 
-     WHERE created_at >= CURRENT_DATE - INTERVAL '6 days' AND payment_status = 'paid'
-     GROUP BY created_at::date
-     ORDER BY date"
-);
 
 $chartLabels = [];
 $chartValues = [];
-foreach ($chartData as $data) {
-    $chartLabels[] = date('d/m', strtotime($data['date']));
-    $chartValues[] = $data['revenue'];
+if ($chartData) {
+    foreach ($chartData as $data) {
+        $chartLabels[] = date('d/m', strtotime($data['date']));
+        $chartValues[] = (float)$data['revenue'];
+    }
 }
 
 include __DIR__ . '/includes/header.php';
