@@ -285,6 +285,9 @@ include __DIR__ . '/includes/header.php';
             <!-- Form đặt hàng -->
             <form method="POST" action="" class="needs-validation">
                 <input type="hidden" name="csrf_token" value="<?= Session::getToken() ?>">
+                <?php foreach ($items as $it): ?>
+                <input type="hidden" name="selected_items[]" value="<?= (int)$it['item_id'] ?>">
+                <?php endforeach; ?>
 
                 <!-- 📍 Thông tin giao hàng -->
                 <div class="card shadow-sm mb-4">

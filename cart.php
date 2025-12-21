@@ -4,7 +4,7 @@ require_once __DIR__ . '/includes/init.php';
 // Kiểm tra đăng nhập
 if (!Auth::check()) {
     Session::setFlash('error', 'Vui lòng đăng nhập để xem giỏ hàng');
-    redirect('/login.php?redirect=/cart.php');
+    redirect(SITE_URL . '/login.php?redirect=' . SITE_URL . '/cart.php');
 }
 
 // Khởi tạo service
