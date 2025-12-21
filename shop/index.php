@@ -11,10 +11,10 @@ $db = Database::getInstance();
 
 // Lấy thông tin shop
 $shop = $db->queryOne(
-    "SELECT id, name, description, logo, banner, status, 
-            COALESCE(rating, 0) as rating, 
+    "SELECT id, shop_name, description, logo, banner, status,
+            COALESCE(rating, 0) as rating,
             COALESCE(total_reviews, 0) as total_reviews,
-            user_id 
+            user_id
      FROM shops WHERE user_id = :user_id",
     [':user_id' => Auth::id()]
 );
