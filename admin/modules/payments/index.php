@@ -8,14 +8,13 @@ Auth::requireRole(ROLE_ADMIN, '/login.php');
 
 $db = Database::getInstance();
 
-$action = isset($_GET['action']) ? trim($_GET['action']) : 'config';
-$tab = isset($_GET['tab']) ? trim($_GET['tab']) : 'vnpay';
+$tab = isset($_GET['tab']) ? trim($_GET['tab']) : 'config';
 
 // Xử lý cập nhật cấu hình
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!Session::verifyToken($_POST['csrf_token'] ?? '')) {
         Session::setFlash('error', 'CSRF token không hợp lệ');
-        redirect('/admin/modules/payments/');
+        redirect(SITE_URL . '/admin/modules/payments/');
     }
     
     if (isset($_POST['update_config'])) {
@@ -54,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             Session::setFlash('error', 'Vui lòng điền đầy đủ thông tin');
         }
-        redirect('/admin/modules/payments/?tab=' . $tab);
+        redirect(SITE_URL . '/admin/modules/payments/?tab=' . $tab);
     }
 }
 
@@ -68,7 +67,7 @@ foreach ($configs as $cfg) {
     $configArray[$cfg['config_key']] = $cfg['config_value'];
 }
 
-// Lấy lịch sử giao dịch (trang payment transactions)
+// Lấy lịch sử giao dịch
 $txnKeyword = isset($_GET['txn_keyword']) ? trim($_GET['txn_keyword']) : '';
 $txnGateway = isset($_GET['txn_gateway']) ? trim($_GET['txn_gateway']) : '';
 $txnStatus = isset($_GET['txn_status']) ? trim($_GET['txn_status']) : '';
@@ -98,26 +97,103 @@ $transactions = $db->query(
     $params
 );
 
+// Statistics
+$stats = [
+    'total_transactions' => $db->queryOne("SELECT COUNT(*) as count FROM payment_transactions")['count'] ?? 0,
+    'success_txns' => $db->queryOne("SELECT COUNT(*) as count FROM payment_transactions WHERE status = 'success'")['count'] ?? 0,
+    'pending_txns' => $db->queryOne("SELECT COUNT(*) as count FROM payment_transactions WHERE status = 'pending'")['count'] ?? 0,
+    'total_amount' => $db->queryOne("SELECT COALESCE(SUM(amount), 0) as total FROM payment_transactions WHERE status = 'success'")['total'] ?? 0,
+    'vnpay_count' => $db->queryOne("SELECT COUNT(*) as count FROM payment_transactions WHERE gateway = 'vnpay' AND status = 'success'")['count'] ?? 0,
+    'momo_count' => $db->queryOne("SELECT COUNT(*) as count FROM payment_transactions WHERE gateway = 'momo' AND status = 'success'")['count'] ?? 0,
+];
+
 $pageTitle = 'Quản lý thanh toán';
 include __DIR__ . '/../../includes/header.php';
 ?>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2><i class="bi bi-credit-card"></i> Quản lý thanh toán</h2>
+    <div>
+        <h2><i class="bi bi-credit-card"></i> Quản lý thanh toán</h2>
+        <p class="text-muted mb-0">Cấu hình gateway & lịch sử giao dịch</p>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-2">
+        <div class="card stat-card primary shadow-sm">
+            <div class="card-body p-3">
+                <div>
+                    <h6 class="text-muted mb-1 small">Tổng giao dịch</h6>
+                    <h3 class="mb-0"><?= number_format($stats['total_transactions']) ?></h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card stat-card success shadow-sm">
+            <div class="card-body p-3">
+                <div>
+                    <h6 class="text-muted mb-1 small">Thành công</h6>
+                    <h3 class="mb-0"><?= number_format($stats['success_txns']) ?></h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card stat-card warning shadow-sm">
+            <div class="card-body p-3">
+                <div>
+                    <h6 class="text-muted mb-1 small">Chờ xử lý</h6>
+                    <h3 class="mb-0"><?= number_format($stats['pending_txns']) ?></h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card info shadow-sm">
+            <div class="card-body p-3">
+                <div>
+                    <h6 class="text-muted mb-1 small">Tổng doanh thu</h6>
+                    <h3 class="mb-0 text-success"><?= formatPrice($stats['total_amount']) ?></h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="row g-2">
+            <div class="col-6">
+                <div class="card shadow-sm">
+                    <div class="card-body p-2 text-center">
+                        <small class="text-muted">VNPay</small>
+                        <h5 class="mb-0 text-info"><?= number_format($stats['vnpay_count']) ?></h5>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="card shadow-sm">
+                    <div class="card-body p-2 text-center">
+                        <small class="text-muted">MoMo</small>
+                        <h5 class="mb-0 text-success"><?= number_format($stats['momo_count']) ?></h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Tabs -->
-<ul class="nav nav-tabs mb-4" role="tablist">
+<ul class="nav nav-tabs mb-4 border-bottom" role="tablist">
     <li class="nav-item" role="presentation">
         <button class="nav-link <?= $tab === 'config' ? 'active' : '' ?>" 
-                onclick="location.href='?tab=config'" 
+                onclick="location.href='<?= SITE_URL ?>/admin/modules/payments/?tab=config'" 
                 type="button" role="tab">
-            <i class="bi bi-gear"></i> Cấu hình
+            <i class="bi bi-gear"></i> Cấu hình gateway
         </button>
     </li>
     <li class="nav-item" role="presentation">
         <button class="nav-link <?= $tab === 'transactions' ? 'active' : '' ?>" 
-                onclick="location.href='?tab=transactions'" 
+                onclick="location.href='<?= SITE_URL ?>/admin/modules/payments/?tab=transactions'" 
                 type="button" role="tab">
             <i class="bi bi-clock-history"></i> Lịch sử giao dịch
         </button>
@@ -139,39 +215,39 @@ include __DIR__ . '/../../includes/header.php';
                     
                     <!-- TMN Code -->
                     <div class="mb-3">
-                        <label class="form-label">TMN Code</label>
+                        <label class="form-label"><strong>TMN Code</strong></label>
                         <input type="text" name="config_name" value="VNPay Terminal Code" style="display:none;">
                         <input type="hidden" name="config_key" value="VNPAY_TMN_CODE">
-                        <input type="text" class="form-control" name="config_value" 
+                        <input type="text" class="form-control form-control-lg" name="config_value" 
                                value="<?= escape($configArray['VNPAY_TMN_CODE'] ?? '') ?>" 
                                placeholder="VD: 1XXXXXX" required>
-                        <small class="text-muted">Mã Terminal từ VNPay</small>
+                        <small class="text-muted d-block mt-1"><i class="bi bi-info-circle"></i> Mã Terminal từ VNPay</small>
                     </div>
                     
                     <!-- Hash Secret -->
                     <div class="mb-3">
-                        <label class="form-label">Hash Secret</label>
+                        <label class="form-label"><strong>Hash Secret</strong></label>
                         <input type="text" name="config_name" value="VNPay Hash Secret" style="display:none;">
-                        <input type="text" class="form-control font-monospace" name="config_value" 
+                        <input type="text" class="form-control form-control-lg font-monospace" name="config_value" 
                                value="<?= escape($configArray['VNPAY_HASH_SECRET'] ?? '') ?>" 
                                placeholder="XXXXXXXXXXXXX" required>
-                        <small class="text-muted">Khóa bí mật từ VNPay (chứa trong tài khoản của bạn)</small>
+                        <small class="text-muted d-block mt-1"><i class="bi bi-shield-lock"></i> Khóa bí mật từ VNPay</small>
                     </div>
                     
                     <!-- URL -->
-                    <div class="mb-3">
-                        <label class="form-label">VNPay URL</label>
+                    <div class="mb-4">
+                        <label class="form-label"><strong>VNPay URL</strong></label>
                         <input type="text" name="config_name" value="VNPay URL" style="display:none;">
                         <input type="text" class="form-control" name="config_value" 
                                value="<?= escape($configArray['VNPAY_URL'] ?? 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html') ?>" 
                                placeholder="VNPay endpoint">
-                        <small class="text-muted">
-                            Sandbox: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html<br>
-                            Production: https://payment.vnpayment.vn/paymentv2/vpcpay.html
+                        <small class="text-muted d-block mt-2">
+                            <strong>Sandbox:</strong> https://sandbox.vnpayment.vn/paymentv2/vpcpay.html<br>
+                            <strong>Production:</strong> https://payment.vnpayment.vn/paymentv2/vpcpay.html
                         </small>
                     </div>
                     
-                    <button type="submit" name="update_config" class="btn btn-primary w-100">
+                    <button type="submit" name="update_config" class="btn btn-primary w-100 btn-lg">
                         <i class="bi bi-save"></i> Lưu cấu hình VNPay
                     </button>
                 </form>
@@ -191,52 +267,52 @@ include __DIR__ . '/../../includes/header.php';
                     
                     <!-- Partner Code -->
                     <div class="mb-3">
-                        <label class="form-label">Partner Code</label>
+                        <label class="form-label"><strong>Partner Code</strong></label>
                         <input type="text" name="config_name" value="MoMo Partner Code" style="display:none;">
                         <input type="hidden" name="config_key" value="MOMO_PARTNER_CODE">
-                        <input type="text" class="form-control" name="config_value" 
+                        <input type="text" class="form-control form-control-lg" name="config_value" 
                                value="<?= escape($configArray['MOMO_PARTNER_CODE'] ?? '') ?>" 
                                placeholder="MXXXXXXXX" required>
-                        <small class="text-muted">Partner Code từ MoMo</small>
+                        <small class="text-muted d-block mt-1"><i class="bi bi-info-circle"></i> Partner Code từ MoMo</small>
                     </div>
                     
                     <!-- Access Key -->
                     <div class="mb-3">
-                        <label class="form-label">Access Key</label>
+                        <label class="form-label"><strong>Access Key</strong></label>
                         <input type="text" name="config_name" value="MoMo Access Key" style="display:none;">
                         <input type="hidden" name="config_key" value="MOMO_ACCESS_KEY">
-                        <input type="text" class="form-control font-monospace" name="config_value" 
+                        <input type="text" class="form-control form-control-lg font-monospace" name="config_value" 
                                value="<?= escape($configArray['MOMO_ACCESS_KEY'] ?? '') ?>" 
                                placeholder="XXXXXXXXXXXXX" required>
-                        <small class="text-muted">Access Key từ MoMo</small>
+                        <small class="text-muted d-block mt-1"><i class="bi bi-key"></i> Access Key từ MoMo</small>
                     </div>
                     
                     <!-- Secret Key -->
                     <div class="mb-3">
-                        <label class="form-label">Secret Key</label>
+                        <label class="form-label"><strong>Secret Key</strong></label>
                         <input type="text" name="config_name" value="MoMo Secret Key" style="display:none;">
                         <input type="hidden" name="config_key" value="MOMO_SECRET_KEY">
-                        <input type="text" class="form-control font-monospace" name="config_value" 
+                        <input type="text" class="form-control form-control-lg font-monospace" name="config_value" 
                                value="<?= escape($configArray['MOMO_SECRET_KEY'] ?? '') ?>" 
                                placeholder="XXXXXXXXXXXXX" required>
-                        <small class="text-muted">Secret Key từ MoMo (giữ bí mật)</small>
+                        <small class="text-muted d-block mt-1"><i class="bi bi-shield-lock"></i> Secret Key từ MoMo (giữ bí mật)</small>
                     </div>
                     
                     <!-- MoMo Endpoint -->
-                    <div class="mb-3">
-                        <label class="form-label">Endpoint</label>
+                    <div class="mb-4">
+                        <label class="form-label"><strong>Endpoint</strong></label>
                         <input type="text" name="config_name" value="MoMo Endpoint" style="display:none;">
                         <input type="hidden" name="config_key" value="MOMO_ENDPOINT">
                         <input type="text" class="form-control" name="config_value" 
                                value="<?= escape($configArray['MOMO_ENDPOINT'] ?? 'https://test-payment.momo.vn/v2/gateway/api/create') ?>" 
                                placeholder="MoMo endpoint">
-                        <small class="text-muted">
-                            Test: https://test-payment.momo.vn/v2/gateway/api/create<br>
-                            Prod: https://payment.momo.vn/v2/gateway/api/create
+                        <small class="text-muted d-block mt-2">
+                            <strong>Test:</strong> https://test-payment.momo.vn/v2/gateway/api/create<br>
+                            <strong>Prod:</strong> https://payment.momo.vn/v2/gateway/api/create
                         </small>
                     </div>
                     
-                    <button type="submit" name="update_config" class="btn btn-primary w-100">
+                    <button type="submit" name="update_config" class="btn btn-success w-100 btn-lg">
                         <i class="bi bi-save"></i> Lưu cấu hình MoMo
                     </button>
                 </form>
@@ -245,32 +321,32 @@ include __DIR__ . '/../../includes/header.php';
     </div>
 </div>
 
-<!-- Thông tin cấu hình hiện tại -->
+<!-- Tất cả cấu hình -->
 <div class="card shadow-sm">
     <div class="card-header bg-light">
-        <h5 class="mb-0"><i class="bi bi-info-circle"></i> Tất cả cấu hình</h5>
+        <h5 class="mb-0"><i class="bi bi-info-circle"></i> Tất cả cấu hình hiện tại</h5>
     </div>
-    <div class="card-body">
+    <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-sm">
-                <thead>
+            <table class="table table-sm mb-0">
+                <thead class="table-light">
                     <tr>
                         <th>Tên cấu hình</th>
                         <th>Khóa</th>
                         <th>Giá trị</th>
-                        <th>Cập nhật</th>
+                        <th width="150">Cập nhật lần cuối</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (!empty($configs)): ?>
                         <?php foreach ($configs as $cfg): ?>
                         <tr>
-                            <td><?= escape($cfg['config_name']) ?></td>
-                            <td><code><?= escape($cfg['config_key']) ?></code></td>
+                            <td><strong><?= escape($cfg['config_name']) ?></strong></td>
+                            <td><code class="text-primary"><?= escape($cfg['config_key']) ?></code></td>
                             <td>
-                                <code class="text-danger font-monospace">
-                                    <?= strlen($cfg['config_value']) > 20 ? 
-                                        substr($cfg['config_value'], 0, 20) . '...' : 
+                                <code class="text-danger font-monospace small">
+                                    <?= strlen($cfg['config_value']) > 30 ? 
+                                        substr($cfg['config_value'], 0, 30) . '...' : 
                                         escape($cfg['config_value']) ?>
                                 </code>
                             </td>
@@ -279,7 +355,9 @@ include __DIR__ . '/../../includes/header.php';
                         <?php endforeach; ?>
                     <?php else: ?>
                     <tr>
-                        <td colspan="4" class="text-center text-muted">Chưa có cấu hình nào</td>
+                        <td colspan="4" class="text-center text-muted py-4">
+                            <i class="bi bi-inbox"></i> Chưa có cấu hình nào
+                        </td>
                     </tr>
                     <?php endif; ?>
                 </tbody>
@@ -294,32 +372,33 @@ include __DIR__ . '/../../includes/header.php';
     <div class="card-body">
         <form method="get" class="row g-3">
             <div class="col-md-3">
+                <label class="form-label small">Tìm kiếm giao dịch</label>
                 <input type="hidden" name="tab" value="transactions">
                 <input type="text" name="txn_keyword" class="form-control" 
-                       placeholder="Tìm ID giao dịch..." 
+                       placeholder="ID hoặc tin nhắn..." 
                        value="<?= escape($txnKeyword) ?>">
             </div>
             <div class="col-md-2">
+                <label class="form-label small">Cổng thanh toán</label>
                 <select name="txn_gateway" class="form-select">
-                    <option value="">Tất cả cổng</option>
+                    <option value="">Tất cả</option>
                     <option value="vnpay" <?= $txnGateway === 'vnpay' ? 'selected' : '' ?>>VNPay</option>
                     <option value="momo" <?= $txnGateway === 'momo' ? 'selected' : '' ?>>MoMo</option>
                 </select>
             </div>
             <div class="col-md-2">
+                <label class="form-label small">Trạng thái</label>
                 <select name="txn_status" class="form-select">
-                    <option value="">Tất cả trạng thái</option>
-                    <option value="pending" <?= $txnStatus === 'pending' ? 'selected' : '' ?>>Chờ</option>
+                    <option value="">Tất cả</option>
+                    <option value="pending" <?= $txnStatus === 'pending' ? 'selected' : '' ?>>Chờ xử lý</option>
                     <option value="success" <?= $txnStatus === 'success' ? 'selected' : '' ?>>Thành công</option>
                     <option value="failed" <?= $txnStatus === 'failed' ? 'selected' : '' ?>>Thất bại</option>
                 </select>
             </div>
-            <div class="col-md-2">
-                <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search"></i> Tìm</button>
-            </div>
-            <div class="col-md-3">
-                <a href="<?php echo SITE_URL; ?>/admin/modules/payments/?tab=transactions" class="btn btn-outline-secondary w-100">
-                    <i class="bi bi-x"></i> Xóa bộ lọc
+            <div class="col-md-3 d-flex align-items-end gap-2">
+                <button type="submit" class="btn btn-primary flex-grow-1"><i class="bi bi-search"></i> Tìm kiếm</button>
+                <a href="<?= SITE_URL ?>/admin/modules/payments/?tab=transactions" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-clockwise"></i>
                 </a>
             </div>
         </form>
@@ -327,64 +406,72 @@ include __DIR__ . '/../../includes/header.php';
 </div>
 
 <!-- Payment Transactions Table -->
-<div class="table-responsive">
-    <table class="table table-hover align-middle">
-        <thead class="table-light">
-            <tr>
-                <th>ID giao dịch</th>
-                <th>Đơn hàng</th>
-                <th>Cổng</th>
-                <th>Số tiền</th>
-                <th>Trạng thái</th>
-                <th>Thời gian</th>
-                <th>Thông điệp</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php if ($transactions): ?>
-                <?php foreach ($transactions as $txn): ?>
-                <tr>
-                    <td>
-                        <code class="text-primary"><?= escape(substr($txn['transaction_id'], -20)) ?></code>
-                    </td>
-                    <td>
-                        <?php if ($txn['order_number']): ?>
-                            <a href="<?php echo SITE_URL; ?>/admin/modules/orders/view.php?id=<?= (int)$txn['order_id'] ?>" 
-                               class="btn btn-sm btn-outline-primary">
-                                <?= escape($txn['order_number']) ?>
-                            </a>
-                        <?php else: ?>
-                            <span class="text-muted">—</span>
-                        <?php endif; ?>
-                    </td>
-                    <td>
-                        <span class="badge bg-<?= $txn['gateway'] === 'vnpay' ? 'info' : 'success' ?>">
-                            <?= strtoupper($txn['gateway']) ?>
-                        </span>
-                    </td>
-                    <td>
-                        <strong><?= formatPrice($txn['amount']) ?></strong>
-                    </td>
-                    <td>
-                        <span class="badge bg-<?= $txn['status'] === 'success' ? 'success' : ($txn['status'] === 'pending' ? 'warning' : 'danger') ?>">
-                            <?= ucfirst($txn['status']) ?>
-                        </span>
-                    </td>
-                    <td><small><?= formatDate($txn['created_at']) ?></small></td>
-                    <td>
-                        <small class="text-muted"><?= escape(substr($txn['message'], 0, 50)) ?></small>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
-            <?php else: ?>
-            <tr>
-                <td colspan="7" class="text-center text-muted py-4">
-                    <i class="bi bi-inbox"></i> Không có giao dịch nào
-                </td>
-            </tr>
-            <?php endif; ?>
-        </tbody>
-    </table>
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light sticky-top">
+                    <tr>
+                        <th width="150">ID giao dịch</th>
+                        <th>Đơn hàng</th>
+                        <th width="90">Cổng</th>
+                        <th width="120">Số tiền</th>
+                        <th width="90">Trạng thái</th>
+                        <th width="150">Thời gian</th>
+                        <th>Thông điệp</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if ($transactions): ?>
+                        <?php foreach ($transactions as $txn): ?>
+                        <tr>
+                            <td>
+                                <code class="text-primary small"><?= escape(substr($txn['transaction_id'], -15)) ?></code>
+                            </td>
+                            <td>
+                                <?php if ($txn['order_number']): ?>
+                                    <a href="<?= SITE_URL ?>/admin/modules/orders/view.php?id=<?= (int)$txn['order_id'] ?>" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-link-45deg"></i> <?= escape($txn['order_number']) ?>
+                                    </a>
+                                <?php else: ?>
+                                    <span class="badge bg-secondary">Không liên kết</span>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <span class="badge bg-<?= $txn['gateway'] === 'vnpay' ? 'info' : 'success' ?> fs-6">
+                                    <?= strtoupper($txn['gateway']) ?>
+                                </span>
+                            </td>
+                            <td>
+                                <strong class="text-success"><?= formatPrice($txn['amount']) ?></strong>
+                            </td>
+                            <td>
+                                <span class="badge bg-<?= $txn['status'] === 'success' ? 'success' : ($txn['status'] === 'pending' ? 'warning' : 'danger') ?> fs-6">
+                                    <i class="bi bi-<?= $txn['status'] === 'success' ? 'check-circle' : ($txn['status'] === 'pending' ? 'clock' : 'x-circle') ?>"></i>
+                                    <?= ucfirst($txn['status']) ?>
+                                </span>
+                            </td>
+                            <td>
+                                <small class="text-muted"><?= formatDate($txn['created_at']) ?></small>
+                            </td>
+                            <td>
+                                <small class="text-muted"><?= escape(substr($txn['message'], 0, 40)) ?></small>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-5">
+                            <i class="bi bi-inbox fs-3"></i>
+                            <p class="mt-2">Không có giao dịch nào</p>
+                        </td>
+                    </tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 <?php endif; ?>

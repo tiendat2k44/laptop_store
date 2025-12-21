@@ -51,11 +51,11 @@ function seo_meta_tags($title, $description = '', $image = '', $url = '') {
                 "availability" => (int)$product['stock_quantity'] > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
             ]
         ];
-        if ($product['rating_average'] > 0) {
+        if (($product['rating_average'] ?? 0) > 0) {
             $schema['aggregateRating'] = [
                 "@type" => "AggregateRating",
-                "ratingValue" => $product['rating_average'],
-                "reviewCount" => $product['review_count']
+                "ratingValue" => ($product['rating_average'] ?? 0),
+                "reviewCount" => ($product['review_count'] ?? 0)
             ];
         }
         echo '<script type="application/ld+json">' . json_encode($schema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . '</script>' . "\n";

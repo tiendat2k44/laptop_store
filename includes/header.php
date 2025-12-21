@@ -57,6 +57,12 @@
                     }
                     if ($currentUser): ?>
                         <span>Xin chào, <strong><?php echo escape($currentUser['full_name'] ?? 'Người dùng'); ?></strong></span>
+                        <?php if (Auth::isAdmin()): ?>
+                            <a href="<?php echo SITE_URL; ?>/admin/index.php" class="text-warning ms-2"><i class="bi bi-speedometer"></i> Về quản trị</a>
+                        <?php endif; ?>
+                        <?php if (Auth::isShop()): ?>
+                            <a href="<?php echo SITE_URL; ?>/shop/index.php" class="text-warning ms-2"><i class="bi bi-shop"></i> Về quản lý shop</a>
+                        <?php endif; ?>
                         <a href="<?php echo SITE_URL; ?>/account/profile.php" class="text-white ms-2"><i class="bi bi-person-circle"></i> Tài khoản</a>
                         <a href="<?php echo SITE_URL; ?>/logout.php" class="text-white ms-2"><i class="bi bi-box-arrow-right"></i> Đăng xuất</a>
                     <?php else: ?>
