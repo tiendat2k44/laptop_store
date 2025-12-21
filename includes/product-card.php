@@ -52,7 +52,9 @@
         
         <div class="mt-auto pt-3">
             <?php if ($product['stock_quantity'] > 0): ?>
-                <button class="btn btn-primary w-100 btn-add-to-cart" data-product-id="<?php echo $product['id']; ?>">
+                <button class="btn btn-primary w-100 btn-add-to-cart" 
+                        data-product-id="<?php echo $product['id']; ?>"
+                        data-quantity="1">
                     <i class="bi bi-cart-plus"></i> Thêm vào giỏ
                 </button>
             <?php else: ?>
