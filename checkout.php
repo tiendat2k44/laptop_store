@@ -177,10 +177,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 error_log('Order created successfully! ID: ' . $result['id'] . ', Number: ' . $result['order_number']);
                 
                 // Xóa các items đã checkout khỏi giỏ hàng
-                $selectedItemIds = isset($_POST['selected_items']) && is_array($_POST['selected_items'])
-                    ? array_map('intval', $_POST['selected_items'])
-                    : array_column($items, 'item_id');
-                
                 if (!empty($selectedItemIds)) {
                     $cart->clearSelectedItems($selectedItemIds);
                     error_log('Cleared ' . count($selectedItemIds) . ' items from cart');
