@@ -141,8 +141,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $result = $orderService->createOrder($shipping, $items, $amounts);
 
             if (is_array($result) && !empty($result['id'])) {
-                // Xóa giỏ hàng sau khi tạo đơn
-                $cart->clear();
+                // KHÔNG XÓA giỏ hàng - giữ lại để user có thể mua tiếp
+                // User có thể xóa thủ công hoặc tự động clear sau vài ngày
+                // $cart->clear();
                 
                 // Clear coupon session
                 Session::set('checkout_coupon_code', null);
