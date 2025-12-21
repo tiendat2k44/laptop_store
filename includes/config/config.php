@@ -62,10 +62,15 @@ define('VNPAY_URL', 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html');
 define('VNPAY_RETURN_URL', SITE_URL . '/payment/vnpay-return.php');
 
 // EasyPay/Sepay
-define('EASYPAY_PARTNER_CODE', 'your_partner_code');
-define('EASYPAY_API_KEY', 'your_api_key');
+define('EASYPAY_PARTNER_CODE', 'SP-LIVE-DTA8B897');
+define('EASYPAY_API_KEY', 'spsk_live_UXMZKgqnQSB6wHF5qDNBUpcEYryayXUj'); // Thay bằng Secret Key từ Sepay
 define('EASYPAY_ENDPOINT', 'https://easypay.vn/api/openapi/pay-url');
 define('EASYPAY_RETURN_URL', SITE_URL . '/payment/easy-pay-return.php');
+
+// Thông tin tài khoản ngân hàng nhận tiền (cho QR Code)
+define('EASYPAY_BANK_ID', 'MB'); // MB, VCB, TCB, ACB, etc.
+define('EASYPAY_ACCOUNT_NUMBER', '56788811102004'); // Số tài khoản
+define('EASYPAY_ACCOUNT_NAME', 'ADMIN'); // Tên chủ tài khoản
 
 // Cấu hình Upload Hình Ảnh
 define('MAX_FILE_SIZE', 5242880); // 5MB tính bằng bytes
