@@ -29,27 +29,53 @@ $stats = [
     'pending_orders' => $db->queryOne("SELECT COUNT(*) as count FROM order_items WHERE shop_id = :shop_id AND status = 'pending'", ['shop_id' => $shopId])['count'] ?? 0,
 ];
 
-// Get revenue
-$revenueThisMonth = $db->queryOne("
-    SELECT COALESCE(SUM(oi.subtotal), 0) as revenue 
-    FROM order_items oi
-    JOIN orders o ON oi.order_id = o.id
-    WHERE oi.shop_id = :shop_id 
-    AND DATE_TRUNC('month', oi.created_at) = DATE_TRUNC('month', CURRENT_DATE)
-    AND o.payment_status = 'paid'
-", ['shop_id' => $shopId])['revenue'] ?? 0;
+// Get revenue - Compatible with PostgreSQL and MySQL
+$driver = $db->getConnection()->getAttribute(PDO::ATTR_DRIVER_NAME);
 
-// Get recent orders
-$recentOrders = $db->query("
-    SELECT DISTINCT ON (o.id) o.*, u.full_name as customer_name,
-           (SELECT SUM(subtotal) FROM order_items WHERE order_id = o.id AND shop_id = :shop_id) as shop_total
-    FROM orders o
-    JOIN order_items oi ON o.id = oi.order_id
-    JOIN users u ON o.user_id = u.id
-    WHERE oi.shop_id = :shop_id
-    ORDER BY o.id, o.created_at DESC
-    LIMIT 10
-", ['shop_id' => $shopId]);
+if ($driver === 'pgsql') {
+    $revenueThisMonth = $db->queryOne("
+        SELECT COALESCE(SUM(oi.subtotal), 0) as revenue 
+        FROM order_items oi
+        JOIN orders o ON oi.order_id = o.id
+        WHERE oi.shop_id = :shop_id 
+        AND DATE_TRUNC('month', oi.created_at) = DATE_TRUNC('month', CURRENT_DATE)
+        AND o.payment_status = 'paid'
+    ", ['shop_id' => $shopId])['revenue'] ?? 0;
+    
+    $recentOrders = $db->query("
+        SELECT DISTINCT ON (o.id) o.*, u.full_name as customer_name,
+               (SELECT SUM(subtotal) FROM order_items WHERE order_id = o.id AND shop_id = :shop_id) as shop_total
+        FROM orders o
+        JOIN order_items oi ON o.id = oi.order_id
+        JOIN users u ON o.user_id = u.id
+        WHERE oi.shop_id = :shop_id
+        ORDER BY o.id, o.created_at DESC
+        LIMIT 10
+    ", ['shop_id' => $shopId]);
+} else {
+    // MySQL
+    $revenueThisMonth = $db->queryOne("
+        SELECT COALESCE(SUM(oi.subtotal), 0) as revenue 
+        FROM order_items oi
+        JOIN orders o ON oi.order_id = o.id
+        WHERE oi.shop_id = :shop_id 
+        AND MONTH(oi.created_at) = MONTH(CURDATE())
+        AND YEAR(oi.created_at) = YEAR(CURDATE())
+        AND o.payment_status = 'paid'
+    ", ['shop_id' => $shopId])['revenue'] ?? 0;
+    
+    $recentOrders = $db->query("
+        SELECT o.*, u.full_name as customer_name,
+               (SELECT SUM(subtotal) FROM order_items WHERE order_id = o.id AND shop_id = :shop_id) as shop_total
+        FROM orders o
+        JOIN order_items oi ON o.id = oi.order_id
+        JOIN users u ON o.user_id = u.id
+        WHERE oi.shop_id = :shop_id
+        GROUP BY o.id, u.full_name
+        ORDER BY o.created_at DESC
+        LIMIT 10
+    ", ['shop_id' => $shopId]);
+}
 
 include __DIR__ . '/includes/header.php';
 ?>
