@@ -1,0 +1,26 @@
+# Admin Panel URL Rewriting
+# Allow access to directories with index.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /admin/
+    
+    # Redirect to index.php if directory is accessed
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteCond %{REQUEST_URI} !/$
+    RewriteRule ^(.*)$ $1/index.php [L]
+    
+    # If directory with index.php exists, serve it
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteCond %{REQUEST_FILENAME}/index.php -f
+    RewriteRule ^(.*)$ $1/index.php [L]
+</IfModule>
+
+# Security
+<FilesMatch "\.(sql|md|log)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Disable directory listing
+Options -Indexes

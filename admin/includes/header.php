@@ -141,32 +141,38 @@
                 </li>
                 
                 <li class="nav-item">
-                    <a class="nav-link" href="/admin/modules/orders/">
+                    <a class="nav-link" href="/admin/modules/orders/index.php">
                         <i class="bi bi-cart-check"></i> Đơn hàng
                     </a>
                 </li>
                 
                 <li class="nav-item">
-                    <a class="nav-link" href="/admin/modules/products/">
+                    <a class="nav-link" href="/admin/modules/products/index.php">
                         <i class="bi bi-box-seam"></i> Sản phẩm
                     </a>
                 </li>
                 
                 <li class="nav-item">
-                    <a class="nav-link" href="/admin/modules/categories/">
+                    <a class="nav-link" href="/admin/modules/categories/index.php">
                         <i class="bi bi-folder"></i> Danh mục
                     </a>
                 </li>
                 
                 <li class="nav-item">
-                    <a class="nav-link" href="/admin/modules/shops/">
+                    <a class="nav-link" href="/admin/modules/shops/index.php">
                         <i class="bi bi-shop"></i> Cửa hàng
                     </a>
                 </li>
                 
                 <li class="nav-item">
-                    <a class="nav-link" href="/admin/modules/users/">
+                    <a class="nav-link" href="/admin/modules/users/index.php">
                         <i class="bi bi-people"></i> Người dùng
+                    </a>
+                </li>
+                
+                <li class="nav-item">
+                    <a class="nav-link" href="/admin/modules/payments/index.php">
+                        <i class="bi bi-credit-card"></i> Thanh toán
                     </a>
                 </li>
                 
