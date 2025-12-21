@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../../includes/init.php';
+require_once __DIR__ . '/../../../includes/init.php';
 Auth::requireRole(ROLE_ADMIN, '/login.php');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -19,7 +19,7 @@ if (empty($ids)) {
 }
 
 $db = Database::getInstance();
-require_once __DIR__ . '/../../includes/services/AdminOrderService.php';
+require_once __DIR__ . '/../../../includes/services/AdminOrderService.php';
 $service = new AdminOrderService($db);
 
 $status = null;

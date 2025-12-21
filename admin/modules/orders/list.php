@@ -1,11 +1,11 @@
 <?php
-require_once __DIR__ . '/../../includes/init.php';
+require_once __DIR__ . '/../../../includes/init.php';
 Auth::requireRole(ROLE_ADMIN, '/login.php');
 
 header('Content-Type: application/json');
 
 $db = Database::getInstance();
-require_once __DIR__ . '/../../includes/services/AdminOrderService.php';
+require_once __DIR__ . '/../../../includes/services/AdminOrderService.php';
 $service = new AdminOrderService($db);
 
 $status = isset($_GET['status']) ? trim($_GET['status']) : '';

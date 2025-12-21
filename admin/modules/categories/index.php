@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../../includes/init.php';
+require_once __DIR__ . '/../../../includes/init.php';
 Auth::requireRole(ROLE_ADMIN, '/login.php');
 
 $db = Database::getInstance();

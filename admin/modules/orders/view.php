@@ -1,9 +1,9 @@
 <?php
-require_once __DIR__ . '/../../includes/init.php';
+require_once __DIR__ . '/../../../includes/init.php';
 Auth::requireRole(ROLE_ADMIN, '/login.php');
 
 $db = Database::getInstance();
-require_once __DIR__ . '/../../includes/services/AdminOrderService.php';
+require_once __DIR__ . '/../../../includes/services/AdminOrderService.php';
 $service = new AdminOrderService($db);
 
 $orderId = intval($_GET['id'] ?? 0);
