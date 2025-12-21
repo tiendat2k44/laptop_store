@@ -111,7 +111,7 @@ include __DIR__ . '/../../../includes/header.php';
                         </td>
                         <td><small><?= formatDate($order['created_at']) ?></small></td>
                         <td>
-                            <a href="#" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i> Xem</a>
+                            <a href="<?php echo SITE_URL; ?>/shop/modules/orders/view.php?id=<?= (int)$order['id'] ?>" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i> Xem</a>
                         </td>
                     </tr>
                     <?php endforeach; ?>
