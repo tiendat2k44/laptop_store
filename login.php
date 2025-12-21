@@ -16,8 +16,17 @@ $errors = [];
 $formData = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Rate limiting - chống brute force (5 attempts per 5 minutes)
+    $ipAddress = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+    $limiter = new RateLimiter('login_' . $ipAddress);
+    
+    if (!$limiter->isAllowed(5, 300)) {
+        $remaining = $limiter->getRemainingAttempts(5, 300);
+        $errors[] = 'Quá nhiều lần đăng nhập thất bại. Vui lòng thử lại sau 5 phút.';
+    }
+    
     // Kiểm tra CSRF token
-    if (!Session::verifyToken($_POST['csrf_token'] ?? '')) {
+    elseif (!Session::verifyToken($_POST['csrf_token'] ?? '')) {
         $errors[] = 'Token bảo mật không hợp lệ';
     } else {
         $email = trim($_POST['email'] ?? '');

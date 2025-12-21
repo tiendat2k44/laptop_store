@@ -4,6 +4,9 @@
  * Load all required files and start session
  */
 
+// Load environment variables
+require_once __DIR__ . '/core/Env.php';
+
 // Load configuration
 require_once __DIR__ . '/config/config.php';
 
@@ -11,6 +14,8 @@ require_once __DIR__ . '/config/config.php';
 require_once __DIR__ . '/core/Database.php';
 require_once __DIR__ . '/core/Session.php';
 require_once __DIR__ . '/core/Auth.php';
+require_once __DIR__ . '/core/RateLimiter.php';
+require_once __DIR__ . '/core/SecurityHeaders.php';
 
 // Load helper functions
 require_once __DIR__ . '/helpers/functions.php';
@@ -19,6 +24,10 @@ require_once __DIR__ . '/helpers/mailer.php';
 require_once __DIR__ . '/helpers/email_templates.php';
 // SEO helper
 require_once __DIR__ . '/helpers/seo.php';
+
+// Apply security headers
+$isHttps = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+SecurityHeaders::apply($isHttps);
 
 // Start session
 Session::start();
@@ -30,3 +39,4 @@ if (!ini_get('display_errors')) {
         return true;
     });
 }
+
