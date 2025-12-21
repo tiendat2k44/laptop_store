@@ -45,8 +45,8 @@ include __DIR__ . '/includes/header.php';
                 ?>
                 <div class="list-group-item d-flex align-items-center gap-3 p-3">
                     <!-- Ảnh sản phẩm -->
-                    <img src="<?= image_url($item['product_thumbnail']) ?>" 
-                         alt="<?= escape($item['product_name']) ?>" 
+                    <img src="<?= image_url($item['main_image'] ?? '') ?>" 
+                         alt="<?= escape($item['name'] ?? '') ?>" 
                          class="rounded flex-shrink-0" 
                          style="width: 80px; height: 80px; object-fit: cover;">
 
@@ -54,7 +54,7 @@ include __DIR__ . '/includes/header.php';
                     <div class="flex-grow-1">
                         <a href="<?= SITE_URL ?>/product-detail.php?id=<?= (int)$item['product_id'] ?>" 
                            class="text-decoration-none fw-bold text-dark">
-                            <?= escape($item['product_name']) ?>
+                            <?= escape($item['name'] ?? '') ?>
                         </a>
                         <div class="text-muted small mt-1">
                             Còn <?= (int)$item['stock_quantity'] ?> trong kho

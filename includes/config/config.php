@@ -18,7 +18,7 @@ define('DB_NAME', 'laptop_store');
 define('DB_USER', 'postgres');
 define('DB_PASS', 'your_password_here');
 
-// Cấu hình Website (tự động nhận thư mục triển khai để tránh sai base URL)
+// Cấu hình Website (tự động nhận base URL đúng gốc dự án)
 define('SITE_NAME', 'Laptop Store');
 $defaultSiteUrl = 'http://localhost/laptop_store';
 if (PHP_SAPI === 'cli' || empty($_SERVER['HTTP_HOST'])) {
@@ -26,9 +26,25 @@ if (PHP_SAPI === 'cli' || empty($_SERVER['HTTP_HOST'])) {
 } else {
 	$scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
 	$host = $_SERVER['HTTP_HOST'];
-	$scriptDir = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/')), '/');
-	$scriptDir = $scriptDir === '/' ? '' : $scriptDir;
-	define('SITE_URL', $scheme . '://' . $host . $scriptDir);
+	// Tính relative path từ document root tới ROOT_PATH (gốc dự án)
+	$docRoot = rtrim(str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT'] ?? ''), '/');
+	$rootPath = rtrim(str_replace('\\', '/', ROOT_PATH), '/');
+	$basePath = '';
+	if ($docRoot !== '' && strpos($rootPath, $docRoot) === 0) {
+		$basePath = substr($rootPath, strlen($docRoot));
+	}
+	if ($basePath === '' || $basePath === false) {
+		// Fallback: dùng thư mục gốc của script nhưng loại bỏ phần phụ như /account, /admin
+		$scriptDir = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/')), '/');
+		// Lấy 2 cấp trên cùng làm base (ví dụ /TienDat123/laptop_store-main)
+		$parts = array_values(array_filter(explode('/', $scriptDir)));
+		if (count($parts) >= 2) {
+			$basePath = '/' . $parts[0] . '/' . $parts[1];
+		} else {
+			$basePath = $scriptDir === '/' ? '' : $scriptDir;
+		}
+	}
+	define('SITE_URL', $scheme . '://' . $host . rtrim($basePath, '/'));
 }
 define('SITE_EMAIL', 'support@laptopstore.com');
 

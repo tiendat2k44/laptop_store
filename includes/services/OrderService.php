@@ -19,19 +19,9 @@ class OrderService {
             
             // 1️⃣ Tạo đơn hàng chính
             $orderNumber = $this->generateOrderNumber();
-            $orderSql = "INSERT INTO orders (
-                order_number, user_id,
-                recipient_name, recipient_phone, shipping_address, city, district, ward,
-                subtotal, shipping_fee, discount_amount, total_amount,
-                payment_method, payment_status, status, notes, created_at
-            ) VALUES (
-                :order_number, :user_id,
-                :recipient_name, :recipient_phone, :shipping_address, :city, :district, :ward,
-                :subtotal, :shipping_fee, :discount_amount, :total_amount,
-                :payment_method, 'pending', 'pending', :notes, CURRENT_TIMESTAMP
-            ) RETURNING id";
-            
-            $orderRow = $this->db->queryOne($orderSql, [
+            // Chèn đơn hàng, tương thích cả PostgreSQL (RETURNING) và MySQL (lastInsertId)
+            $driver = $this->db->getConnection()->getAttribute(PDO::ATTR_DRIVER_NAME);
+            $params = [
                 'order_number' => $orderNumber,
                 'user_id' => $this->userId,
                 'recipient_name' => $shipping['name'],
@@ -46,9 +36,42 @@ class OrderService {
                 'total_amount' => $amounts['total_amount'],
                 'payment_method' => $shipping['payment_method'],
                 'notes' => $shipping['notes'] ?? ''
-            ]);
-            
-            $orderId = $orderRow['id'] ?? null;
+            ];
+
+            if ($driver === 'pgsql') {
+                $orderRow = $this->db->queryOne(
+                    "INSERT INTO orders (
+                        order_number, user_id,
+                        recipient_name, recipient_phone, shipping_address, city, district, ward,
+                        subtotal, shipping_fee, discount_amount, total_amount,
+                        payment_method, payment_status, status, notes, created_at
+                    ) VALUES (
+                        :order_number, :user_id,
+                        :recipient_name, :recipient_phone, :shipping_address, :city, :district, :ward,
+                        :subtotal, :shipping_fee, :discount_amount, :total_amount,
+                        :payment_method, 'pending', 'pending', :notes, CURRENT_TIMESTAMP
+                    ) RETURNING id",
+                    $params
+                );
+                $orderId = $orderRow['id'] ?? null;
+            } else {
+                $this->db->insert(
+                    "INSERT INTO orders (
+                        order_number, user_id,
+                        recipient_name, recipient_phone, shipping_address, city, district, ward,
+                        subtotal, shipping_fee, discount_amount, total_amount,
+                        payment_method, payment_status, status, notes, created_at
+                    ) VALUES (
+                        :order_number, :user_id,
+                        :recipient_name, :recipient_phone, :shipping_address, :city, :district, :ward,
+                        :subtotal, :shipping_fee, :discount_amount, :total_amount,
+                        :payment_method, 'pending', 'pending', :notes, NOW()
+                    )",
+                    $params
+                );
+                // Lấy ID theo cách MySQL
+                $orderId = (int)$this->db->getConnection()->lastInsertId();
+            }
             if (!$orderId) {
                 throw new Exception('Không thể tạo đơn hàng');
             }
