@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../../includes/init.php';
+require_once __DIR__ . '/../includes/init.php';
 
 header('Content-Type: application/json');
 
@@ -19,7 +19,7 @@ if ($code === '') {
 }
 
 $db = Database::getInstance();
-require_once __DIR__ . '/../../includes/services/CouponService.php';
+require_once __DIR__ . '/../includes/services/CouponService.php';
 $coupon = new CouponService($db);
 
 $result = $coupon->validateCoupon($code, $subtotal);

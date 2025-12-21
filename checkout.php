@@ -575,10 +575,20 @@ function loadSavedAddresses() {
             csrf_token: document.querySelector('input[name="csrf_token"]').value
         })
     })
-    .then(r => r.json())
+    .then(r => {
+        if (!r.ok) {
+            console.warn('Address fetch failed:', r.status);
+            return { success: false, addresses: [] };
+        }
+        return r.json();
+    })
     .then(res => {
+        if (!res || !res.success) {
+            console.log('No saved addresses or table not exists');
+            return;
+        }
         const container = document.getElementById('savedAddressesList');
-        if (res.success && res.addresses.length > 0) {
+        if (res.addresses && res.addresses.length > 0) {
             let html = '<div class="mb-3"><label class="form-label">Hoặc chọn địa chỉ đã lưu</label><div class="row g-2">';
             res.addresses.forEach(addr => {
                 html += `<div class="col-md-6">
@@ -592,6 +602,10 @@ function loadSavedAddresses() {
             html += '</div></div><hr>';
             container.innerHTML = html;
         }
+    })
+    .catch(e => {
+        console.warn('Address load error:', e.message);
+        // Silent fail - không ảnh hưởng checkout
     });
 }
 
