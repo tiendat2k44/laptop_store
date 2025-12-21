@@ -35,7 +35,7 @@ include __DIR__ . '/includes/header.php';
 
     <!-- Trường hợp: Có sản phẩm trong giỏ -->
     <?php else: ?>
-    <form id="checkoutForm" method="POST" action="<?= SITE_URL ?>/checkout.php">
+    <form id="checkoutForm" method="POST" action="/checkout.php">
     <input type="hidden" name="csrf_token" value="<?= Session::getToken() ?>">
     <div class="row">
         <!-- Cột trái: Danh sách sản phẩm -->
