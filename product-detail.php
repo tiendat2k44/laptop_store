@@ -217,9 +217,11 @@ $discount = calculateDiscount($product['price'], $product['sale_price']);
                         <?= $product['stock_quantity'] <= 0 ? 'disabled' : '' ?>>
                     <i class="bi bi-cart-plus fs-5 me-2"></i> Thêm vào giỏ hàng
                 </button>
-                <a href="<?= SITE_URL ?>/checkout.php" class="btn btn-primary btn-lg fw-bold py-3">
+                <button class="btn btn-primary btn-lg fw-bold py-3" 
+                        onclick="buyNow(<?= (int)$productId ?>)"
+                        <?= $product['stock_quantity'] <= 0 ? 'disabled' : '' ?>>
                     <i class="bi bi-lightning-charge fs-5 me-2"></i> Mua ngay
-                </a>
+                </button>
             </div>
 
             <!-- Thông tin cửa hàng -->
@@ -498,6 +500,16 @@ function updateImageSelection(element) {
     element.classList.remove('border-light', 'border-2');
     element.classList.add('border-primary', 'border-3');
     element.style.opacity = '1';
+}
+
+function buyNow(productId) {
+    // Thêm sản phẩm vào giỏ hàng
+    addToCart(productId);
+    
+    // Redirect đến trang thanh toán sau 500ms để đảm bảo giỏ hàng cập nhật
+    setTimeout(() => {
+        window.location.href = '<?= SITE_URL ?>/checkout.php';
+    }, 500);
 }
 </script>
 
