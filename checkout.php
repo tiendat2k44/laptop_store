@@ -69,8 +69,13 @@ if (!$orderSuccess) {
 $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    error_log('=== CHECKOUT POST START ===');
+    error_log('User ID: ' . Auth::id());
+    error_log('Payment Method: ' . ($_POST['payment_method'] ?? 'not set'));
+    
     // Kiểm tra CSRF token
     if (!Session::verifyToken($_POST['csrf_token'] ?? '')) {
+        error_log('CSRF token verification FAILED');
         $errors[] = 'Lỗi bảo mật: CSRF token không hợp lệ';
     } else {
         // Lấy & chuẩn hóa dữ liệu từ form
@@ -100,6 +105,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!in_array($shipping['payment_method'], ['COD', 'MOMO', 'VNPAY'], true)) {
             $errors[] = 'Phương thức thanh toán không hợp lệ';
         }
+        
+        error_log('Validation errors: ' . count($errors));
+        if (!empty($errors)) {
+            error_log('Validation failed: ' . json_encode($errors));
+        }
 
         // Nếu hợp lệ, kiểm tra lại tồn kho trước khi tạo đơn
         if (empty($errors)) {
@@ -123,6 +133,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Nếu vẫn hợp lệ sau kiểm tra tồn kho, tạo đơn hàng
         if (empty($errors)) {
+            error_log('Starting order creation...');
+            error_log('Items count: ' . count($items));
+            error_log('Total amount: ' . $amounts['total_amount']);
+            
             // Xử lý coupon nếu có
             $appliedCoupon = trim($_POST['applied_coupon_code'] ?? '');
             $appliedDiscount = (float)($_POST['applied_discount'] ?? 0);
@@ -139,8 +153,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $result = $orderService->createOrder($shipping, $items, $amounts);
+            
+            error_log('Order creation result: ' . json_encode($result));
 
             if (is_array($result) && !empty($result['id'])) {
+                error_log('Order created successfully! ID: ' . $result['id'] . ', Number: ' . $result['order_number']);
+                
                 // KHÔNG XÓA giỏ hàng - giữ lại để user có thể mua tiếp
                 // User có thể xóa thủ công hoặc tự động clear sau vài ngày
                 // $cart->clear();
@@ -151,15 +169,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // Redirect theo phương thức thanh toán
                 if ($shipping['payment_method'] === 'VNPAY') {
+                    error_log('Redirecting to VNPay...');
                     redirect('/payment/vnpay-return.php?id=' . (int)$result['id']);
                 } elseif ($shipping['payment_method'] === 'MOMO') {
+                    error_log('Redirecting to MoMo...');
                     redirect('/payment/momo-return.php?id=' . (int)$result['id']);
                 } else {
                     // COD: chuyển sang màn hình thành công tại checkout
+                    error_log('COD order - Redirecting to success page...');
                     Session::set('last_order_id', (int)$result['id']);
                     redirect('/checkout.php?order_id=' . (int)$result['id']);
                 }
             } else {
+                error_log('Order creation FAILED! Result: ' . var_export($result, true));
                 $errors[] = 'Không thể tạo đơn hàng. Vui lòng thử lại.';
             }
         }

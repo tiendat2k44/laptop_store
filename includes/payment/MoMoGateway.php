@@ -294,8 +294,4 @@ class MoMoGateway {
         return self::RESULT_CODES[$code] ?? 'Mã lỗi không xác định';
     }
 }
-        $computedSignature = hash_hmac("sha256", $rawHash, $this->secretKey);
-        
-        return $computedSignature === $rawSignature;
-    }
-}
+

@@ -115,7 +115,7 @@ include __DIR__ . '/../includes/header.php';
                         <strong>Số tiền:</strong> <?= formatPrice($order['total_amount']) ?>
                     </div>
                     <?php if ($paymentRequest['success']): ?>
-                    <form method="POST" action="<?= $paymentRequest['url'] ?>" id="momoForm">
+                    <form method="POST" action="<?= escape($endpoint) ?>" id="momoForm">
                         <?php foreach ($paymentRequest['data'] as $key => $val): ?>
                         <input type="hidden" name="<?= $key ?>" value="<?= escape($val) ?>">
                         <?php endforeach; ?>
