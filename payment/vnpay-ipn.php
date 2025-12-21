@@ -29,7 +29,8 @@ if ($responseCode === '00' && $txnRef) {
              SET payment_status = 'paid', 
                  payment_transaction_id = :txn,
                  paid_at = CURRENT_TIMESTAMP,
-                 updated_at = CURRENT_TIMESTAMP
+                 updated_at = CURRENT_TIMESTAMP,
+                 status = CASE WHEN status = 'pending' THEN 'confirmed' ELSE status END
              WHERE id = :id",
             ['txn' => $txnRef, 'id' => $orderId]
         );

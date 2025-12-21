@@ -147,15 +147,24 @@ include __DIR__ . '/../includes/header.php';
                             <i class="bi bi-eye"></i> Chi tiết
                         </a>
                         <?php if (in_array($status, ['pending','confirmed'], true) && $paymentStatus !== 'paid'): ?>
+                        <?php $method = $order['payment_method'] ?? 'COD'; ?>
                         <div class="btn-group" role="group" aria-label="Pay again">
-                            <a href="<?= SITE_URL ?>/payment/momo-return.php?id=<?= (int)$order['id'] ?>" 
-                               class="btn btn-sm btn-outline-success">
+                            <?php if ($method === 'MOMO'): ?>
+                            <a href="<?= SITE_URL ?>/payment/momo-return.php?id=<?= (int)$order['id'] ?>" class="btn btn-sm btn-outline-success">
                                 <i class="bi bi-wallet2"></i> Thanh toán MoMo
                             </a>
-                            <a href="<?= SITE_URL ?>/payment/vnpay-return.php?id=<?= (int)$order['id'] ?>" 
-                               class="btn btn-sm btn-outline-primary">
+                            <?php elseif ($method === 'VNPAY'): ?>
+                            <a href="<?= SITE_URL ?>/payment/vnpay-return.php?id=<?= (int)$order['id'] ?>" class="btn btn-sm btn-outline-primary">
                                 <i class="bi bi-credit-card"></i> Thanh toán VNPay
                             </a>
+                            <?php else: ?>
+                            <a href="<?= SITE_URL ?>/payment/momo-return.php?id=<?= (int)$order['id'] ?>" class="btn btn-sm btn-outline-success">
+                                <i class="bi bi-wallet2"></i> Thanh toán MoMo
+                            </a>
+                            <a href="<?= SITE_URL ?>/payment/vnpay-return.php?id=<?= (int)$order['id'] ?>" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-credit-card"></i> Thanh toán VNPay
+                            </a>
+                            <?php endif; ?>
                             <button type="button" class="btn btn-sm btn-outline-danger btn-cancel-order" data-order-id="<?= (int)$order['id'] ?>">
                                 <i class="bi bi-x-circle"></i> Hủy đơn
                             </button>

@@ -42,7 +42,8 @@ if (!empty($_GET['vnp_ResponseCode'])) {
              SET payment_status = 'paid',
                  payment_transaction_id = :txn,
                  paid_at = CURRENT_TIMESTAMP,
-                 updated_at = CURRENT_TIMESTAMP
+                 updated_at = CURRENT_TIMESTAMP,
+                 status = CASE WHEN status = 'pending' THEN 'confirmed' ELSE status END
              WHERE id = :id",
             ['txn' => $transactionId, 'id' => $orderId]
         );
