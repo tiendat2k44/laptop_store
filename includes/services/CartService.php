@@ -61,6 +61,24 @@ class CartService {
             ['user_id' => $this->userId]
         );
     }
+    
+    /**
+     * Xóa các items được chọn (sau khi checkout một phần)
+     * @param array $itemIds Danh sách item_id cần xóa
+     */
+    public function clearSelectedItems($itemIds) {
+        if (empty($itemIds)) {
+            return;
+        }
+        
+        $placeholders = implode(',', array_fill(0, count($itemIds), '?'));
+        $params = array_merge([$this->userId], $itemIds);
+        
+        $this->db->execute(
+            "DELETE FROM cart_items WHERE user_id = ? AND id IN ($placeholders)",
+            $params
+        );
+    }
 }
 
 ?>

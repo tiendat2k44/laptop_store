@@ -13,6 +13,33 @@ if (!Session::verifyToken($_POST['csrf_token'] ?? '')) {
     jsonResponse(['success' => false, 'message' => 'Invalid CSRF token'], 403);
 }
 
+// Xóa nhiều items (comma-separated IDs)
+if (isset($_POST['item_ids']) && !empty($_POST['item_ids'])) {
+    $itemIds = explode(',', $_POST['item_ids']);
+    $itemIds = array_map('intval', $itemIds);
+    $itemIds = array_filter($itemIds);
+    
+    if (empty($itemIds)) {
+        jsonResponse(['success' => false, 'message' => 'No items to delete']);
+    }
+    
+    $placeholders = implode(',', array_fill(0, count($itemIds), '?'));
+    $params = array_merge([Auth::id()], $itemIds);
+    
+    $db = Database::getInstance();
+    $result = $db->execute(
+        "DELETE FROM cart_items WHERE user_id = ? AND id IN ($placeholders)",
+        $params
+    );
+    
+    if ($result !== false) {
+        jsonResponse(['success' => true, 'message' => 'Đã xóa ' . count($itemIds) . ' sản phẩm']);
+    } else {
+        jsonResponse(['success' => false, 'message' => 'Không thể xóa sản phẩm']);
+    }
+}
+
+// Xóa 1 item (legacy)
 $itemId = intval($_POST['item_id'] ?? 0);
 
 if ($itemId <= 0) {

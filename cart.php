@@ -35,15 +35,38 @@ include __DIR__ . '/includes/header.php';
 
     <!-- Trường hợp: Có sản phẩm trong giỏ -->
     <?php else: ?>
+    <form id="checkoutForm" method="POST" action="<?= SITE_URL ?>/checkout.php">
     <div class="row">
         <!-- Cột trái: Danh sách sản phẩm -->
         <div class="col-lg-8 mb-4">
+            <!-- Nút chọn tất cả -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="selectAll" checked>
+                    <label class="form-check-label fw-bold" for="selectAll">
+                        Chọn tất cả (<span id="selectedCount"><?= count($items) ?></span> sản phẩm)
+                    </label>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-danger" id="deleteSelected">
+                    <i class="bi bi-trash"></i> Xóa đã chọn
+                </button>
+            </div>
+            
             <div class="list-group">
                 <?php foreach ($items as $item):
                     $price = getDisplayPrice($item['price'], $item['sale_price']);
                     $itemTotal = $price * $item['quantity'];
                 ?>
                 <div class="list-group-item d-flex align-items-center gap-3 p-3">
+                    <!-- Checkbox chọn -->
+                    <div class="form-check">
+                        <input class="form-check-input item-checkbox" 
+                               type="checkbox" 
+                               name="selected_items[]" 
+                               value="<?= (int)$item['item_id'] ?>" 
+                               data-product-id="<?= (int)$item['product_id'] ?>"
+                               checked>
+                    </div>
                     <!-- Ảnh sản phẩm -->
                     <img src="<?= image_url($item['main_image'] ?? '') ?>" 
                          alt="<?= escape($item['name'] ?? '') ?>" 
@@ -132,7 +155,77 @@ include __DIR__ . '/includes/header.php';
             </div>
         </div>
     </div>
+    </form>
     <?php endif; ?>
 </div>
+
+<script>
+// Xử lý checkbox chọn tất cả
+document.getElementById('selectAll')?.addEventListener('change', function() {
+    const checkboxes = document.querySelectorAll('.item-checkbox');
+    checkboxes.forEach(cb => cb.checked = this.checked);
+    updateSelectedCount();
+    updateTotal();
+});
+
+// Cập nhật số lượng đã chọn
+document.querySelectorAll('.item-checkbox').forEach(cb => {
+    cb.addEventListener('change', function() {
+        updateSelectedCount();
+        updateTotal();
+    });
+});
+
+function updateSelectedCount() {
+    const count = document.querySelectorAll('.item-checkbox:checked').length;
+    document.getElementById('selectedCount').textContent = count;
+}
+
+function updateTotal() {
+    // Tính lại tổng cộng chỉ của items được chọn
+    let total = 0;
+    document.querySelectorAll('.item-checkbox:checked').forEach(cb => {
+        const itemDiv = cb.closest('.list-group-item');
+        const priceText = itemDiv.querySelector('.text-danger.fw-bold').textContent;
+        const price = parseInt(priceText.replace(/[^0-9]/g, ''));
+        total += price;
+    });
+    
+    // Cập nhật hiển thị
+    const totalElements = document.querySelectorAll('.text-danger');
+    totalElements[totalElements.length - 1].textContent = 
+        new Intl.NumberFormat('vi-VN', {style: 'currency', currency: 'VND'}).format(total);
+}
+
+// Xóa các items đã chọn
+document.getElementById('deleteSelected')?.addEventListener('click', function() {
+    const selected = document.querySelectorAll('.item-checkbox:checked');
+    if (selected.length === 0) {
+        alert('Vui lòng chọn sản phẩm cần xóa');
+        return;
+    }
+    if (!confirm(`Xóa ${selected.length} sản phẩm đã chọn?`)) return;
+    
+    const itemIds = Array.from(selected).map(cb => cb.value);
+    
+    fetch('<?= SITE_URL ?>/ajax/cart-remove.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: new URLSearchParams({
+            item_ids: itemIds.join(','),
+            csrf_token: document.querySelector('meta[name="csrf-token"]').content
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert(data.message || 'Không thể xóa');
+        }
+    })
+    .catch(() => alert('Có lỗi xảy ra'));
+});
+</script>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>

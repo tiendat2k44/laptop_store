@@ -44,7 +44,18 @@ if ($successOrderId > 0) {
 // Chỉ tải giỏ hàng và tính tiền nếu chưa ở màn hình thành công
 if (!$orderSuccess) {
     // Lấy giỏ hàng
-    $items = $cart->getItems();
+    $allItems = $cart->getItems();
+    
+    // Nếu có selected_items từ form, chỉ lấy những items được chọn
+    $selectedItemIds = isset($_POST['selected_items']) && is_array($_POST['selected_items']) 
+        ? array_map('intval', $_POST['selected_items'])
+        : array_column($allItems, 'item_id'); // Mặc định lấy tất cả
+    
+    // Filter items theo selection
+    $items = array_filter($allItems, function($item) use ($selectedItemIds) {
+        return in_array($item['item_id'], $selectedItemIds, true);
+    });
+    
     if (empty($items)) {
         Session::setFlash('error', 'Giỏ hàng trống, vui lòng thêm sản phẩm trước khi thanh toán');
         redirect('/products.php');
@@ -159,9 +170,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (is_array($result) && !empty($result['id'])) {
                 error_log('Order created successfully! ID: ' . $result['id'] . ', Number: ' . $result['order_number']);
                 
-                // KHÔNG XÓA giỏ hàng - giữ lại để user có thể mua tiếp
-                // User có thể xóa thủ công hoặc tự động clear sau vài ngày
-                // $cart->clear();
+                // Xóa các items đã checkout khỏi giỏ hàng
+                $selectedItemIds = isset($_POST['selected_items']) && is_array($_POST['selected_items'])
+                    ? array_map('intval', $_POST['selected_items'])
+                    : array_column($items, 'item_id');
+                
+                if (!empty($selectedItemIds)) {
+                    $cart->clearSelectedItems($selectedItemIds);
+                    error_log('Cleared ' . count($selectedItemIds) . ' items from cart');
+                }
                 
                 // Clear coupon session
                 Session::set('checkout_coupon_code', null);
