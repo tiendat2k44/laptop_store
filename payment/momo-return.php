@@ -10,7 +10,7 @@ $db = Database::getInstance();
 $orderId = (int)($_GET['id'] ?? 0);
 if ($orderId <= 0) {
     Session::setFlash('error', 'Đơn hàng không hợp lệ');
-    redirect('/checkout.php');
+    redirect('/account/orders.php');
 }
 
 $order = $db->queryOne(
@@ -20,7 +20,7 @@ $order = $db->queryOne(
 
 if (!$order) {
     Session::setFlash('error', 'Không tìm thấy đơn hàng');
-    redirect('/checkout.php');
+    redirect('/account/orders.php');
 }
 
 // ========================================
@@ -67,7 +67,7 @@ if (!empty($_GET['resultCode'])) {
     } else {
         // Thanh toán thất bại
         Session::setFlash('error', 'Thanh toán thất bại: ' . escape($message));
-        redirect('/checkout.php');
+        redirect('/account/order-detail.php?id=' . $orderId);
     }
 }
 
@@ -94,7 +94,7 @@ try {
 } catch (Throwable $e) {
     error_log('MoMo payment error: ' . $e->getMessage());
     Session::setFlash('error', 'Lỗi thanh toán: ' . $e->getMessage());
-    redirect('/checkout.php');
+    redirect('/account/order-detail.php?id=' . $orderId);
 }
 
 $pageTitle = 'Thanh toán MoMo';
