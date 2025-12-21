@@ -26,20 +26,18 @@ $orderSuccess = false;
 $orderNumber = null;
 $successOrderId = null;
 
-// Nếu quay lại bằng URL thành công, bỏ qua kiểm tra giỏ hàng trống
-if (isset($_GET['success']) && intval($_GET['success']) === 1) {
-    $successOrderId = intval($_GET['order_id'] ?? 0);
-    if ($successOrderId <= 0) {
-        $successOrderId = intval(Session::get('last_order_id') ?? 0);
-    }
-    if ($successOrderId > 0) {
-        $order = $orderService->getOrderDetail($successOrderId);
-        if ($order) {
-            $orderSuccess = true;
-            $orderNumber = $order['order_number'];
-            // Dọn session để tránh hiển thị sai khi refresh/quay lại
-            Session::set('last_order_id', null);
-        }
+// Nếu có order_id trong URL hoặc Session, hiển thị trang thành công và bỏ qua kiểm tra giỏ hàng trống
+$successOrderId = intval($_GET['order_id'] ?? 0);
+if ($successOrderId <= 0) {
+    $successOrderId = intval(Session::get('last_order_id') ?? 0);
+}
+if ($successOrderId > 0) {
+    $order = $orderService->getOrderDetail($successOrderId);
+    if ($order) {
+        $orderSuccess = true;
+        $orderNumber = $order['order_number'];
+        // Dọn session để tránh hiển thị sai khi refresh/quay lại
+        Session::set('last_order_id', null);
     }
 }
 
