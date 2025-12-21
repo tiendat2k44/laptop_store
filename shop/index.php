@@ -246,10 +246,10 @@ include __DIR__ . '/../includes/header.php';
                 <div class="card-body">
                     <h5 class="card-title mb-3">Quản lý nhanh</h5>
                     <div class="d-flex flex-wrap gap-2">
-                        <a href="<?= SITE_URL ?>/shop/products.php" class="btn btn-primary">
+                        <a href="<?= SITE_URL ?>/shop/modules/products/index.php" class="btn btn-primary">
                             <i class="bi bi-laptop"></i> Quản lý sản phẩm
                         </a>
-                        <a href="<?= SITE_URL ?>/shop/orders.php" class="btn btn-warning">
+                        <a href="<?= SITE_URL ?>/shop/modules/orders/index.php" class="btn btn-warning">
                             <i class="bi bi-cart"></i> Quản lý đơn hàng
                         </a>
                         <a href="<?= SITE_URL ?>/shop/profile.php" class="btn btn-outline-secondary">
