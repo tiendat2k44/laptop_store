@@ -101,7 +101,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = 'Phương thức thanh toán không hợp lệ';
         }
 
-        // Nếu hợp lệ, tạo đơn hàng
+        // Nếu hợp lệ, kiểm tra lại tồn kho trước khi tạo đơn
+        if (empty($errors)) {
+            $stockErrors = [];
+            foreach ($items as $it) {
+                $available = (int)($it['stock_quantity'] ?? 0);
+                $need = (int)($it['quantity'] ?? 0);
+                if ($need <= 0) {
+                    $stockErrors[] = 'Số lượng sản phẩm không hợp lệ.';
+                    continue;
+                }
+                if ($available < $need) {
+                    $stockErrors[] = 'Sản phẩm "' . ($it['name'] ?? 'không xác định') . '" chỉ còn ' . $available . ' trong kho.';
+                }
+            }
+            if (!empty($stockErrors)) {
+                $errors = array_merge($errors, $stockErrors);
+            }
+
+        }
+
+        // Nếu vẫn hợp lệ sau kiểm tra tồn kho, tạo đơn hàng
         if (empty($errors)) {
             // Xử lý coupon nếu có
             $appliedCoupon = trim($_POST['applied_coupon_code'] ?? '');
@@ -134,9 +154,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } elseif ($shipping['payment_method'] === 'MOMO') {
                     redirect('/payment/momo-return.php?id=' . (int)$result['id']);
                 } else {
-                    // COD: chuyển sang trang thành công
+                    // COD: chuyển sang màn hình thành công tại checkout
                     Session::set('last_order_id', (int)$result['id']);
-                    redirect('/order-success.php?order_id=' . (int)$result['id']);
+                    redirect('/checkout.php?order_id=' . (int)$result['id']);
                 }
             } else {
                 $errors[] = 'Không thể tạo đơn hàng. Vui lòng thử lại.';
