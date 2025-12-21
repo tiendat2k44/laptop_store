@@ -41,7 +41,7 @@ foreach ($orders as $o): ?>
     <td><?= getPaymentStatusBadge($o['payment_status']) ?></td>
     <td><small class="text-muted"><?= formatDate($o['created_at']) ?></small></td>
     <td>
-        <a href="/admin/modules/orders/view.php?id=<?= (int)$o['id'] ?>" class="btn btn-sm btn-outline-primary">
+        <a href="<?php echo SITE_URL; ?>/admin/modules/orders/view.php?id=<?= (int)$o['id'] ?>" class="btn btn-sm btn-outline-primary">
             <i class="bi bi-eye"></i>
         </a>
     </td>

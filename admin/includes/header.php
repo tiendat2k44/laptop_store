@@ -112,7 +112,7 @@
     <!-- Top Navigation -->
     <nav class="navbar navbar-dark bg-dark">
         <div class="container-fluid">
-            <a class="navbar-brand" href="/admin/">
+            <a class="navbar-brand" href="<?php echo SITE_URL; ?>/admin/">
                 <i class="bi bi-speedometer2"></i> Admin Panel - <?php echo SITE_NAME; ?>
             </a>
             
@@ -123,7 +123,7 @@
                 <a href="<?php echo SITE_URL; ?>" class="btn btn-outline-light btn-sm me-2" target="_blank">
                     <i class="bi bi-globe"></i> Xem trang chủ
                 </a>
-                <a href="/logout.php" class="btn btn-outline-danger btn-sm">
+                <a href="<?php echo SITE_URL; ?>/logout.php" class="btn btn-outline-danger btn-sm">
                     <i class="bi bi-box-arrow-right"></i> Đăng xuất
                 </a>
             </div>
@@ -135,43 +135,43 @@
         <div class="sidebar-sticky">
             <ul class="nav flex-column">
                 <li class="nav-item">
-                    <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) === 'index.php' ? 'active' : ''; ?>" href="/admin/">
+                    <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) === 'index.php' ? 'active' : ''; ?>" href="<?php echo SITE_URL; ?>/admin/">
                         <i class="bi bi-house-door"></i> Dashboard
                     </a>
                 </li>
                 
                 <li class="nav-item">
-                    <a class="nav-link" href="/admin/modules/orders/index.php">
+                    <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/modules/orders/index.php">
                         <i class="bi bi-cart-check"></i> Đơn hàng
                     </a>
                 </li>
                 
                 <li class="nav-item">
-                    <a class="nav-link" href="/admin/modules/products/index.php">
+                    <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/modules/products/index.php">
                         <i class="bi bi-box-seam"></i> Sản phẩm
                     </a>
                 </li>
                 
                 <li class="nav-item">
-                    <a class="nav-link" href="/admin/modules/categories/index.php">
+                    <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/modules/categories/index.php">
                         <i class="bi bi-folder"></i> Danh mục
                     </a>
                 </li>
                 
                 <li class="nav-item">
-                    <a class="nav-link" href="/admin/modules/shops/index.php">
+                    <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/modules/shops/index.php">
                         <i class="bi bi-shop"></i> Cửa hàng
                     </a>
                 </li>
                 
                 <li class="nav-item">
-                    <a class="nav-link" href="/admin/modules/users/index.php">
+                    <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/modules/users/index.php">
                         <i class="bi bi-people"></i> Người dùng
                     </a>
                 </li>
                 
                 <li class="nav-item">
-                    <a class="nav-link" href="/admin/modules/payments/index.php">
+                    <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/modules/payments/index.php">
                         <i class="bi bi-credit-card"></i> Thanh toán
                     </a>
                 </li>
@@ -181,7 +181,7 @@
                 </li>
                 
                 <li class="nav-item">
-                    <a class="nav-link" href="/admin/settings.php">
+                    <a class="nav-link" href="<?php echo SITE_URL; ?>/admin/settings.php">
                         <i class="bi bi-gear"></i> Cấu hình
                     </a>
                 </li>

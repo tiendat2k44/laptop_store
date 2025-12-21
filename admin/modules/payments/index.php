@@ -318,7 +318,7 @@ include __DIR__ . '/../../includes/header.php';
                 <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search"></i> Tìm</button>
             </div>
             <div class="col-md-3">
-                <a href="/admin/modules/payments/?tab=transactions" class="btn btn-outline-secondary w-100">
+                <a href="<?php echo SITE_URL; ?>/admin/modules/payments/?tab=transactions" class="btn btn-outline-secondary w-100">
                     <i class="bi bi-x"></i> Xóa bộ lọc
                 </a>
             </div>
@@ -349,7 +349,7 @@ include __DIR__ . '/../../includes/header.php';
                     </td>
                     <td>
                         <?php if ($txn['order_number']): ?>
-                            <a href="/admin/modules/orders/view.php?id=<?= (int)$txn['order_id'] ?>" 
+                            <a href="<?php echo SITE_URL; ?>/admin/modules/orders/view.php?id=<?= (int)$txn['order_id'] ?>" 
                                class="btn btn-sm btn-outline-primary">
                                 <?= escape($txn['order_number']) ?>
                             </a>

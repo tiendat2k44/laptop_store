@@ -75,7 +75,7 @@ include __DIR__ . '/../../includes/header.php';
             </div>
             <div class="col-12 d-flex gap-2">
                 <button class="btn btn-primary"><i class="bi bi-search"></i> Lọc</button>
-                <a href="/admin/modules/orders/" class="btn btn-outline-secondary"><i class="bi bi-x-circle"></i> Xóa lọc</a>
+                <a href="<?php echo SITE_URL; ?>/admin/modules/orders/" class="btn btn-outline-secondary"><i class="bi bi-x-circle"></i> Xóa lọc</a>
             </div>
         </form>
     </div>
@@ -127,7 +127,7 @@ include __DIR__ . '/../../includes/header.php';
                             <td><?= getPaymentStatusBadge($o['payment_status']) ?></td>
                             <td><small class="text-muted"><?= formatDate($o['created_at']) ?></small></td>
                             <td>
-                                <a href="/admin/modules/orders/view.php?id=<?= (int)$o['id'] ?>" class="btn btn-sm btn-outline-primary">
+                                <a href="<?php echo SITE_URL; ?>/admin/modules/orders/view.php?id=<?= (int)$o['id'] ?>" class="btn btn-sm btn-outline-primary">
                                     <i class="bi bi-eye"></i>
                                 </a>
                             </td>

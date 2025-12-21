@@ -199,7 +199,7 @@ include __DIR__ . '/includes/header.php';
                             <button type="submit" class="btn btn-primary">
                                 <i class="bi bi-check-circle"></i> Lưu cài đặt
                             </button>
-                            <a href="/admin/" class="btn btn-secondary">
+                            <a href="<?php echo SITE_URL; ?>/admin/" class="btn btn-secondary">
                                 <i class="bi bi-arrow-left"></i> Quay lại
                             </a>
                         </div>

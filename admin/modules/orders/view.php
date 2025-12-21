@@ -59,7 +59,7 @@ $validPayments = ['pending','paid','failed','refunded'];
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2><i class="bi bi-receipt"></i> Đơn hàng <?= escape($order['order_number']) ?></h2>
-    <a href="/admin/modules/orders/" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Quay lại</a>
+    <a href="<?php echo SITE_URL; ?>/admin/modules/orders/" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Quay lại</a>
 </div>
 
 <div class="row">

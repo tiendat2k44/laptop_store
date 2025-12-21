@@ -236,7 +236,7 @@ include __DIR__ . '/includes/header.php';
         <div class="card shadow-sm">
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="bi bi-clock-history"></i> Đơn hàng gần đây</h5>
-                <a href="/admin/modules/orders/" class="btn btn-sm btn-outline-primary">Xem tất cả</a>
+                <a href="<?php echo SITE_URL; ?>/admin/modules/orders/" class="btn btn-sm btn-outline-primary">Xem tất cả</a>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -260,7 +260,7 @@ include __DIR__ . '/includes/header.php';
                                 <?php foreach ($recentOrders as $order): ?>
                                     <tr>
                                         <td>
-                                            <a href="/admin/modules/orders/view.php?id=<?php echo $order['id']; ?>" class="text-decoration-none fw-bold">
+                                            <a href="<?php echo SITE_URL; ?>/admin/modules/orders/view.php?id=<?php echo $order['id']; ?>" class="text-decoration-none fw-bold">
                                                 <?php echo escape($order['order_number']); ?>
                                             </a>
                                         </td>
