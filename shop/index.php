@@ -11,7 +11,11 @@ $db = Database::getInstance();
 
 // Lấy thông tin shop
 $shop = $db->queryOne(
-    "SELECT id, name, description, logo, banner, status, rating, user_id FROM shops WHERE user_id = :user_id",
+    "SELECT id, name, description, logo, banner, status, 
+            COALESCE(rating, 0) as rating, 
+            COALESCE(total_reviews, 0) as total_reviews,
+            user_id 
+     FROM shops WHERE user_id = :user_id",
     [':user_id' => Auth::id()]
 );
 
@@ -134,7 +138,7 @@ include __DIR__ . '/../includes/header.php';
                     <div class="d-flex align-items-center">
                         <div class="flex-grow-1">
                             <h6 class="text-muted mb-1">Đánh giá</h6>
-                            <h3 class="mb-0"><?= number_format($shop['rating'] ?? 0, 1) ?>/5</h3>
+                            <h3 class="mb-0"><?= isset($shop['rating']) ? number_format($shop['rating'] ?? 0, 1) : '0.0' ?>/5</h3>
                         </div>
                         <div class="fs-1 text-warning">
                             <i class="bi bi-star-fill"></i>
