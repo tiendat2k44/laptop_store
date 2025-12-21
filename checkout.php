@@ -4,7 +4,7 @@ require_once __DIR__ . '/includes/init.php';
 // Kiểm tra đăng nhập
 if (!Auth::check()) {
     Session::setFlash('error', 'Vui lòng đăng nhập để thanh toán');
-    redirect('/login.php?redirect=/checkout.php');
+    redirect(SITE_URL . '/login.php?redirect=' . SITE_URL . '/checkout.php');
 }
 
 // Khởi tạo services
@@ -62,7 +62,7 @@ if (!$orderSuccess) {
         error_log('POST keys: ' . json_encode(array_keys($_POST)));
         error_log('POST data: ' . json_encode($_POST));
         Session::setFlash('error', 'Vui lòng chọn ít nhất một sản phẩm để thanh toán');
-        redirect('/cart.php');
+        redirect(SITE_URL . '/cart.php');
     }
     
     $selectedItemIds = array_map('intval', $_POST['selected_items']);
@@ -75,7 +75,7 @@ if (!$orderSuccess) {
     
     if (empty($items)) {
         Session::setFlash('error', 'Giỏ hàng trống, vui lòng thêm sản phẩm trước khi thanh toán');
-        redirect('/products.php');
+        redirect(SITE_URL . '/products.php');
     }
 
     // Tính toán số tiền
@@ -200,15 +200,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Redirect theo phương thức thanh toán
                 if ($shipping['payment_method'] === 'VNPAY') {
                     error_log('Redirecting to VNPay...');
-                    redirect('/payment/vnpay-return.php?id=' . (int)$result['id']);
+                    redirect(SITE_URL . '/payment/vnpay-return.php?id=' . (int)$result['id']);
                 } elseif ($shipping['payment_method'] === 'MOMO') {
                     error_log('Redirecting to MoMo...');
-                    redirect('/payment/momo-return.php?id=' . (int)$result['id']);
+                    redirect(SITE_URL . '/payment/momo-return.php?id=' . (int)$result['id']);
                 } else {
                     // COD: chuyển sang màn hình thành công tại checkout
                     error_log('COD order - Redirecting to success page...');
                     Session::set('last_order_id', (int)$result['id']);
-                    redirect('/checkout.php?order_id=' . (int)$result['id']);
+                    redirect(SITE_URL . '/checkout.php?order_id=' . (int)$result['id']);
                 }
             } else {
                 error_log('Order creation FAILED! Result: ' . var_export($result, true));
