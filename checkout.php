@@ -130,7 +130,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (empty($shipping['address']) || empty($shipping['city'])) {
             $errors[] = 'Địa chỉ giao hàng không đủ thông tin';
         }
-        if (!in_array($shipping['payment_method'], ['COD', 'MOMO', 'VNPAY'], true)) {
+        if (!in_array($shipping['payment_method'], ['COD', 'MOMO', 'VNPAY', 'EASYPAY'], true)) {
             $errors[] = 'Phương thức thanh toán không hợp lệ';
         }
         
@@ -204,6 +204,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } elseif ($shipping['payment_method'] === 'MOMO') {
                     error_log('Redirecting to MoMo...');
                     redirect(SITE_URL . '/payment/momo-return.php?id=' . (int)$result['id']);
+                } elseif ($shipping['payment_method'] === 'EASYPAY') {
+                    error_log('Redirecting to EasyPay...');
+                    redirect(SITE_URL . '/payment/easy-pay-return.php?id=' . (int)$result['id']);
                 } else {
                     // COD: chuyển sang màn hình thành công tại checkout
                     error_log('COD order - Redirecting to success page...');
@@ -427,6 +430,31 @@ include __DIR__ . '/includes/header.php';
                                             </p>
                                             <p class="text-muted small mb-0">
                                                 <i class="bi bi-check-circle"></i> Được tin tưởng
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- EASYPAY - Thanh toán qua EasyPay -->
+                            <div class="col-lg-6">
+                                <div class="payment-method-card border rounded-3 p-3 position-relative cursor-pointer" 
+                                     onclick="document.getElementById('pmEASYPAY').click()" 
+                                     style="cursor: pointer; transition: all 0.3s ease; border: 2px solid #e0e0e0;">
+                                    <input class="form-check-input position-absolute" type="radio" name="payment_method" 
+                                           id="pmEASYPAY" value="EASYPAY" style="top: 15px; right: 15px;">
+                                    <div class="d-flex align-items-start">
+                                        <div class="fs-3 me-3">💳</div>
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1 fw-bold">EasyPay</h6>
+                                            <p class="text-muted small mb-0">
+                                                <i class="bi bi-check-circle"></i> Thanh toán mọi lúc mọi nơi
+                                            </p>
+                                            <p class="text-muted small mb-0">
+                                                <i class="bi bi-check-circle"></i> An toàn và nhanh chóng
+                                            </p>
+                                            <p class="text-muted small mb-0">
+                                                <i class="bi bi-check-circle"></i> Miễn phí giao dịch
                                             </p>
                                         </div>
                                     </div>

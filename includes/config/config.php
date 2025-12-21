@@ -60,6 +60,12 @@ define('VNPAY_HASH_SECRET', 'your_hash_secret');
 define('VNPAY_URL', 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html');
 define('VNPAY_RETURN_URL', SITE_URL . '/payment/vnpay-return.php');
 
+// EasyPay/Sepay
+define('EASYPAY_PARTNER_CODE', 'your_partner_code');
+define('EASYPAY_API_KEY', 'your_api_key');
+define('EASYPAY_ENDPOINT', 'https://easypay.vn/api/openapi/pay-url');
+define('EASYPAY_RETURN_URL', SITE_URL . '/payment/easy-pay-return.php');
+
 // Cấu hình Upload Hình Ảnh
 define('MAX_FILE_SIZE', 5242880); // 5MB tính bằng bytes
 define('ALLOWED_IMAGE_TYPES', ['image/jpeg', 'image/png', 'image/jpg', 'image/webp']);
