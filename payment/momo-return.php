@@ -6,7 +6,13 @@ if (!Auth::check()) {
 }
 
 $db = Database::getInstance();
-require_once __DIR__ . '/../includes/payment/MoMoGateway.php';
+
+try {
+    require_once __DIR__ . '/../includes/payment/MoMoGateway.php';
+} catch (Throwable $e) {
+    Session::setFlash('error', 'Lỗi tải gateway: ' . $e->getMessage());
+    redirect('/checkout.php');
+}
 
 $orderId = (int)($_GET['id'] ?? 0);
 if ($orderId <= 0) {
@@ -53,8 +59,23 @@ if (!empty($_GET['resultCode'])) {
 }
 
 // Tạo request MoMo
-$momo = new MoMoGateway();
-$paymentRequest = $momo->createPaymentRequest($order);
+try {
+    // Validate config
+    if (strpos(MOMO_PARTNER_CODE, 'your_') === 0) {
+        throw new Exception('MoMo chưa được cấu hình. Hãy cập nhật MOMO_PARTNER_CODE, MOMO_ACCESS_KEY, MOMO_SECRET_KEY trong config.');
+    }
+    
+    $momo = new MoMoGateway();
+    $paymentRequest = $momo->createPaymentRequest($order);
+    
+    if (!$paymentRequest['success']) {
+        throw new Exception('Không thể tạo request thanh toán: ' . ($paymentRequest['message'] ?? 'Unknown error'));
+    }
+} catch (Throwable $e) {
+    error_log('MoMo payment error: ' . $e->getMessage());
+    Session::setFlash('error', 'Lỗi: ' . $e->getMessage());
+    redirect('/checkout.php');
+}
 
 $pageTitle = 'Thanh toán MoMo';
 include __DIR__ . '/../includes/header.php';

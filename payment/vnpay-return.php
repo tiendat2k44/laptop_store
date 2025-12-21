@@ -6,7 +6,13 @@ if (!Auth::check()) {
 }
 
 $db = Database::getInstance();
-require_once __DIR__ . '/../includes/payment/VNPayGateway.php';
+
+try {
+    require_once __DIR__ . '/../includes/payment/VNPayGateway.php';
+} catch (Throwable $e) {
+    Session::setFlash('error', 'Lỗi tải gateway: ' . $e->getMessage());
+    redirect('/checkout.php');
+}
 
 $orderId = (int)($_GET['id'] ?? 0);
 if ($orderId <= 0) {
@@ -55,8 +61,23 @@ if (!empty($_GET['vnp_ResponseCode'])) {
 }
 
 // Nếu chưa có response, tạo link thanh toán
-$vnpay = new VNPayGateway();
-$paymentUrl = $vnpay->createPaymentUrl($order);
+try {
+    // Validate config
+    if (strpos(VNPAY_TMN_CODE, 'your_') === 0) {
+        throw new Exception('VNPay chưa được cấu hình. Hãy cập nhật VNPAY_TMN_CODE và VNPAY_HASH_SECRET trong config.');
+    }
+    
+    $vnpay = new VNPayGateway();
+    $paymentUrl = $vnpay->createPaymentUrl($order);
+    
+    if (!$paymentUrl) {
+        throw new Exception('Không thể tạo URL thanh toán');
+    }
+} catch (Throwable $e) {
+    error_log('VNPay payment error: ' . $e->getMessage());
+    Session::setFlash('error', 'Lỗi: ' . $e->getMessage());
+    redirect('/checkout.php');
+}
 
 $pageTitle = 'Thanh toán VNPay';
 include __DIR__ . '/../includes/header.php';
