@@ -119,57 +119,141 @@ $validPayments = ['pending','paid','failed','refunded'];
     </div>
     <div class="col-lg-4">
         <div class="card shadow-sm sticky-top" style="top:20px;">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="bi bi-wallet2"></i> Quản lý đơn</h5>
+            </div>
             <div class="card-body">
-                <h5 class="mb-3">Tổng tiền</h5>
-                <div class="d-flex justify-content-between"><span>Tạm tính</span><strong><?= formatPrice($order['subtotal']) ?></strong></div>
-                <div class="d-flex justify-content-between"><span>Vận chuyển</span><strong><?= formatPrice($order['shipping_fee']) ?></strong></div>
-                <div class="d-flex justify-content-between text-success"><span>Giảm giá</span><strong>-<?= formatPrice($order['discount_amount']) ?></strong></div>
-                <hr>
-                <div class="d-flex justify-content-between fs-5 fw-bold"><span>Tổng cộng</span><span class="text-danger"><?= formatPrice($order['total_amount']) ?></span></div>
+                <!-- Tổng tiền -->
+                <div class="bg-light rounded-3 p-3 mb-4">
+                    <small class="text-muted d-block mb-1">Tổng giá trị</small>
+                    <h3 class="text-danger mb-3"><?= formatPrice($order['total_amount']) ?></h3>
+                    <div class="small mb-2">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Tạm tính</span>
+                            <strong><?= formatPrice($order['subtotal']) ?></strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Vận chuyển</span>
+                            <strong><?= formatPrice($order['shipping_fee']) ?></strong>
+                        </div>
+                        <div class="d-flex justify-content-between text-success mb-1">
+                            <span>Giảm giá</span>
+                            <strong>-<?= formatPrice($order['discount_amount']) ?></strong>
+                        </div>
+                    </div>
+                </div>
 
-                <hr>
-                <form method="POST" class="mb-3 d-flex gap-2 align-items-end">
-                    <input type="hidden" name="csrf_token" value="<?= Session::getToken() ?>">
-                    <input type="hidden" name="action" value="update_status">
-                    <div class="flex-grow-1">
-                        <label class="form-label">Cập nhật trạng thái</label>
-                        <select name="new_status" class="form-select">
-                            <?php foreach ($validStatuses as $st): ?>
-                                <option value="<?= $st ?>" <?= $order['status']===$st?'selected':'' ?>><?= ucfirst($st) ?></option>
+                <!-- Cập nhật trạng thái đơn hàng -->
+                <div class="mb-4">
+                    <label class="form-label fw-bold mb-2">
+                        <i class="bi bi-clock-history"></i> Trạng thái đơn hàng
+                    </label>
+                    <form method="POST" class="d-flex gap-2">
+                        <input type="hidden" name="csrf_token" value="<?= Session::getToken() ?>">
+                        <input type="hidden" name="action" value="update_status">
+                        <select name="new_status" class="form-select form-select-sm">
+                            <?php foreach ($validStatuses as $st): 
+                                $icons = [
+                                    'pending' => '⏳',
+                                    'confirmed' => '✓',
+                                    'processing' => '⚙️',
+                                    'shipping' => '🚚',
+                                    'delivered' => '✅',
+                                    'cancelled' => '❌'
+                                ];
+                                $icon = $icons[$st] ?? '❓';
+                            ?>
+                                <option value="<?= $st ?>" <?= $order['status']===$st?'selected':'' ?>>
+                                    <?= $icon ?> <?= ucfirst($st) ?>
+                                </option>
                             <?php endforeach; ?>
                         </select>
-                    </div>
-                    <button class="btn btn-primary"><i class="bi bi-save"></i></button>
-                </form>
+                        <button type="submit" class="btn btn-sm btn-primary" title="Cập nhật">
+                            <i class="bi bi-check-lg"></i>
+                        </button>
+                    </form>
+                </div>
 
-                <form method="POST" class="mb-3 d-flex gap-2 align-items-end">
-                    <input type="hidden" name="csrf_token" value="<?= Session::getToken() ?>">
-                    <input type="hidden" name="action" value="update_payment">
-                    <div class="flex-grow-1">
-                        <label class="form-label">Trạng thái thanh toán</label>
-                        <div class="input-group">
-                            <select name="new_payment_status" class="form-select">
-                                <?php foreach ($validPayments as $ps): ?>
-                                    <option value="<?= $ps ?>" <?= $order['payment_status']===$ps?'selected':'' ?>><?= ucfirst($ps) ?></option>
+                <!-- Cập nhật trạng thái thanh toán -->
+                <div class="mb-4">
+                    <label class="form-label fw-bold mb-2">
+                        <i class="bi bi-credit-card"></i> Trạng thái thanh toán
+                    </label>
+                    <form method="POST">
+                        <input type="hidden" name="csrf_token" value="<?= Session::getToken() ?>">
+                        <input type="hidden" name="action" value="update_payment">
+                        <div class="mb-2">
+                            <select name="new_payment_status" class="form-select form-select-sm mb-2">
+                                <?php foreach ($validPayments as $ps): 
+                                    $icons = [
+                                        'pending' => '⏳',
+                                        'paid' => '💰',
+                                        'failed' => '❌',
+                                        'refunded' => '↩️'
+                                    ];
+                                    $icon = $icons[$ps] ?? '❓';
+                                ?>
+                                    <option value="<?= $ps ?>" <?= $order['payment_status']===$ps?'selected':'' ?>>
+                                        <?= $icon ?> <?= ucfirst($ps) ?>
+                                    </option>
                                 <?php endforeach; ?>
                             </select>
-                            <input type="text" name="transaction_id" class="form-control" placeholder="Mã giao dịch (tuỳ chọn)" value="<?= escape($order['payment_transaction_id'] ?? '') ?>">
-                            <button class="btn btn-outline-primary" title="Lưu"><i class="bi bi-credit-card"></i></button>
+                            <input type="text" name="transaction_id" class="form-control form-control-sm mb-2" 
+                                   placeholder="Mã giao dịch (tùy chọn)" 
+                                   value="<?= escape($order['payment_transaction_id'] ?? '') ?>">
                         </div>
-                        <small class="text-muted">Chọn "Paid" sẽ tự ghi thời điểm trả tiền vào "paid_at".</small>
-                    </div>
-                </form>
+                        <button type="submit" class="btn btn-sm btn-outline-success w-100">
+                            <i class="bi bi-save"></i> Lưu
+                        </button>
+                        <small class="text-muted d-block mt-2">
+                            💡 Chọn "Paid" để ghi thời điểm thanh toán
+                        </small>
+                    </form>
+                </div>
 
+                <!-- Hủy đơn -->
                 <?php if ($order['status'] !== 'cancelled'): ?>
-                <form method="POST" onsubmit="return confirm('Xác nhận hủy đơn?');">
-                    <input type="hidden" name="csrf_token" value="<?= Session::getToken() ?>">
-                    <input type="hidden" name="action" value="cancel">
-                    <div class="mb-2">
-                        <label class="form-label">Lý do hủy (tuỳ chọn)</label>
-                        <input type="text" name="reason" class="form-control" placeholder="Ghi lý do...">
+                <div class="mb-4">
+                    <button type="button" class="btn btn-outline-danger w-100 btn-sm" data-bs-toggle="modal" data-bs-target="#cancelOrderModal">
+                        <i class="bi bi-x-circle"></i> Hủy đơn hàng
+                    </button>
+                </div>
+
+                <!-- Modal hủy đơn -->
+                <div class="modal fade" id="cancelOrderModal" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <form method="POST">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Hủy đơn hàng</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <input type="hidden" name="csrf_token" value="<?= Session::getToken() ?>">
+                                    <input type="hidden" name="action" value="cancel">
+                                    <div class="alert alert-warning">
+                                        <i class="bi bi-exclamation-triangle"></i> Bạn sắp hủy đơn hàng này. Hành động này không thể hoàn tác.
+                                    </div>
+                                    <div>
+                                        <label class="form-label fw-bold">Lý do hủy (bắt buộc)</label>
+                                        <textarea name="reason" class="form-control" rows="3" placeholder="Nhập lý do hủy đơn..." required></textarea>
+                                        <small class="text-muted d-block mt-2">
+                                            Khách hàng sẽ được thông báo về lý do này
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                        <i class="bi bi-x"></i> Đóng
+                                    </button>
+                                    <button type="submit" class="btn btn-danger">
+                                        <i class="bi bi-x-circle"></i> Xác nhận hủy
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
-                    <button class="btn btn-outline-danger w-100"><i class="bi bi-x-circle"></i> Hủy đơn</button>
-                </form>
+                </div>
                 <?php endif; ?>
             </div>
         </div>

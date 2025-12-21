@@ -301,35 +301,128 @@ include __DIR__ . '/includes/header.php';
                         <h5 class="mb-0">💳 Phương thức thanh toán</h5>
                     </div>
                     <div class="card-body">
-                        <div class="form-check mb-3">
-                            <input class="form-check-input" type="radio" name="payment_method" 
-                                   id="pmCOD" value="COD" checked>
-                            <label class="form-check-label" for="pmCOD">
-                                <strong>Thanh toán khi nhận hàng (COD)</strong>
-                                <br>
-                                <small class="text-muted">Không cần trả tiền trước</small>
-                            </label>
-                        </div>
-                        <div class="form-check mb-3">
-                            <input class="form-check-input" type="radio" name="payment_method" 
-                                   id="pmMOMO" value="MOMO">
-                            <label class="form-check-label" for="pmMOMO">
-                                <strong>Ví MoMo</strong>
-                                <br>
-                                <small class="text-muted">Thanh toán qua ví MoMo</small>
-                            </label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="payment_method" 
-                                   id="pmVNPAY" value="VNPAY">
-                            <label class="form-check-label" for="pmVNPAY">
-                                <strong>VNPAY</strong>
-                                <br>
-                                <small class="text-muted">Thanh toán qua VNPAY</small>
-                            </label>
+                        <div class="row g-3">
+                            <!-- COD - Thanh toán khi nhận hàng -->
+                            <div class="col-lg-6">
+                                <div class="payment-method-card border rounded-3 p-3 position-relative cursor-pointer" 
+                                     onclick="document.getElementById('pmCOD').click()" 
+                                     style="cursor: pointer; transition: all 0.3s ease; border: 2px solid #e0e0e0;">
+                                    <input class="form-check-input position-absolute" type="radio" name="payment_method" 
+                                           id="pmCOD" value="COD" checked style="top: 15px; right: 15px;">
+                                    <div class="d-flex align-items-start">
+                                        <div class="fs-3 me-3">🚚</div>
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1 fw-bold">Thanh toán khi nhận hàng</h6>
+                                            <p class="text-muted small mb-0">
+                                                <i class="bi bi-check-circle"></i> Thanh toán an toàn
+                                            </p>
+                                            <p class="text-muted small mb-0">
+                                                <i class="bi bi-check-circle"></i> Không cần trả tiền trước
+                                            </p>
+                                            <p class="text-muted small mb-0">
+                                                <i class="bi bi-check-circle"></i> Kiểm tra hàng trước khi trả tiền
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- MOMO - Ví MoMo -->
+                            <div class="col-lg-6">
+                                <div class="payment-method-card border rounded-3 p-3 position-relative cursor-pointer" 
+                                     onclick="document.getElementById('pmMOMO').click()" 
+                                     style="cursor: pointer; transition: all 0.3s ease; border: 2px solid #e0e0e0;">
+                                    <input class="form-check-input position-absolute" type="radio" name="payment_method" 
+                                           id="pmMOMO" value="MOMO" style="top: 15px; right: 15px;">
+                                    <div class="d-flex align-items-start">
+                                        <div class="fs-3 me-3">💳</div>
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1 fw-bold">Ví MoMo</h6>
+                                            <p class="text-muted small mb-0">
+                                                <i class="bi bi-check-circle"></i> Thanh toán nhanh chóng
+                                            </p>
+                                            <p class="text-muted small mb-0">
+                                                <i class="bi bi-check-circle"></i> Bảo mật cao
+                                            </p>
+                                            <p class="text-muted small mb-0">
+                                                <i class="bi bi-check-circle"></i> Hỗ trợ quốc tế
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- VNPAY - Thanh toán qua VNPAY -->
+                            <div class="col-lg-6">
+                                <div class="payment-method-card border rounded-3 p-3 position-relative cursor-pointer" 
+                                     onclick="document.getElementById('pmVNPAY').click()" 
+                                     style="cursor: pointer; transition: all 0.3s ease; border: 2px solid #e0e0e0;">
+                                    <input class="form-check-input position-absolute" type="radio" name="payment_method" 
+                                           id="pmVNPAY" value="VNPAY" style="top: 15px; right: 15px;">
+                                    <div class="d-flex align-items-start">
+                                        <div class="fs-3 me-3">🏦</div>
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1 fw-bold">VNPAY</h6>
+                                            <p class="text-muted small mb-0">
+                                                <i class="bi bi-check-circle"></i> Ngân hàng trực tuyến
+                                            </p>
+                                            <p class="text-muted small mb-0">
+                                                <i class="bi bi-check-circle"></i> Hoạt động 24/7
+                                            </p>
+                                            <p class="text-muted small mb-0">
+                                                <i class="bi bi-check-circle"></i> Được tin tưởng
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
+
+                <style>
+                    .payment-method-card {
+                        transition: all 0.3s ease;
+                    }
+                    .payment-method-card:hover {
+                        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                        transform: translateY(-2px);
+                    }
+                    input[type="radio"]:checked ~ * .payment-method-card,
+                    #pmCOD:checked ~ .payment-method-card,
+                    #pmMOMO:checked ~ .payment-method-card,
+                    #pmVNPAY:checked ~ .payment-method-card {
+                        border-color: #007bff !important;
+                        background-color: #f0f8ff;
+                    }
+                </style>
+
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const cards = document.querySelectorAll('.payment-method-card');
+                        const radios = document.querySelectorAll('input[name="payment_method"]');
+                        
+                        function updateCardStyles() {
+                            cards.forEach(card => {
+                                card.style.borderColor = '#e0e0e0';
+                                card.style.backgroundColor = 'transparent';
+                            });
+                            
+                            radios.forEach(radio => {
+                                if (radio.checked) {
+                                    radio.closest('.col-lg-6').querySelector('.payment-method-card').style.borderColor = '#007bff';
+                                    radio.closest('.col-lg-6').querySelector('.payment-method-card').style.backgroundColor = '#f0f8ff';
+                                }
+                            });
+                        }
+                        
+                        radios.forEach(radio => {
+                            radio.addEventListener('change', updateCardStyles);
+                        });
+                        
+                        updateCardStyles();
+                    });
+                </script>
 
                 <!-- 🎟️ Mã giảm giá -->
                 <div class="card shadow-sm mb-4">

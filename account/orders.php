@@ -51,26 +51,27 @@ include __DIR__ . '/../includes/header.php';
     </div>
 
     <!-- Bộ lọc trạng thái -->
-    <ul class="nav nav-pills mb-4">
+    <ul class="nav nav-pills mb-4" role="tablist">
         <?php
             $tabs = [
-                'all' => 'Tất cả',
-                'pending' => 'Chờ xác nhận',
-                'confirmed' => 'Đã xác nhận',
-                'processing' => 'Đang xử lý',
-                'shipping' => 'Đang giao',
-                'delivered' => 'Đã giao',
-                'cancelled' => 'Đã hủy',
+                'all' => ['Tất cả', 'bi-list'],
+                'pending' => ['⏳ Chờ xác nhận', 'bi-hourglass-split'],
+                'confirmed' => ['✓ Đã xác nhận', 'bi-check-circle'],
+                'processing' => ['⚙️ Đang xử lý', 'bi-gear'],
+                'shipping' => ['🚚 Đang giao', 'bi-truck'],
+                'delivered' => ['✅ Đã giao', 'bi-check2-circle'],
+                'cancelled' => ['❌ Đã hủy', 'bi-x-circle'],
             ];
         ?>
-        <?php foreach ($tabs as $key => $label):
+        <?php foreach ($tabs as $key => $data):
+            list($label, $icon) = $data;
             $active = ($key === 'all' && $currentStatus === '') || ($key !== 'all' && $currentStatus === $key);
             $url = SITE_URL . '/account/orders.php' . ($key === 'all' ? '' : ('?status=' . $key));
         ?>
         <li class="nav-item me-2 mb-2">
-            <a class="nav-link <?= $active ? 'active' : '' ?>" href="<?= $url ?>">
-                <?= $label ?>
-                <span class="badge bg-light text-dark ms-1"><?= (int)($counts[$key] ?? 0) ?></span>
+            <a class="nav-link <?= $active ? 'active bg-primary' : 'bg-light' ?>" href="<?= $url ?>">
+                <i class="bi <?= $icon ?>"></i> <?= $label ?>
+                <span class="badge <?= $active ? 'bg-light text-dark' : 'bg-secondary text-white' ?> ms-2"><?= (int)($counts[$key] ?? 0) ?></span>
             </a>
         </li>
         <?php endforeach; ?>
@@ -78,106 +79,113 @@ include __DIR__ . '/../includes/header.php';
 
     <!-- Trường hợp: Không có đơn hàng -->
     <?php if (empty($orders)): ?>
-    <div class="alert alert-info">
-        <i class="bi bi-info-circle me-2"></i>
-        Bạn chưa có đơn hàng nào.
-        <a href="<?= SITE_URL ?>/products.php" class="alert-link fw-bold">Bắt đầu mua sắm →</a>
+    <div class="alert alert-info rounded-3" role="alert">
+        <i class="bi bi-info-circle me-2 fs-5"></i>
+        <strong>Chưa có đơn hàng</strong><br>
+        Bạn chưa có đơn hàng nào. <a href="<?= SITE_URL ?>/products.php" class="alert-link fw-bold">Bắt đầu mua sắm →</a>
     </div>
 
     <!-- Trường hợp: Có đơn hàng -->
     <?php else: ?>
-    <div class="table-responsive">
-        <table class="table table-hover align-middle">
-            <thead class="table-light">
-                <tr>
-                    <th>Mã đơn hàng</th>
-                    <th>Ngày đặt</th>
-                    <th>Tổng tiền</th>
-                    <th>Trạng thái</th>
-                    <th>Thanh toán</th>
-                    <th style="width: 180px;">Hành động</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($orders as $order):
-                    $status = $order['status'] ?? 'pending';
-                    $paymentStatus = $order['payment_status'] ?? 'pending';
-                    
-                    [$statusEmoji, $statusText, $statusBadge] = $orderStatuses[$status] ?? ['❓', 'Không xác định', 'secondary'];
-                    [$payEmoji, $payText, $payBadge] = $paymentStatuses[$paymentStatus] ?? ['❓', 'Không xác định', 'secondary'];
-                ?>
-                <tr>
-                    <!-- Mã đơn hàng -->
-                    <td>
-                        <span class="badge bg-light text-dark">
-                            <?= escape($order['order_number']) ?>
-                        </span>
-                    </td>
-
-                    <!-- Ngày đặt -->
-                    <td class="text-muted">
-                        <small><?= formatDate($order['created_at']) ?></small>
-                    </td>
-
-                    <!-- Tổng tiền -->
-                    <td>
-                        <span class="fw-bold text-danger">
-                            <?= formatPrice($order['total_amount']) ?>
-                        </span>
-                    </td>
-
-                    <!-- Trạng thái đơn hàng -->
-                    <td>
-                        <span class="badge bg-<?= $statusBadge ?>">
+    <div class="row g-3">
+        <?php foreach ($orders as $order):
+            $status = $order['status'] ?? 'pending';
+            $paymentStatus = $order['payment_status'] ?? 'pending';
+            
+            [$statusEmoji, $statusText, $statusBadge] = $orderStatuses[$status] ?? ['❓', 'Không xác định', 'secondary'];
+            [$payEmoji, $payText, $payBadge] = $paymentStatuses[$paymentStatus] ?? ['❓', 'Không xác định', 'secondary'];
+        ?>
+        <div class="col-lg-6">
+            <div class="card shadow-sm h-100 border-0 order-card" style="transition: all 0.3s ease;">
+                <div class="card-body">
+                    <!-- Header: Mã đơn hàng + Trạng thái -->
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h5 class="card-title mb-1">
+                                <span class="badge bg-light text-dark me-2"><?= escape($order['order_number']) ?></span>
+                            </h5>
+                            <small class="text-muted">
+                                <i class="bi bi-calendar-event"></i> <?= formatDate($order['created_at']) ?>
+                            </small>
+                        </div>
+                        <span class="badge bg-<?= $statusBadge ?> fs-6">
                             <?= $statusEmoji ?> <?= $statusText ?>
                         </span>
-                    </td>
+                    </div>
 
-                    <!-- Trạng thái thanh toán -->
-                    <td>
+                    <!-- Thanh toán status -->
+                    <div class="mb-3 pb-3 border-bottom">
+                        <small class="text-muted d-block mb-2">Trạng thái thanh toán:</small>
                         <span class="badge bg-<?= $payBadge ?>">
                             <?= $payEmoji ?> <?= $payText ?>
                         </span>
-                    </td>
+                    </div>
+
+                    <!-- Tổng tiền -->
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Tổng giá trị:</small>
+                        <h4 class="text-danger mb-0">
+                            <?= formatPrice($order['total_amount']) ?>
+                        </h4>
+                    </div>
 
                     <!-- Hành động -->
-                    <td>
+                    <div class="d-flex gap-2 flex-wrap">
                         <a href="<?= SITE_URL ?>/account/order-detail.php?id=<?= (int)$order['id'] ?>" 
-                           class="btn btn-sm btn-outline-primary me-2">
+                           class="btn btn-sm btn-outline-primary flex-grow-1">
                             <i class="bi bi-eye"></i> Chi tiết
                         </a>
+                        
                         <?php if (in_array($status, ['pending','confirmed'], true) && $paymentStatus !== 'paid'): ?>
-                        <?php $method = $order['payment_method'] ?? 'COD'; ?>
-                        <div class="btn-group" role="group" aria-label="Pay again">
+                            <?php $method = $order['payment_method'] ?? 'COD'; ?>
+                            
                             <?php if ($method === 'MOMO'): ?>
-                            <a href="<?= SITE_URL ?>/payment/momo-return.php?id=<?= (int)$order['id'] ?>" class="btn btn-sm btn-outline-success">
-                                <i class="bi bi-wallet2"></i> Thanh toán MoMo
+                            <a href="<?= SITE_URL ?>/payment/momo-return.php?id=<?= (int)$order['id'] ?>" 
+                               class="btn btn-sm btn-success flex-grow-1" title="Thanh toán MoMo">
+                                <i class="bi bi-wallet2"></i> Thanh toán
                             </a>
                             <?php elseif ($method === 'VNPAY'): ?>
-                            <a href="<?= SITE_URL ?>/payment/vnpay-return.php?id=<?= (int)$order['id'] ?>" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-credit-card"></i> Thanh toán VNPay
+                            <a href="<?= SITE_URL ?>/payment/vnpay-return.php?id=<?= (int)$order['id'] ?>" 
+                               class="btn btn-sm btn-primary flex-grow-1" title="Thanh toán VNPay">
+                                <i class="bi bi-credit-card"></i> Thanh toán
                             </a>
                             <?php else: ?>
-                            <a href="<?= SITE_URL ?>/payment/momo-return.php?id=<?= (int)$order['id'] ?>" class="btn btn-sm btn-outline-success">
-                                <i class="bi bi-wallet2"></i> Thanh toán MoMo
-                            </a>
-                            <a href="<?= SITE_URL ?>/payment/vnpay-return.php?id=<?= (int)$order['id'] ?>" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-credit-card"></i> Thanh toán VNPay
-                            </a>
+                            <div class="btn-group btn-group-sm flex-grow-1" role="group">
+                                <a href="<?= SITE_URL ?>/payment/momo-return.php?id=<?= (int)$order['id'] ?>" 
+                                   class="btn btn-success" title="Thanh toán MoMo">
+                                    <i class="bi bi-wallet2"></i>
+                                </a>
+                                <a href="<?= SITE_URL ?>/payment/vnpay-return.php?id=<?= (int)$order['id'] ?>" 
+                                   class="btn btn-primary" title="Thanh toán VNPay">
+                                    <i class="bi bi-credit-card"></i>
+                                </a>
+                            </div>
                             <?php endif; ?>
-                            <button type="button" class="btn btn-sm btn-outline-danger btn-cancel-order" data-order-id="<?= (int)$order['id'] ?>">
-                                <i class="bi bi-x-circle"></i> Hủy đơn
+                            
+                            <button type="button" class="btn btn-sm btn-outline-danger btn-cancel-order" 
+                                    data-order-id="<?= (int)$order['id'] ?>" title="Hủy đơn hàng">
+                                <i class="bi bi-x-circle"></i>
                             </button>
-                        </div>
                         <?php endif; ?>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php endforeach; ?>
     </div>
     <?php endif; ?>
 </div>
+
+<style>
+    .order-card {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    .order-card:hover {
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1) !important;
+        transform: translateY(-4px);
+    }
+</style>
 
 <?php include __DIR__ . '/../includes/footer.php'; ?>
 
