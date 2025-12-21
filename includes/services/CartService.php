@@ -15,7 +15,7 @@ class CartService {
     public function getItems() {
         return $this->db->query(
             "SELECT ci.id as item_id, ci.quantity, ci.created_at,
-                    p.id as product_id, p.name, p.price, p.sale_price, p.stock_quantity,
+                    p.id as product_id, p.name, p.price, p.sale_price, p.stock_quantity, p.shop_id,
                     (SELECT image_url FROM product_images 
                      WHERE product_id = p.id ORDER BY display_order LIMIT 1) AS main_image
              FROM cart_items ci

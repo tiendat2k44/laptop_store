@@ -80,8 +80,11 @@ class OrderService {
             foreach ($items as $item) {
                 $price = getDisplayPrice($item['price'], $item['sale_price']);
                 
+                // Xử lý shop_id: nếu không có, dùng 1 (shop mặc định)
+                $shopId = !empty($item['shop_id']) ? (int)$item['shop_id'] : 1;
+                
                 // Thêm order item
-                $this->db->insert(
+                $itemInsertResult = $this->db->insert(
                     "INSERT INTO order_items (
                         order_id, product_id, shop_id, product_name, product_thumbnail,
                         price, quantity, subtotal, status, created_at
@@ -92,7 +95,7 @@ class OrderService {
                     [
                         'order_id' => $orderId,
                         'product_id' => $item['product_id'],
-                        'shop_id' => $item['shop_id'],
+                        'shop_id' => $shopId,
                         'product_name' => $item['name'],
                         'product_thumbnail' => $item['main_image'],
                         'price' => $price,
@@ -100,6 +103,10 @@ class OrderService {
                         'subtotal' => $price * $item['quantity']
                     ]
                 );
+                
+                if ($itemInsertResult === false) {
+                    throw new Exception('Không thể thêm sản phẩm vào đơn hàng: ' . $item['name']);
+                }
                 
                 // Cập nhật tồn kho & số lượng bán
                 $this->db->execute(

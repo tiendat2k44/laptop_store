@@ -169,7 +169,10 @@ if (isset($_GET['run']) && $_GET['run'] === 'yes') {
         foreach ($items as $item) {
             $price = getDisplayPrice($item['price'], $item['sale_price']);
             
-            echo '<div class="step">Inserting item: ' . htmlspecialchars($item['name']) . '</div>';
+            // Xử lý shop_id: nếu không có, dùng 1
+            $shopId = !empty($item['shop_id']) ? (int)$item['shop_id'] : 1;
+            
+            echo '<div class="step">Inserting item: ' . htmlspecialchars($item['name']) . ' (shop_id: ' . $shopId . ')</div>';
             
             $itemResult = $db->insert(
                 "INSERT INTO order_items (
@@ -182,7 +185,7 @@ if (isset($_GET['run']) && $_GET['run'] === 'yes') {
                 [
                     'order_id' => $orderId,
                     'product_id' => $item['product_id'],
-                    'shop_id' => $item['shop_id'],
+                    'shop_id' => $shopId,
                     'product_name' => $item['name'],
                     'product_thumbnail' => $item['main_image'],
                     'price' => $price,
