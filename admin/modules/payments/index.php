@@ -193,7 +193,7 @@ include __DIR__ . '/../../includes/header.php';
                     <div class="mb-3">
                         <label class="form-label">Partner Code</label>
                         <input type="text" name="config_name" value="MoMo Partner Code" style="display:none;">
-                        <input type="text" class="form-control" name="config_key" value="MOMO_PARTNER_CODE" style="display:none;">
+                        <input type="hidden" name="config_key" value="MOMO_PARTNER_CODE">
                         <input type="text" class="form-control" name="config_value" 
                                value="<?= escape($configArray['MOMO_PARTNER_CODE'] ?? '') ?>" 
                                placeholder="MXXXXXXXX" required>
@@ -204,7 +204,7 @@ include __DIR__ . '/../../includes/header.php';
                     <div class="mb-3">
                         <label class="form-label">Access Key</label>
                         <input type="text" name="config_name" value="MoMo Access Key" style="display:none;">
-                        <input type="text" class="form-control font-monospace" name="config_key" value="MOMO_ACCESS_KEY" style="display:none;">
+                        <input type="hidden" name="config_key" value="MOMO_ACCESS_KEY">
                         <input type="text" class="form-control font-monospace" name="config_value" 
                                value="<?= escape($configArray['MOMO_ACCESS_KEY'] ?? '') ?>" 
                                placeholder="XXXXXXXXXXXXX" required>
@@ -215,7 +215,7 @@ include __DIR__ . '/../../includes/header.php';
                     <div class="mb-3">
                         <label class="form-label">Secret Key</label>
                         <input type="text" name="config_name" value="MoMo Secret Key" style="display:none;">
-                        <input type="text" class="form-control font-monospace" name="config_key" value="MOMO_SECRET_KEY" style="display:none;">
+                        <input type="hidden" name="config_key" value="MOMO_SECRET_KEY">
                         <input type="text" class="form-control font-monospace" name="config_value" 
                                value="<?= escape($configArray['MOMO_SECRET_KEY'] ?? '') ?>" 
                                placeholder="XXXXXXXXXXXXX" required>
@@ -226,7 +226,7 @@ include __DIR__ . '/../../includes/header.php';
                     <div class="mb-3">
                         <label class="form-label">Endpoint</label>
                         <input type="text" name="config_name" value="MoMo Endpoint" style="display:none;">
-                        <input type="text" class="form-control" name="config_key" value="MOMO_ENDPOINT" style="display:none;">
+                        <input type="hidden" name="config_key" value="MOMO_ENDPOINT">
                         <input type="text" class="form-control" name="config_value" 
                                value="<?= escape($configArray['MOMO_ENDPOINT'] ?? 'https://test-payment.momo.vn/v2/gateway/api/create') ?>" 
                                placeholder="MoMo endpoint">

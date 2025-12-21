@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $csrf = isset($_POST['csrf_token']) ? trim($_POST['csrf_token']) : '';
     if (!Session::verifyToken($csrf)) {
         Session::setFlash('error', 'Invalid token');
-        redirect('/admin/modules/products/');
+        redirect(SITE_URL . '/admin/modules/products/');
     }
     
     if (isset($_POST['add_product'])) {
@@ -41,7 +41,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             Session::setFlash('error', 'Vui lòng điền đầy đủ thông tin hợp lệ');
         }
-        redirect('/admin/modules/products/');
+        redirect(SITE_URL . '/admin/modules/products/');
+    }
+    
+    if (isset($_POST['delete_product'])) {
+        $productId = intval($_POST['product_id'] ?? 0);
+        if ($productId > 0) {
+            try {
+                $db->execute("DELETE FROM products WHERE id = :id", ['id' => $productId]);
+                Session::setFlash('success', 'Xóa sản phẩm thành công');
+            } catch (Exception $e) {
+                Session::setFlash('error', 'Lỗi: ' . $e->getMessage());
+            }
+        }
+        redirect(SITE_URL . '/admin/modules/products/');
     }
 }
 
@@ -133,9 +146,16 @@ include __DIR__ . '/../../includes/header.php';
                     </td>
                     <td><small><?= formatDate($product['created_at']) ?></small></td>
                     <td>
-                        <a href="?edit=<?= (int)$product['id'] ?>" class="btn btn-sm btn-outline-warning">
+                        <a href="<?php echo SITE_URL; ?>/admin/modules/products/edit.php?id=<?= (int)$product['id'] ?>" class="btn btn-sm btn-outline-warning">
                             <i class="bi bi-pencil"></i> Sửa
                         </a>
+                        <form method="POST" style="display:inline;" onsubmit="return confirm('Bạn chắc chắn muốn xóa?');">
+                            <input type="hidden" name="csrf_token" value="<?= Session::getToken() ?>">
+                            <input type="hidden" name="product_id" value="<?= (int)$product['id'] ?>">
+                            <button type="submit" name="delete_product" class="btn btn-sm btn-outline-danger">
+                                <i class="bi bi-trash"></i> Xóa
+                            </button>
+                        </form>
                     </td>
                 </tr>
                 <?php endforeach; ?>
