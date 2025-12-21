@@ -46,7 +46,7 @@ $(document).ready(function() {
                 }
             },
             complete: function() {
-                button.prop('disabled', false).html('<i class="bi bi-cart-plus"></i> Thêm vào giỏ');
+                button.prop('disabled', false).html('<i class="bi bi-cart-plus fs-5 me-2"></i> Thêm vào giỏ hàng');
             }
         });
     });
@@ -100,7 +100,7 @@ $(document).ready(function() {
         const button = $(this);
         
         $.ajax({
-            url: '/ajax/wishlist-toggle.php',
+            url: window.SITE_URL + '/ajax/wishlist-toggle.php',
             method: 'POST',
             data: {
                 product_id: productId,
@@ -149,7 +149,7 @@ $(document).ready(function() {
         const itemId = $(this).data('item-id');
         
         $.ajax({
-            url: '/ajax/cart-remove.php',
+            url: window.SITE_URL + '/ajax/cart-remove.php',
             method: 'POST',
             data: {
                 item_id: itemId,
@@ -183,7 +183,7 @@ $(document).ready(function() {
         
         searchTimeout = setTimeout(function() {
             $.ajax({
-                url: '/ajax/search-suggestions.php',
+                url: window.SITE_URL + '/ajax/search-suggestions.php',
                 method: 'GET',
                 data: { q: query },
                 dataType: 'json',
@@ -342,7 +342,7 @@ function updateCartCount(count) {
 
 function updateCartItem(itemId, quantity) {
     $.ajax({
-        url: '/ajax/cart-update.php',
+        url: window.SITE_URL + '/ajax/cart-update.php',
         method: 'POST',
         data: {
             item_id: itemId,
