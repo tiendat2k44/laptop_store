@@ -51,16 +51,21 @@ if (!$orderSuccess) {
     // Lấy giỏ hàng
     $allItems = $cart->getItems();
     
-    // Nếu có selected_items từ POST, lưu vào session để persist across form resubmission
+    // Lấy selected_items: Ưu tiên POST data, fallback về session
+    $selectedItemIds = [];
     if (isset($_POST['selected_items']) && is_array($_POST['selected_items']) && !empty($_POST['selected_items'])) {
-        Session::set('checkout_selected_items', $_POST['selected_items']);
-        error_log('Saved selected_items to session: ' . json_encode($_POST['selected_items']));
+        // Có POST data - dùng luôn và lưu vào session
+        $selectedItemIds = $_POST['selected_items'];
+        Session::set('checkout_selected_items', $selectedItemIds);
+        error_log('Using POST selected_items: ' . json_encode($selectedItemIds));
+    } else {
+        // Không có POST - fallback về session (cho trường hợp form resubmit)
+        $selectedItemIds = Session::get('checkout_selected_items', []);
+        error_log('Using session selected_items: ' . json_encode($selectedItemIds));
     }
     
-    // Lấy selected_items từ session hoặc POST
-    $selectedItemIds = Session::get('checkout_selected_items', []);
     if (empty($selectedItemIds)) {
-        // Nếu không có trong session và không có trong POST, redirect về cart
+        // Không có trong cả POST và session - redirect về cart
         error_log('REJECTED: No selected_items in POST or session. Redirecting to cart.php');
         error_log('POST keys: ' . json_encode(array_keys($_POST)));
         Session::setFlash('error', 'Vui lòng chọn ít nhất một sản phẩm để thanh toán');
