@@ -75,6 +75,9 @@ class SecurityHeaders {
             // Images - allow from self and data URIs
             "img-src 'self' data: https:",
             
+            // Media - allow data URIs (for notification sounds, etc)
+            "media-src 'self' data:",
+            
             // Connect - allow AJAX to self and CDN source maps
             "connect-src 'self' cdn.jsdelivr.net",
             

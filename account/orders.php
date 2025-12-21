@@ -19,7 +19,13 @@ $validStatuses = ['pending','confirmed','processing','shipping','delivered','can
 if ($currentStatus !== '' && !in_array($currentStatus, $validStatuses, true)) {
     $currentStatus = '';
 }
+
+// Debug: log để kiểm tra
+error_log('OrderService userId: ' . Auth::id());
+
 $orders = $orderService->getUserOrders($currentStatus ?: null);
+error_log('Orders found: ' . count($orders));
+
 $counts = $orderService->getUserOrderCounts();
 
 // Định nghĩa trạng thái đơn hàng
