@@ -62,8 +62,8 @@
     <!-- Bootstrap 5 JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- jQuery (for AJAX operations) + fallback nội bộ nếu CDN bị chặn) -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- jQuery (for AJAX operations) - Dùng Google CDN theo CSP -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script>
         window.jQuery || document.write('<script src="<?php echo SITE_URL; ?>/assets/js/jquery-3.6.0.min.js"><\\/script>');
         window.SITE_URL = '<?php echo SITE_URL; ?>';
