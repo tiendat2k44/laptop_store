@@ -36,9 +36,8 @@ CREATE TABLE roles (
     description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
--- Insert default roles
-INSERT INTO roles (name, description) VALUES 
+-- BẢNG NGƯỜI DÙNG
+-- Lưu thông tin tài khoản người dùng
 ('admin', 'Administrator with full access'),
 ('shop', 'Shop owner/vendor'),
 ('customer', 'Regular customer');
@@ -58,9 +57,8 @@ CREATE TABLE users (
     email_verification_token VARCHAR(255),
     password_reset_token VARCHAR(255),
     password_reset_expires TIMESTAMP,
-    status VARCHAR(20) DEFAULT 'active', -- active, locked, pending
-    last_login TIMESTAMP,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+-- BẢNG SẢN PHẨM
+-- Lưu thông tin sản phẩm laptop
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE RESTRICT
 );
@@ -76,11 +74,8 @@ CREATE INDEX idx_users_status ON users(status);
 CREATE TABLE addresses (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
-    recipient_name VARCHAR(255) NOT NULL,
-    phone VARCHAR(20) NOT NULL,
-    address_line VARCHAR(500) NOT NULL,
-    city VARCHAR(100) NOT NULL,
-    district VARCHAR(100),
+    -- BẢNG NGƯỜI DÙNG
+    -- Lưu thông tin tài khoản người dùng
     ward VARCHAR(100),
     is_default BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -89,25 +84,21 @@ CREATE TABLE addresses (
 );
 
 CREATE INDEX idx_addresses_user ON addresses(user_id);
-
--- =============================================
--- SHOPS TABLE
--- =============================================
-CREATE TABLE shops (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER UNIQUE NOT NULL,
-    shop_name VARCHAR(255) UNIQUE NOT NULL,
-    description TEXT,
+         email_verified BOOLEAN DEFAULT FALSE, -- Đã xác thực email
+         email_verification_token VARCHAR(255), -- Mã xác thực email
+         password_reset_token VARCHAR(255), -- Mã đặt lại mật khẩu
+         password_reset_expires TIMESTAMP, -- Thời hạn mã đặt lại mật khẩu
+         status VARCHAR(20) DEFAULT 'active', -- Trạng thái: hoạt động, bị khóa, chờ xác thực
+         last_login TIMESTAMP, -- Lần đăng nhập cuối
+         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Ngày tạo
+         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Ngày cập nhật
+         FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE RESTRICT
     logo VARCHAR(255),
     banner VARCHAR(255),
-    phone VARCHAR(20),
-    email VARCHAR(255),
-    address TEXT,
-    rating DECIMAL(3,2) DEFAULT 0.00,
-    total_reviews INTEGER DEFAULT 0,
-    status VARCHAR(20) DEFAULT 'pending', -- pending, active, suspended
-    approved_by INTEGER,
-    approved_at TIMESTAMP,
+    -- BẢNG SẢN PHẨM
+    -- Lưu thông tin sản phẩm laptop
+-- BẢNG DANH MỤC
+-- Lưu các nhóm/danh mục sản phẩm
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -115,30 +106,28 @@ CREATE TABLE shops (
 );
 
 CREATE INDEX idx_shops_status ON shops(status);
-CREATE INDEX idx_shops_user ON shops(user_id);
-CREATE INDEX idx_shops_rating ON shops(rating DESC);
-
--- =============================================
--- BRANDS TABLE
--- =============================================
-CREATE TABLE brands (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(100) UNIQUE NOT NULL,
-    logo VARCHAR(255),
-    description TEXT,
-    status VARCHAR(20) DEFAULT 'active',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+         cpu VARCHAR(255), -- Bộ vi xử lý
+         ram VARCHAR(100), -- Bộ nhớ RAM
+         storage VARCHAR(255), -- Ổ cứng
+         screen_size VARCHAR(50), -- Kích thước màn hình
+         graphics VARCHAR(255), -- Card đồ họa
+         weight VARCHAR(50), -- Trọng lượng
+         battery VARCHAR(100), -- Pin
+         os VARCHAR(100), -- Hệ điều hành
+-- Lưu các ảnh liên quan đến sản phẩm
+         price DECIMAL(15,2) NOT NULL, -- Giá bán
+         sale_price DECIMAL(15,2), -- Giá khuyến mãi
+         stock_quantity INTEGER DEFAULT 0, -- Số lượng tồn kho
+         low_stock_alert INTEGER DEFAULT 10, -- Ngưỡng cảnh báo hết hàng
 );
-
--- Insert popular laptop brands
-INSERT INTO brands (name, description) VALUES 
+         thumbnail VARCHAR(255), -- Ảnh đại diện
+         featured BOOLEAN DEFAULT FALSE, -- Sản phẩm nổi bật
+         status VARCHAR(20) DEFAULT 'active', -- Trạng thái: hoạt động, ẩn, hết hàng
 ('Dell', 'American technology company'),
-('HP', 'Hewlett-Packard'),
-('Lenovo', 'Chinese multinational technology company'),
-('ASUS', 'Taiwan-based multinational computer hardware and electronics company'),
-('Acer', 'Taiwan-based hardware + electronics corporation'),
-('Apple', 'MacBook series'),
+         views INTEGER DEFAULT 0, -- Lượt xem
+         sold_count INTEGER DEFAULT 0, -- Số lượng đã bán
+         rating_average DECIMAL(3,2) DEFAULT 0, -- Điểm đánh giá trung bình
+         review_count INTEGER DEFAULT 0, -- Số lượng đánh giá
 ('MSI', 'Gaming laptops'),
 ('Razer', 'Gaming laptops and peripherals');
 
@@ -146,11 +135,8 @@ INSERT INTO brands (name, description) VALUES
 -- CATEGORIES TABLE
 -- =============================================
 CREATE TABLE categories (
-    id SERIAL PRIMARY KEY,
-    parent_id INTEGER,
-    name VARCHAR(255) NOT NULL,
-    slug VARCHAR(255) UNIQUE NOT NULL,
-    description TEXT,
+    -- BẢNG DANH MỤC
+    -- Lưu các nhóm/danh mục sản phẩm
     image VARCHAR(255),
     display_order INTEGER DEFAULT 0,
     status VARCHAR(20) DEFAULT 'active',
@@ -165,63 +151,51 @@ CREATE INDEX idx_categories_parent ON categories(parent_id);
 -- Insert default categories
 INSERT INTO categories (name, slug, description) VALUES 
 ('Laptop Văn Phòng', 'laptop-van-phong', 'Laptop cho công việc văn phòng, học tập'),
-('Laptop Gaming', 'laptop-gaming', 'Laptop chơi game hiệu năng cao'),
-('Laptop Đồ Họa', 'laptop-do-hoa', 'Laptop cho thiết kế, render'),
-('Ultrabook', 'ultrabook', 'Laptop mỏng nhẹ cao cấp'),
-('Workstation', 'workstation', 'Laptop workstation chuyên nghiệp');
-
+    -- BẢNG HÌNH ẢNH SẢN PHẨM
+    -- Lưu các ảnh liên quan đến sản phẩm
 -- =============================================
 -- PRODUCTS TABLE
 -- =============================================
-CREATE TABLE products (
-    id SERIAL PRIMARY KEY,
-    shop_id INTEGER NOT NULL,
+-- BẢNG CHI TIẾT ĐƠN HÀNG
+-- Lưu các sản phẩm thuộc từng đơn hàng
     category_id INTEGER NOT NULL,
     brand_id INTEGER NOT NULL,
     name VARCHAR(500) NOT NULL,
     slug VARCHAR(500) UNIQUE NOT NULL,
-    description TEXT,
-    
-    -- Specifications
-    cpu VARCHAR(255),
-    ram VARCHAR(100),
+    -- BẢNG ĐƠN HÀNG
+    -- Lưu thông tin các đơn hàng của khách
     storage VARCHAR(255),
     screen_size VARCHAR(50),
     graphics VARCHAR(255),
     weight VARCHAR(50),
     battery VARCHAR(100),
-    os VARCHAR(100),
+         recipient_name VARCHAR(255) NOT NULL, -- Tên người nhận
+         recipient_phone VARCHAR(20) NOT NULL, -- Số điện thoại người nhận
+         shipping_address TEXT NOT NULL, -- Địa chỉ nhận hàng
+         city VARCHAR(100) NOT NULL, -- Tỉnh/Thành phố
+         district VARCHAR(100), -- Quận/Huyện
+         ward VARCHAR(100), -- Phường/Xã
     
-    -- Pricing & Inventory
-    price DECIMAL(15,2) NOT NULL,
-    sale_price DECIMAL(15,2),
-    stock_quantity INTEGER DEFAULT 0,
-    low_stock_alert INTEGER DEFAULT 10,
+         subtotal DECIMAL(15,2) NOT NULL, -- Tổng tiền hàng
+         shipping_fee DECIMAL(15,2) DEFAULT 0, -- Phí vận chuyển
+         discount_amount DECIMAL(15,2) DEFAULT 0, -- Số tiền giảm giá
+         total_amount DECIMAL(15,2) NOT NULL, -- Tổng thanh toán
     
-    -- SEO & Display
-    thumbnail VARCHAR(255),
-    featured BOOLEAN DEFAULT FALSE,
-    status VARCHAR(20) DEFAULT 'active', -- active, inactive, out_of_stock
-    
-    -- Statistics
-    views INTEGER DEFAULT 0,
-    sold_count INTEGER DEFAULT 0,
-    rating_average DECIMAL(3,2) DEFAULT 0,
+         payment_method VARCHAR(50) NOT NULL, -- Phương thức thanh toán: COD, MOMO, VNPAY, EASYPAY
+         payment_status VARCHAR(20) DEFAULT 'pending', -- Trạng thái thanh toán: chờ, đã thanh toán, thất bại, hoàn tiền
+         payment_transaction_id VARCHAR(255), -- Mã giao dịch thanh toán
+         paid_at TIMESTAMP, -- Thời gian thanh toán
     review_count INTEGER DEFAULT 0,
+         status VARCHAR(50) DEFAULT 'pending', -- Trạng thái đơn hàng: chờ, xác nhận, xử lý, giao, hoàn thành, hủy
+         notes TEXT, -- Ghi chú đơn hàng
+         cancel_reason TEXT, -- Lý do hủy đơn
     
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    FOREIGN KEY (shop_id) REFERENCES shops(id) ON DELETE CASCADE,
-    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE RESTRICT,
-    FOREIGN KEY (brand_id) REFERENCES brands(id) ON DELETE RESTRICT
+-- BẢNG TỈNH/THÀNH, QUẬN/HUYỆN, PHƯỜNG/XÃ
+-- Lưu dữ liệu hành chính Việt Nam
 );
 
--- Indexes for products
-CREATE INDEX idx_products_shop ON products(shop_id);
-CREATE INDEX idx_products_category ON products(category_id);
-CREATE INDEX idx_products_brand ON products(brand_id);
-CREATE INDEX idx_products_slug ON products(slug);
+    -- BẢNG CHI TIẾT ĐƠN HÀNG
+    -- Lưu các sản phẩm thuộc từng đơn hàng
 CREATE INDEX idx_products_status ON products(status);
 CREATE INDEX idx_products_price ON products(price);
 CREATE INDEX idx_products_featured ON products(featured);
@@ -232,19 +206,16 @@ CREATE INDEX idx_products_featured ON products(featured);
 CREATE TABLE product_images (
     id SERIAL PRIMARY KEY,
     product_id INTEGER NOT NULL,
-    image_url VARCHAR(255) NOT NULL,
-    display_order INTEGER DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
-);
-
+         status VARCHAR(50) DEFAULT 'pending', -- Trạng thái sản phẩm trong đơn: chờ, xác nhận, xử lý, giao, hoàn thành, hủy
+         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Ngày tạo
+         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Ngày cập nhật
+         FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+         FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT
+         FOREIGN KEY (shop_id) REFERENCES shops(id) ON DELETE RESTRICT
 CREATE INDEX idx_product_images_product ON product_images(product_id);
 
--- =============================================
--- CART ITEMS TABLE
--- =============================================
-CREATE TABLE cart_items (
-    id SERIAL PRIMARY KEY,
+    -- BẢNG ĐỊA CHỈ
+    -- Lưu địa chỉ nhận hàng của khách
     user_id INTEGER NOT NULL,
     product_id INTEGER NOT NULL,
     quantity INTEGER NOT NULL DEFAULT 1,
@@ -260,11 +231,8 @@ CREATE INDEX idx_cart_user ON cart_items(user_id);
 -- =============================================
 -- WISHLIST TABLE
 -- =============================================
-CREATE TABLE wishlist (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL,
-    product_id INTEGER NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    -- BẢNG CỬA HÀNG
+    -- Lưu thông tin cửa hàng
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
     UNIQUE(user_id, product_id)

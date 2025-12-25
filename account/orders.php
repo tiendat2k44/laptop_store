@@ -115,6 +115,7 @@ include __DIR__ . '/../includes/header.php';
             $payEmoji = $paymentStatusMap[$paymentStatus]['emoji'] ?? '❓';
             $payText = $paymentStatusMap[$paymentStatus]['label'] ?? 'Không xác định';
             $payBadge = $paymentStatusMap[$paymentStatus]['badge'] ?? 'secondary';
+            $paymentMethod = strtoupper($order['payment_method'] ?? 'COD');
         ?>
         <div class="col-lg-6">
             <div class="card shadow-sm h-100 border-0 order-card" style="transition: all 0.3s ease;">
@@ -123,78 +124,48 @@ include __DIR__ . '/../includes/header.php';
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <div>
                             <h5 class="card-title mb-1">
-                                <span class="badge bg-light text-dark me-2"><?= escape($order['order_number']) ?></span>
+                                <span class="badge bg-light text-dark me-2">#<?= escape($order['order_number']) ?></span>
                             </h5>
                             <small class="text-muted">
                                 <i class="bi bi-calendar-event"></i> <?= formatDate($order['created_at']) ?>
                             </small>
                         </div>
-                        <span class="badge bg-<?= $statusBadge ?> fs-6">
-                            <?= $statusEmoji ?> <?= $statusText ?>
-                        </span>
+                        <div class="text-end">
+                            <span class="badge bg-<?= $statusBadge ?> fs-6 mb-1 d-block">
+                                <?= $statusEmoji ?> <?= $statusText ?>
+                            </span>
+                            <span class="badge bg-<?= $payBadge ?>">
+                                <?= $payEmoji ?> <?= $payText ?>
+                            </span>
+                        </div>
                     </div>
 
-                    <!-- Thanh toán status -->
                     <div class="mb-3 pb-3 border-bottom">
-                        <small class="text-muted d-block mb-2">Trạng thái thanh toán:</small>
-                        <span class="badge bg-<?= $payBadge ?>">
-                            <?= $payEmoji ?> <?= $payText ?>
-                        </span>
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div>
+                                <small class="text-muted d-block">Tổng giá trị</small>
+                                <h4 class="text-danger mb-0">
+                                    <?= formatPrice($order['total_amount']) ?>
+                                </h4>
+                            </div>
+                            <div class="text-end">
+                                <small class="text-muted d-block">Phương thức thanh toán</small>
+                                <span class="badge bg-dark-subtle text-dark fw-semibold px-3 py-2">
+                                    <?= escape($paymentMethod) ?>
+                                </span>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Tổng tiền -->
-                    <div class="mb-3">
-                        <small class="text-muted d-block">Tổng giá trị:</small>
-                        <h4 class="text-danger mb-0">
-                            <?= formatPrice($order['total_amount']) ?>
-                        </h4>
-                    </div>
-
-                    <!-- Hành động -->
                     <div class="d-flex gap-2 flex-wrap">
                         <a href="<?= SITE_URL ?>/account/order-detail.php?id=<?= (int)$order['id'] ?>" 
                            class="btn btn-sm btn-outline-primary flex-grow-1">
                             <i class="bi bi-eye"></i> Chi tiết
                         </a>
-                        
                         <?php if (in_array($status, ['pending','confirmed'], true) && $paymentStatus !== 'paid'): ?>
-                            <?php $method = $order['payment_method'] ?? 'COD'; ?>
-                            
-                            <?php if ($method === 'MOMO'): ?>
-                            <a href="<?= SITE_URL ?>/payment/momo-return.php?id=<?= (int)$order['id'] ?>" 
-                               class="btn btn-sm btn-success flex-grow-1" title="Thanh toán MoMo">
-                                <i class="bi bi-wallet2"></i> Thanh toán
-                            </a>
-                            <?php elseif ($method === 'VNPAY'): ?>
-                            <a href="<?= SITE_URL ?>/payment/vnpay-return.php?id=<?= (int)$order['id'] ?>" 
-                               class="btn btn-sm btn-primary flex-grow-1" title="Thanh toán VNPay">
-                                <i class="bi bi-credit-card"></i> Thanh toán
-                            </a>
-                            <?php elseif ($method === 'EASYPAY'): ?>
-                            <a href="<?= SITE_URL ?>/easyPay/create.php?order_id=<?= (int)$order['id'] ?>" 
-                               class="btn btn-sm btn-info flex-grow-1" title="Thanh toán EasyPay">
-                                <i class="bi bi-qr-code"></i> Thanh toán
-                            </a>
-                            <?php else: ?>
-                            <div class="btn-group btn-group-sm flex-grow-1" role="group">
-                                <a href="<?= SITE_URL ?>/payment/momo-return.php?id=<?= (int)$order['id'] ?>" 
-                                   class="btn btn-success" title="Thanh toán MoMo">
-                                    <i class="bi bi-wallet2"></i>
-                                </a>
-                                <a href="<?= SITE_URL ?>/payment/vnpay-return.php?id=<?= (int)$order['id'] ?>" 
-                                   class="btn btn-primary" title="Thanh toán VNPay">
-                                    <i class="bi bi-credit-card"></i>
-                                </a>
-                                <a href="<?= SITE_URL ?>/easyPay/create.php?order_id=<?= (int)$order['id'] ?>" 
-                                   class="btn btn-info" title="Thanh toán EasyPay">
-                                    <i class="bi bi-qr-code"></i>
-                                </a>
-                            </div>
-                            <?php endif; ?>
-                            
                             <button type="button" class="btn btn-sm btn-outline-danger btn-cancel-order" 
                                     data-order-id="<?= (int)$order['id'] ?>" title="Hủy đơn hàng">
-                                <i class="bi bi-x-circle"></i>
+                                <i class="bi bi-x-circle"></i> Hủy đơn
                             </button>
                         <?php endif; ?>
                     </div>
@@ -210,10 +181,20 @@ include __DIR__ . '/../includes/header.php';
     .order-card {
         border-radius: 12px;
         overflow: hidden;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
     }
     .order-card:hover {
         box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1) !important;
         transform: translateY(-4px);
+    }
+    .order-card .badge {
+        border-radius: 999px;
+    }
+    .order-card .card-body {
+        padding: 1.25rem 1.25rem 1.1rem;
+    }
+    .bg-dark-subtle {
+        background-color: #e2e8f0;
     }
 </style>
 

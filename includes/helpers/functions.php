@@ -226,6 +226,95 @@ function uploadImage($file, $folder, $maxWidth = null, $maxHeight = null) {
 }
 
 /**
+ * Tải ảnh từ URL về thư mục uploads
+ * @param string $url URL ảnh (http/https)
+ * @param string $folder Thư mục con trong uploads
+ * @param string|null $error Thông báo lỗi (tham chiếu)
+ * @param int $maxSize Giới hạn kích thước bytes (mặc định 5MB)
+ * @return string|null Đường dẫn tương đối (folder/filename) hoặc null nếu lỗi
+ */
+function downloadImageFromUrl($url, $folder = 'products', &$error = null, $maxSize = 5242880) {
+    $url = trim((string)$url);
+    if ($url === '' || !preg_match('#^https?://#i', $url)) {
+        $error = 'URL ảnh không hợp lệ';
+        return null;
+    }
+
+    $context = stream_context_create([
+        'http' => ['timeout' => 6],
+        'https' => ['timeout' => 6, 'ignore_errors' => true],
+    ]);
+
+    $stream = @fopen($url, 'rb', false, $context);
+    if (!$stream) {
+        $error = 'Không tải được ảnh từ URL';
+        return null;
+    }
+
+    $tmpFile = tempnam(sys_get_temp_dir(), 'img_url_');
+    $tmpHandle = fopen($tmpFile, 'wb');
+    $downloaded = 0;
+
+    while (!feof($stream)) {
+        $chunk = fread($stream, 8192);
+        if ($chunk === false) {
+            fclose($stream);
+            fclose($tmpHandle);
+            @unlink($tmpFile);
+            $error = 'Lỗi đọc dữ liệu ảnh';
+            return null;
+        }
+        $downloaded += strlen($chunk);
+        if ($downloaded > $maxSize) {
+            fclose($stream);
+            fclose($tmpHandle);
+            @unlink($tmpFile);
+            $error = 'Ảnh không vượt quá 5MB';
+            return null;
+        }
+        fwrite($tmpHandle, $chunk);
+    }
+
+    fclose($stream);
+    fclose($tmpHandle);
+
+    $mime = mime_content_type($tmpFile);
+    $allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!in_array($mime, $allowed, true)) {
+        @unlink($tmpFile);
+        $error = 'Ảnh phải là JPG, PNG, GIF hoặc WebP';
+        return null;
+    }
+
+    $extMap = [
+        'image/jpeg' => 'jpg',
+        'image/png' => 'png',
+        'image/gif' => 'gif',
+        'image/webp' => 'webp',
+    ];
+    $ext = $extMap[$mime] ?? 'jpg';
+
+    $basePath = defined('UPLOAD_PATH') ? rtrim(UPLOAD_PATH, '/') : (ROOT_PATH . '/assets/uploads');
+    $dir = $basePath . '/' . trim($folder, '/') . '/';
+    if (!is_dir($dir)) {
+        mkdir($dir, 0755, true);
+    }
+
+    $filename = 'prd_' . time() . '_' . uniqid() . '.' . $ext;
+    $dest = $dir . $filename;
+    if (!@rename($tmpFile, $dest)) {
+        if (!copy($tmpFile, $dest)) {
+            @unlink($tmpFile);
+            $error = 'Không thể lưu ảnh';
+            return null;
+        }
+        @unlink($tmpFile);
+    }
+
+    return trim($folder, '/') . '/' . $filename;
+}
+
+/**
  * Resize image
  * @param string $source Source file path
  * @param string $destination Destination file path
@@ -507,8 +596,11 @@ function image_url($path) {
     }
 
     // Chuẩn hóa đường dẫn uploads
-    // Hỗ trợ: products/..., banners/..., uploads/...
+    // Hỗ trợ: products/..., banners/..., uploads/... hoặc assets/uploads/...
     $relative = ltrim($path, '/');
+    if (strpos($relative, 'assets/uploads/') === 0) {
+        $relative = substr($relative, strlen('assets/uploads/'));
+    }
     if (strpos($relative, 'uploads/') === 0) {
         $relative = substr($relative, strlen('uploads/'));
     }
