@@ -1,4 +1,9 @@
 <?php
+/**
+ * Admin - Xuất Đơn Hàng Ra File CSV
+ * Xuất danh sách đơn hàng theo bộ lọc ra file CSV để lưu trữ/báo cáo
+ */
+
 require_once __DIR__ . '/../../../includes/init.php';
 Auth::requireRole(ROLE_ADMIN, '/login.php');
 
@@ -6,6 +11,7 @@ $db = Database::getInstance();
 require_once __DIR__ . '/../../../includes/services/AdminOrderService.php';
 $service = new AdminOrderService($db);
 
+// Lấy các tham số bộ lọc từ URL
 $status = isset($_GET['status']) ? trim($_GET['status']) : '';
 $keyword = isset($_GET['keyword']) ? trim($_GET['keyword']) : '';
 $date_from = isset($_GET['date_from']) ? trim($_GET['date_from']) : '';
@@ -17,19 +23,19 @@ $filters = [
     'date_to' => $date_to,
 ];
 
-// Tải tối đa 5000 dòng cho export
+// Lấy tối đa 5000 đơn hàng để xuất (tránh quá tải)
 $rows = $service->listOrders($filters, 5000, 0);
 
-// Header CSV
+// Thiết lập header cho file CSV
 $filename = 'orders_' . date('Ymd_His') . '.csv';
 header('Content-Type: text/csv; charset=UTF-8');
 header('Content-Disposition: attachment; filename=' . $filename);
 
-// BOM cho Excel
+// Thêm BOM cho UTF-8 để Excel hiển thị tiếng Việt đúng
 echo "\xEF\xBB\xBF";
 
 $out = fopen('php://output', 'w');
-// Tiêu đề cột
+// Ghi dòng tiêu đề cột
 fputcsv($out, ['ID','Mã đơn','Khách hàng','Email','Tổng tiền','Trạng thái','Thanh toán','Ngày tạo']);
 
 foreach ($rows as $r) {

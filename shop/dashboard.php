@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/init.php';
 
-// Require shop access
+// Yêu cầu quyền truy cập cửa hàng
 Auth::requireRole(ROLE_SHOP, '/login.php');
 
 $pageTitle = 'Dashboard Shop';
@@ -13,7 +13,7 @@ if (!$shopId) {
     redirect('/');
 }
 
-// Get shop info
+// Lấy thông tin cửa hàng
 $shop = $db->queryOne("SELECT * FROM shops WHERE id = :id", ['id' => $shopId]);
 
 if (!$shop || $shop['status'] !== 'active') {
@@ -21,7 +21,7 @@ if (!$shop || $shop['status'] !== 'active') {
     redirect('/');
 }
 
-// Get statistics
+// Lấy thống kê
 $stats = [
     'total_products' => $db->queryOne("SELECT COUNT(*) as count FROM products WHERE shop_id = :shop_id", ['shop_id' => $shopId])['count'] ?? 0,
     'active_products' => $db->queryOne("SELECT COUNT(*) as count FROM products WHERE shop_id = :shop_id AND status = 'active'", ['shop_id' => $shopId])['count'] ?? 0,
@@ -29,7 +29,7 @@ $stats = [
     'pending_orders' => $db->queryOne("SELECT COUNT(*) as count FROM order_items WHERE shop_id = :shop_id AND status = 'pending'", ['shop_id' => $shopId])['count'] ?? 0,
 ];
 
-// Get revenue - Compatible with PostgreSQL and MySQL
+// Lấy doanh thu - Tương thích với PostgreSQL và MySQL
 $driver = $db->getConnection()->getAttribute(PDO::ATTR_DRIVER_NAME);
 
 if ($driver === 'pgsql') {
@@ -99,9 +99,9 @@ include __DIR__ . '/includes/header.php';
                     <div>
                         <h6 class="text-muted mb-1">Sản phẩm</h6>
                         <h3 class="mb-0"><?php echo number_format($stats['total_products']); ?></h3>
-                        <small class="text-success"><?php echo $stats['active_products']; ?> đang bán</small>
+                        <small class="text-success"><i class="bi bi-check-circle"></i> <?php echo $stats['active_products']; ?> đang bán</small>
                     </div>
-                    <div class="fs-1 text-primary">
+                    <div class="fs-1 text-primary opacity-75">
                         <i class="bi bi-box-seam"></i>
                     </div>
                 </div>
@@ -118,9 +118,11 @@ include __DIR__ . '/includes/header.php';
                         <h3 class="mb-0"><?php echo number_format($stats['total_orders']); ?></h3>
                         <?php if ($stats['pending_orders'] > 0): ?>
                             <small class="text-warning"><i class="bi bi-clock"></i> <?php echo $stats['pending_orders']; ?> chờ xử lý</small>
+                        <?php else: ?>
+                            <small class="text-muted">Tất cả đã xử lý</small>
                         <?php endif; ?>
                     </div>
-                    <div class="fs-1 text-info">
+                    <div class="fs-1 text-info opacity-75">
                         <i class="bi bi-cart-check"></i>
                     </div>
                 </div>
@@ -129,10 +131,18 @@ include __DIR__ . '/includes/header.php';
     </div>
     
     <div class="col-md-6">
-        <div class="card shadow-sm">
+        <div class="card stat-card success shadow-sm">
             <div class="card-body">
-                <h6 class="text-muted mb-1">Doanh thu tháng này</h6>
-                <h3 class="text-success mb-0"><?php echo formatPrice($revenueThisMonth); ?></h3>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">Doanh thu tháng này</h6>
+                        <h3 class="text-success mb-0"><?php echo formatPrice($revenueThisMonth); ?></h3>
+                        <small class="text-muted"><?php echo date('F Y'); ?></small>
+                    </div>
+                    <div class="fs-1 text-success opacity-75">
+                        <i class="bi bi-graph-up-arrow"></i>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -141,27 +151,27 @@ include __DIR__ . '/includes/header.php';
 <!-- Quick Actions -->
 <div class="row g-4 mb-4">
     <div class="col-md-3">
-        <a href="/shop/modules/products/create.php" class="btn btn-primary w-100 py-3">
+        <a href="/shop/modules/products/create.php" class="btn btn-lg btn-primary w-100 py-3 shadow-sm">
             <i class="bi bi-plus-circle fs-3 d-block mb-2"></i>
-            Thêm sản phẩm mới
+            <strong>Thêm sản phẩm</strong>
         </a>
     </div>
     <div class="col-md-3">
-        <a href="/shop/modules/products/" class="btn btn-outline-primary w-100 py-3">
+        <a href="/shop/modules/products/" class="btn btn-lg btn-outline-primary w-100 py-3 shadow-sm">
             <i class="bi bi-box-seam fs-3 d-block mb-2"></i>
-            Quản lý sản phẩm
+            <strong>Quản lý sản phẩm</strong>
         </a>
     </div>
     <div class="col-md-3">
-        <a href="/shop/modules/orders/" class="btn btn-outline-info w-100 py-3">
+        <a href="/shop/modules/orders/" class="btn btn-lg btn-outline-info w-100 py-3 shadow-sm">
             <i class="bi bi-cart-check fs-3 d-block mb-2"></i>
-            Quản lý đơn hàng
+            <strong>Quản lý đơn hàng</strong>
         </a>
     </div>
     <div class="col-md-3">
-        <a href="/shop/reports.php" class="btn btn-outline-success w-100 py-3">
+        <a href="/shop/reports.php" class="btn btn-lg btn-outline-success w-100 py-3 shadow-sm">
             <i class="bi bi-graph-up fs-3 d-block mb-2"></i>
-            Báo cáo doanh thu
+            <strong>Báo cáo doanh thu</strong>
         </a>
     </div>
 </div>

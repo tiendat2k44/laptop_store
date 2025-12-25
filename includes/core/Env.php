@@ -47,7 +47,7 @@ class Env {
                 $key = trim($key);
                 $value = trim($value);
 
-                // Remove quotes if present
+                // Loại bỏ dấu ngoặc nếu có
                 if (preg_match('/^"(.*)"$/', $value, $matches)) {
                     $value = $matches[1];
                 } elseif (preg_match("/^'(.*)'$/", $value, $matches)) {
@@ -55,7 +55,7 @@ class Env {
                 }
 
                 self::$values[$key] = $value;
-                // Also set as environment variable
+                // Cũng đặt làm biến môi trường
                 putenv("$key=$value");
             }
         }
@@ -64,10 +64,10 @@ class Env {
     }
 
     /**
-     * Get environment variable
+     * Lấy biến môi trường
      * 
-     * @param string $key Variable name
-     * @param string $default Default value if not found
+     * @param string $key Tên biến
+     * @param string $default Giá trị mặc định nếu không tìm thấy
      * @return mixed
      */
     public static function get($key, $default = null) {
@@ -75,28 +75,28 @@ class Env {
             self::load();
         }
 
-        // Check if exists in loaded values
+        // Kiểm tra xem có tồn tại trong các giá trị đã tải
         if (isset(self::$values[$key])) {
             return self::$values[$key];
         }
 
-        // Check in $_ENV
+        // Kiểm tra trong $_ENV
         if (isset($_ENV[$key])) {
             return $_ENV[$key];
         }
 
-        // Check in $_SERVER
+        // Kiểm tra trong $_SERVER
         if (isset($_SERVER[$key])) {
             return $_SERVER[$key];
         }
 
-        // Use getenv as fallback
+        // Sử dụng getenv làm fallback
         $value = getenv($key);
         if ($value !== false) {
             return $value;
         }
 
-        // Return default
+        // Trả về mặc định
         return $default;
     }
 

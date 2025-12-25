@@ -3,12 +3,12 @@ require_once __DIR__ . '/../includes/init.php';
 
 header('Content-Type: application/json');
 
-// Check if user is logged in
+// Kiểm tra người dùng đã đăng nhập chưa
 if (!Auth::check()) {
     jsonResponse(['success' => false, 'message' => 'Vui lòng đăng nhập'], 401);
 }
 
-// Check CSRF token
+// Kiểm tra CSRF token
 if (!Session::verifyToken($_POST['csrf_token'] ?? '')) {
     jsonResponse(['success' => false, 'message' => 'Invalid CSRF token'], 403);
 }

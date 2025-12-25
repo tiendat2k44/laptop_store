@@ -13,8 +13,16 @@
     
     <!-- Custom CSS -->
     <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            --warning-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f8f9fa;
         }
         
         .sidebar {
@@ -24,45 +32,52 @@
             left: 0;
             z-index: 100;
             padding: 56px 0 0;
-            box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
-            width: 250px;
-            background: #343a40;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, .05);
+            width: 260px;
+            background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
         }
         
         .sidebar-sticky {
             position: relative;
             top: 0;
             height: calc(100vh - 56px);
-            padding-top: .5rem;
+            padding-top: 1rem;
             overflow-x: hidden;
             overflow-y: auto;
         }
         
         .sidebar .nav-link {
-            color: rgba(255, 255, 255, .75);
-            padding: .75rem 1rem;
-            transition: all .3s;
+            color: rgba(255, 255, 255, .8);
+            padding: 1rem 1.5rem;
+            transition: all .3s ease;
+            border-left: 3px solid transparent;
+            font-weight: 500;
         }
         
         .sidebar .nav-link:hover {
             color: #fff;
-            background: rgba(255, 255, 255, .1);
+            background: rgba(255, 255, 255, .08);
+            border-left-color: #667eea;
+            transform: translateX(5px);
         }
         
         .sidebar .nav-link.active {
             color: #fff;
-            background: #0d6efd;
+            background: rgba(102, 126, 234, 0.2);
+            border-left-color: #667eea;
         }
         
         .sidebar .nav-link i {
-            width: 20px;
+            width: 24px;
             text-align: center;
-            margin-right: .5rem;
+            margin-right: .75rem;
+            font-size: 1.1rem;
         }
         
         main {
-            margin-left: 250px;
-            padding-top: 56px;
+            margin-left: 260px;
+            padding-top: 70px;
+            min-height: 100vh;
         }
         
         .navbar {
@@ -71,32 +86,99 @@
             left: 0;
             right: 0;
             z-index: 1000;
-            box-shadow: 0 2px 4px rgba(0,0,0,.1);
+            background: var(--primary-gradient) !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,.15);
+            padding: 0.8rem 0;
         }
         
         .stat-card {
-            border-left: 4px solid;
-            transition: transform .3s;
+            border: none;
+            border-radius: 12px;
+            transition: all .3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            transition: width .3s ease;
         }
         
         .stat-card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-8px);
+            box-shadow: 0 12px 24px rgba(0,0,0,.15) !important;
         }
         
-        .stat-card.primary {
-            border-color: #0d6efd;
+        .stat-card:hover::before {
+            width: 100%;
+            opacity: 0.05;
         }
         
-        .stat-card.success {
-            border-color: #198754;
+        .stat-card.primary::before {
+            background: var(--primary-gradient);
         }
         
-        .stat-card.warning {
-            border-color: #ffc107;
+        .stat-card.success::before {
+            background: var(--success-gradient);
         }
         
-        .stat-card.info {
-            border-color: #0dcaf0;
+        .stat-card.warning::before {
+            background: var(--warning-gradient);
+        }
+        
+        .stat-card.info::before {
+            background: var(--info-gradient);
+        }
+        
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.08);
+        }
+        
+        .card-header {
+            border-radius: 12px 12px 0 0 !important;
+            background: #fff !important;
+            border-bottom: 2px solid #f0f0f0 !important;
+            padding: 1.25rem 1.5rem;
+        }
+        
+        .btn {
+            border-radius: 8px;
+            padding: 0.5rem 1.25rem;
+            font-weight: 500;
+            transition: all .3s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,.15);
+        }
+        
+        .badge {
+            padding: 0.5rem 0.75rem;
+            font-weight: 500;
+            border-radius: 6px;
+        }
+        
+        .table {
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .table thead th {
+            background: #f8f9fa;
+            border: none;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            color: #6c757d;
         }
     </style>
     

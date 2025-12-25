@@ -1,4 +1,9 @@
 <?php
+/**
+ * Admin - Sửa Người Dùng
+ * Chỉnh sửa thông tin người dùng (tên, số điện thoại, trạng thái)
+ */
+
 require_once __DIR__ . '/../../../includes/init.php';
 Auth::requireRole(ROLE_ADMIN, '/login.php');
 
@@ -10,7 +15,7 @@ if ($userId <= 0) {
     redirect(SITE_URL . '/admin/modules/users/');
 }
 
-// Lấy thông tin người dùng
+// Lấy thông tin chi tiết người dùng
 $user = $db->queryOne(
     "SELECT id, email, full_name, phone, status FROM users WHERE id = :id",
     ['id' => $userId]

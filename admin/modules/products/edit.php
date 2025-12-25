@@ -1,4 +1,9 @@
 <?php
+/**
+ * Admin - Sửa Sản Phẩm
+ * Chỉnh sửa thông tin sản phẩm (tên, giá, tồn kho, trạng thái)
+ */
+
 require_once __DIR__ . '/../../../includes/init.php';
 Auth::requireRole(ROLE_ADMIN, '/login.php');
 
@@ -10,7 +15,7 @@ if ($productId <= 0) {
     redirect(SITE_URL . '/admin/modules/products/');
 }
 
-// Lấy thông tin sản phẩm
+// Lấy thông tin chi tiết sản phẩm
 $product = $db->queryOne(
     "SELECT id, name, price, sale_price, stock_quantity, description, status FROM products WHERE id = :id",
     ['id' => $productId]
@@ -21,7 +26,7 @@ if (!$product) {
     redirect(SITE_URL . '/admin/modules/products/');
 }
 
-// Xử lý cập nhật
+// Xử lý form cập nhật sản phẩm
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!Session::verifyToken($_POST['csrf_token'] ?? '')) {
         Session::setFlash('error', 'CSRF token không hợp lệ');

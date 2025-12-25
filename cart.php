@@ -1,4 +1,9 @@
 <?php
+/**
+ * Trang Giỏ Hàng
+ * Hiển thị danh sách sản phẩm trong giỏ và tính tổng tiền
+ */
+
 require_once __DIR__ . '/includes/init.php';
 
 // Kiểm tra đăng nhập
@@ -7,7 +12,7 @@ if (!Auth::check()) {
     redirect(SITE_URL . '/login.php?redirect=' . SITE_URL . '/cart.php');
 }
 
-// Khởi tạo service
+// Khởi tạo service giỏ hàng
 $db = Database::getInstance();
 require_once __DIR__ . '/includes/services/CartService.php';
 

@@ -5,7 +5,7 @@ $pageTitle = 'Trang chủ';
 
 $db = Database::getInstance();
 
-// Get featured products
+// Lấy sản phẩm nổi bật
 $featuredProducts = $db->query("
     SELECT p.*, s.shop_name,
            (SELECT image_url FROM product_images WHERE product_id = p.id ORDER BY display_order LIMIT 1) as main_image,
@@ -17,7 +17,7 @@ $featuredProducts = $db->query("
     LIMIT 8
 ");
 
-// Get latest products
+// Lấy sản phẩm mới nhất
 $latestProducts = $db->query("
     SELECT p.*, s.shop_name,
            (SELECT image_url FROM product_images WHERE product_id = p.id ORDER BY display_order LIMIT 1) as main_image,
@@ -29,10 +29,10 @@ $latestProducts = $db->query("
     LIMIT 8
 ");
 
-// Get banners
+// Lấy banners
 $banners = $db->query("SELECT * FROM banners WHERE status = 'active' ORDER BY display_order LIMIT 5");
 
-// Get categories
+// Lấy danh mục
 $categories = $db->query("SELECT * FROM categories WHERE parent_id IS NULL AND status = 'active' ORDER BY display_order, name");
 
 include __DIR__ . '/includes/header.php';

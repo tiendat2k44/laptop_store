@@ -1,35 +1,55 @@
 <?php
+/**
+ * Admin - Chi tiết & quản lý đơn hàng
+ * Cho phép admin xem chi tiết và cập nhật trạng thái đơn hàng
+ */
+
 require_once __DIR__ . '/../../../includes/init.php';
+
+// Kiểm tra quyền Admin
 Auth::requireRole(ROLE_ADMIN, '/login.php');
 
+// Khởi tạo database và service
 $db = Database::getInstance();
 require_once __DIR__ . '/../../../includes/services/AdminOrderService.php';
 $service = new AdminOrderService($db);
 
+// Lấy ID đơn hàng từ URL
 $orderId = intval($_GET['id'] ?? 0);
 if ($orderId <= 0) {
     Session::setFlash('error', 'Đơn hàng không hợp lệ');
     redirect('/admin/modules/orders/');
 }
 
-// Handle actions
+// Xử lý các hành động POST (cập nhật trạng thái, thanh toán, hủy đơn)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Xác thực CSRF token để bảo mật
     if (!Session::verifyToken($_POST['csrf_token'] ?? '')) {
         Session::setFlash('error', 'CSRF token không hợp lệ');
         redirect('/admin/modules/orders/view.php?id=' . $orderId);
     }
+    
     $action = $_POST['action'] ?? '';
     try {
+        // Cập nhật trạng thái đơn hàng (pending -> processing -> shipped -> delivered)
         if ($action === 'update_status') {
             $newStatus = trim($_POST['new_status'] ?? '');
-            $service->updateStatus($orderId, $newStatus);
-            Session::setFlash('success', 'Cập nhật trạng thái thành công');
-        } elseif ($action === 'update_payment') {
+            $ok = $service->updateStatus($orderId, $newStatus);
+            if ($ok) {
+                Session::setFlash('success', 'Cập nhật trạng thái thành công');
+            } else {
+                Session::setFlash('error', 'Không thể cập nhật trạng thái. Vui lòng thử lại.');
+            }
+        } 
+        // Cập nhật trạng thái thanh toán (pending -> paid -> refunded)
+        elseif ($action === 'update_payment') {
             $newPayment = trim($_POST['new_payment_status'] ?? '');
-            $tx = trim($_POST['transaction_id'] ?? '');
+            $tx = trim($_POST['transaction_id'] ?? ''); // Mã giao dịch (tùy chọn)
             $service->updatePaymentStatus($orderId, $newPayment, $tx);
             Session::setFlash('success', 'Cập nhật trạng thái thanh toán thành công');
-        } elseif ($action === 'cancel') {
+        } 
+        // Hủy đơn hàng với lý do
+        elseif ($action === 'cancel') {
             $reason = trim($_POST['reason'] ?? '');
             if ($service->cancelOrder($orderId, $reason)) {
                 Session::setFlash('success', 'Đã hủy đơn hàng');
@@ -40,53 +60,87 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } catch (Exception $e) {
         Session::setFlash('error', $e->getMessage());
     }
+    
+    // Redirect lại trang chi tiết sau khi xử lý
+    // Redirect lại trang chi tiết sau khi xử lý
     redirect('/admin/modules/orders/view.php?id=' . $orderId);
 }
 
+// Lấy thông tin chi tiết đơn hàng
 $order = $service->getOrder($orderId);
 if (!$order) {
     Session::setFlash('error', 'Không tìm thấy đơn hàng');
     redirect('/admin/modules/orders/');
 }
+
+// Lấy danh sách sản phẩm trong đơn hàng
 $items = $service->getOrderItems($orderId);
 
+// Thiết lập tiêu đề trang
 $pageTitle = 'Đơn ' . $order['order_number'];
 include __DIR__ . '/../../includes/header.php';
 
-$validStatuses = ['pending','confirmed','processing','shipping','delivered','cancelled'];
-$validPayments = ['pending','paid','failed','refunded'];
+// Danh sách trạng thái hợp lệ cho dropdown
+$validStatuses = getOrderStatusKeys();
+$validPayments = getPaymentStatusKeys();
 ?>
 
+<!-- Header trang với nút quay lại -->
+
+<!-- Header trang với nút quay lại -->
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2><i class="bi bi-receipt"></i> Đơn hàng <?= escape($order['order_number']) ?></h2>
     <a href="<?php echo SITE_URL; ?>/admin/modules/orders/" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Quay lại</a>
 </div>
 
 <div class="row">
+    <!-- Cột trái: Thông tin đơn hàng & Danh sách sản phẩm -->
     <div class="col-lg-8 mb-4">
+        <!-- Card thông tin đơn hàng -->
         <div class="card shadow-sm mb-4">
             <div class="card-header bg-light"><strong>Thông tin đơn</strong></div>
             <div class="card-body">
                 <div class="row">
+                    <!-- Cột thông tin khách hàng & trạng thái -->
                     <div class="col-md-6">
                         <div class="mb-2"><small class="text-muted">Khách hàng</small><div class="fw-bold"><?= escape($order['customer_name']) ?> (<?= escape($order['customer_email']) ?>)</div></div>
                         <div class="mb-2"><small class="text-muted">Trạng thái</small><div><?= getOrderStatusBadge($order['status']) ?></div></div>
                         <div class="mb-2"><small class="text-muted">Thanh toán</small><div><?= getPaymentStatusBadge($order['payment_status']) ?></div></div>
                         <div class="mb-2"><small class="text-muted">Ngày tạo</small><div><?= formatDate($order['created_at']) ?></div></div>
                     </div>
+                    <!-- Cột thông tin giao hàng -->
                     <div class="col-md-6">
                         <div class="mb-2"><small class="text-muted">Người nhận</small><div class="fw-bold"><?= escape($order['recipient_name']) ?></div></div>
                         <div class="mb-2"><small class="text-muted">Điện thoại</small><div><?= escape($order['recipient_phone']) ?></div></div>
+                        <div class="mb-2">
+                            <small class="text-muted">Phương thức thanh toán</small>
+                            <div>
+                                <?php 
+                                // Danh sách phương thức thanh toán với màu badge tương ứng
+                                $paymentMethods = [
+                                    'COD' => ['Thanh toán khi nhận (COD)', 'secondary'],
+                                    'MOMO' => ['MoMo', 'success'],
+                                    'VNPAY' => ['VNPay', 'primary'],
+                                    'EASYPAY' => ['EasyPay (VietQR)', 'info']
+                                ];
+                                $pm = $order['payment_method'] ?? 'COD';
+                                [$pmLabel, $pmClass] = $paymentMethods[$pm] ?? ['Không xác định', 'secondary'];
+                                ?>
+                                <span class="badge bg-<?= $pmClass ?>"><?= $pmLabel ?></span>
+                            </div>
+                        </div>
                         <div class="mb-2"><small class="text-muted">Địa chỉ</small><div><?= escape($order['shipping_address']) ?>, <?= escape($order['ward']) ?>, <?= escape($order['district']) ?>, <?= escape($order['city']) ?></div></div>
                     </div>
                 </div>
                 <?php if (!empty($order['notes'])): ?>
                     <hr>
+                    <!-- Hiển thị ghi chú của khách hàng nếu có -->
                     <div><small class="text-muted">Ghi chú</small><div><?= escape($order['notes']) ?></div></div>
                 <?php endif; ?>
             </div>
         </div>
 
+        <!-- Card danh sách sản phẩm -->
         <div class="card shadow-sm">
             <div class="card-header bg-light"><strong>Sản phẩm (<?= count($items) ?>)</strong></div>
             <div class="card-body p-0">
@@ -117,13 +171,15 @@ $validPayments = ['pending','paid','failed','refunded'];
             </div>
         </div>
     </div>
+    
+    <!-- Cột phải: Panel quản lý đơn hàng -->
     <div class="col-lg-4">
         <div class="card shadow-sm sticky-top" style="top:20px;">
             <div class="card-header bg-light">
                 <h5 class="mb-0"><i class="bi bi-wallet2"></i> Quản lý đơn</h5>
             </div>
             <div class="card-body">
-                <!-- Tổng tiền -->
+                <!-- Hiển thị tổng tiền với chi tiết phí -->
                 <div class="bg-light rounded-3 p-3 mb-4">
                     <small class="text-muted d-block mb-1">Tổng giá trị</small>
                     <h3 class="text-danger mb-3"><?= formatPrice($order['total_amount']) ?></h3>
@@ -143,7 +199,7 @@ $validPayments = ['pending','paid','failed','refunded'];
                     </div>
                 </div>
 
-                <!-- Cập nhật trạng thái đơn hàng -->
+                <!-- Form cập nhật trạng thái đơn hàng (pending/processing/shipped/delivered/cancelled) -->
                 <div class="mb-4">
                     <label class="form-label fw-bold mb-2">
                         <i class="bi bi-clock-history"></i> Trạng thái đơn hàng
@@ -152,19 +208,9 @@ $validPayments = ['pending','paid','failed','refunded'];
                         <input type="hidden" name="csrf_token" value="<?= Session::getToken() ?>">
                         <input type="hidden" name="action" value="update_status">
                         <select name="new_status" class="form-select form-select-sm">
-                            <?php foreach ($validStatuses as $st): 
-                                $icons = [
-                                    'pending' => '⏳',
-                                    'confirmed' => '✓',
-                                    'processing' => '⚙️',
-                                    'shipping' => '🚚',
-                                    'delivered' => '✅',
-                                    'cancelled' => '❌'
-                                ];
-                                $icon = $icons[$st] ?? '❓';
-                            ?>
+                            <?php foreach (getOrderStatusMap() as $st => $info): ?>
                                 <option value="<?= $st ?>" <?= $order['status']===$st?'selected':'' ?>>
-                                    <?= $icon ?> <?= ucfirst($st) ?>
+                                    <?= $info['emoji'] ?> <?= $info['label'] ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
@@ -174,7 +220,7 @@ $validPayments = ['pending','paid','failed','refunded'];
                     </form>
                 </div>
 
-                <!-- Cập nhật trạng thái thanh toán -->
+                <!-- Form cập nhật trạng thái thanh toán (pending/paid/refunded) -->
                 <div class="mb-4">
                     <label class="form-label fw-bold mb-2">
                         <i class="bi bi-credit-card"></i> Trạng thái thanh toán
@@ -184,17 +230,9 @@ $validPayments = ['pending','paid','failed','refunded'];
                         <input type="hidden" name="action" value="update_payment">
                         <div class="mb-2">
                             <select name="new_payment_status" class="form-select form-select-sm mb-2">
-                                <?php foreach ($validPayments as $ps): 
-                                    $icons = [
-                                        'pending' => '⏳',
-                                        'paid' => '💰',
-                                        'failed' => '❌',
-                                        'refunded' => '↩️'
-                                    ];
-                                    $icon = $icons[$ps] ?? '❓';
-                                ?>
+                                <?php foreach (getPaymentStatusMap() as $ps => $info): ?>
                                     <option value="<?= $ps ?>" <?= $order['payment_status']===$ps?'selected':'' ?>>
-                                        <?= $icon ?> <?= ucfirst($ps) ?>
+                                        <?= $info['emoji'] ?> <?= $info['label'] ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
@@ -211,7 +249,7 @@ $validPayments = ['pending','paid','failed','refunded'];
                     </form>
                 </div>
 
-                <!-- Hủy đơn -->
+                <!-- Nút hủy đơn hàng (chỉ hiện khi đơn chưa bị hủy) -->
                 <?php if ($order['status'] !== 'cancelled'): ?>
                 <div class="mb-4">
                     <button type="button" class="btn btn-outline-danger w-100 btn-sm" data-bs-toggle="modal" data-bs-target="#cancelOrderModal">
@@ -219,7 +257,7 @@ $validPayments = ['pending','paid','failed','refunded'];
                     </button>
                 </div>
 
-                <!-- Modal hủy đơn -->
+                <!-- Modal xác nhận hủy đơn hàng với lý do -->
                 <div class="modal fade" id="cancelOrderModal" tabindex="-1">
                     <div class="modal-dialog">
                         <div class="modal-content">

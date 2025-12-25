@@ -1,6 +1,7 @@
 <?php
 /**
- * Admin Payments Management - Quản lý cấu hình thanh toán & lịch sử giao dịch
+ * Admin - Quản Lý Thanh Toán
+ * Quản lý cấu hình cổng thanh toán (MoMo, VNPay, EasyPay) và lịch sử giao dịch
  */
 
 require_once __DIR__ . '/../../../includes/init.php';
@@ -10,7 +11,7 @@ $db = Database::getInstance();
 
 $tab = isset($_GET['tab']) ? trim($_GET['tab']) : 'config';
 
-// Xử lý cập nhật cấu hình
+// Xử lý form cập nhật cấu hình thanh toán
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!Session::verifyToken($_POST['csrf_token'] ?? '')) {
         Session::setFlash('error', 'CSRF token không hợp lệ');
@@ -24,21 +25,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         if ($configName && $configKey && strlen($configValue) > 0) {
             try {
-                // Kiểm tra xem config đã tồn tại chưa
+                // Kiểm tra config đã tồn tại chưa, nếu có thì UPDATE, chưa có thì INSERT
                 $existing = $db->queryOne(
                     "SELECT id FROM payment_config WHERE config_key = :key",
                     ['key' => $configKey]
                 );
                 
                 if ($existing) {
-                    // Update
+                    // Cập nhật giá trị config cũ
                     $db->execute(
                         "UPDATE payment_config SET config_value = :value, updated_at = NOW() 
                          WHERE config_key = :key",
                         ['value' => $configValue, 'key' => $configKey]
                     );
                 } else {
-                    // Insert
+                    // Thêm config mới
                     $db->insert(
                         "INSERT INTO payment_config (config_name, config_key, config_value, created_at) 
                          VALUES (:name, :key, :value, NOW())",
@@ -57,17 +58,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Lấy cấu hình hiện tại
+// Lấy tất cả cấu hình thanh toán hiện tại
 $configs = $db->query(
     "SELECT * FROM payment_config ORDER BY config_key ASC"
 );
 
-$configArray = [];
+// Chuyển thành mảng key-value để dễ truy xuất
 foreach ($configs as $cfg) {
     $configArray[$cfg['config_key']] = $cfg['config_value'];
 }
 
-// Lấy lịch sử giao dịch
+// Lấy lịch sử giao dịch thanh toán với bộ lọc
 $txnKeyword = isset($_GET['txn_keyword']) ? trim($_GET['txn_keyword']) : '';
 $txnGateway = isset($_GET['txn_gateway']) ? trim($_GET['txn_gateway']) : '';
 $txnStatus = isset($_GET['txn_status']) ? trim($_GET['txn_status']) : '';
@@ -97,7 +98,7 @@ $transactions = $db->query(
     $params
 );
 
-// Statistics
+// Thống kê giao dịch
 $stats = [
     'total_transactions' => $db->queryOne("SELECT COUNT(*) as count FROM payment_transactions")['count'] ?? 0,
     'success_txns' => $db->queryOne("SELECT COUNT(*) as count FROM payment_transactions WHERE status = 'success'")['count'] ?? 0,

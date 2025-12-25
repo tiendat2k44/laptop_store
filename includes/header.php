@@ -6,12 +6,12 @@
     <meta name="csrf-token" content="<?php echo Session::getToken(); ?>">
     
     <?php
-    // Initialize Database if not already done
+    // Khởi tạo Database nếu chưa được thực hiện
     if (!isset($db)) {
         $db = Database::getInstance();
     }
     
-    // SEO Meta Tags
+    // Thẻ Meta SEO
     $seoTitle = $pageTitle ?? '';
     $seoDescription = $pageDescription ?? '';
     $seoImage = $pageImage ?? '';
@@ -19,13 +19,13 @@
     seo_meta_tags($seoTitle, $seoDescription, $seoImage, $seoUrl);
     ?>
     
-    <!-- Bootstrap 5 CSS -->
+    <!-- CSS Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     
-    <!-- Bootstrap Icons -->
+    <!-- Bộ biểu tượng Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     
-    <!-- Custom CSS -->
+    <!-- CSS tùy chỉnh -->
     <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/style.css">
     
     <?php if (Auth::check()): ?>
@@ -39,7 +39,7 @@
     <?php endif; ?>
 </head>
 <body>
-    <!-- Top Bar -->
+    <!-- Thanh trên cùng -->
     <div class="top-bar bg-dark text-white py-2">
         <div class="container">
             <div class="row align-items-center">
@@ -75,7 +75,7 @@
         </div>
     </div>
 
-    <!-- Main Navigation -->
+    <!-- Điều hướng chính -->
     <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
         <div class="container">
             <a class="navbar-brand fw-bold text-primary" href="<?php echo SITE_URL; ?>">
@@ -110,7 +110,7 @@
                     </li>
                 </ul>
                 
-                <!-- Search Form -->
+                <!-- Biểu mẫu tìm kiếm -->
                 <form class="d-flex me-3 position-relative" method="GET" action="<?php echo SITE_URL; ?>/products.php" style="min-width:340px;">
                     <div class="input-group w-100">
                         <input id="searchInput" class="form-control" type="search" name="keyword" placeholder="Tìm kiếm laptop..." value="<?php 
@@ -122,7 +122,7 @@
                     <div id="searchSuggestions" class="w-100" style="display:none;"></div>
                 </form>
                 
-                <!-- Cart & Wishlist -->
+                <!-- Giỏ hàng & Danh sách yêu thích -->
                 <div class="d-flex">
                     <?php if (Auth::check()): ?>
                         <a href="<?php echo SITE_URL; ?>/wishlist.php" class="btn btn-outline-secondary position-relative me-2">
@@ -158,7 +158,7 @@
         </div>
     </nav>
 
-    <!-- Flash Messages -->
+    <!-- Thông báo nhanh -->
     <?php if (Session::hasFlash('success')): ?>
         <div class="container mt-3">
             <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -186,5 +186,5 @@
         </div>
     <?php endif; ?>
 
-    <!-- Main Content -->
+    <!-- Khu vực nội dung chính -->
     <main class="py-4">

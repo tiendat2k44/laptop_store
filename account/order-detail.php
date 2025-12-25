@@ -1,4 +1,9 @@
 <?php
+/**
+ * Trang Chi Tiết Đơn Hàng
+ * Hiển thị thông tin chi tiết đơn hàng và sản phẩm
+ */
+
 require_once __DIR__ . '/../includes/init.php';
 
 // Kiểm tra đăng nhập
@@ -18,7 +23,7 @@ if ($orderId <= 0) {
     redirect('/account/orders.php');
 }
 
-// Lấy thông tin đơn hàng
+// Lấy thông tin chi tiết đơn hàng
 $orderService = new OrderService($db, Auth::id());
 $order = $orderService->getOrderDetail($orderId);
 
@@ -30,23 +35,24 @@ if (!$order) {
 // Lấy danh sách sản phẩm trong đơn
 $items = $orderService->getOrderItems($orderId);
 
-// Định nghĩa trạng thái đơn hàng
-$orderStatuses = [
-    'pending' => ['⏳', 'Chờ xác nhận', 'warning'],
-    'confirmed' => ['✓', 'Đã xác nhận', 'info'],
-    'processing' => ['⚙️', 'Đang xử lý', 'primary'],
-    'shipping' => ['🚚', 'Đang giao', 'primary'],
-    'delivered' => ['✅', 'Đã giao', 'success'],
-    'cancelled' => ['❌', 'Đã hủy', 'danger']
+// Định nghĩa trạng thái đơn hàng (sử dụng helper function)
+$orderStatuses = getOrderStatusMap();
+// Phương thức thanh toán
+$paymentMethods = [
+    'COD' => 'Thanh toán khi nhận hàng (COD)',
+    'MOMO' => 'Ví điện tử MoMo',
+    'VNPAY' => 'Cổng thanh toán VNPay',
+    'EASYPAY' => 'EasyPay (SePay VietQR)'
 ];
-
-$paymentMethods = ['COD' => 'Thanh toán khi nhận', 'MOMO' => 'MoMo', 'VNPAY' => 'VNPAY'];
 
 $pageTitle = 'Đơn hàng ' . escape($order['order_number']);
 include __DIR__ . '/../includes/header.php';
 
 $status = $order['status'] ?? 'pending';
-[$statusEmoji, $statusText, $statusBadge] = $orderStatuses[$status] ?? ['❓', 'Không xác định', 'secondary'];
+$statusInfo = $orderStatuses[$status] ?? ['emoji' => '❓', 'label' => 'Không xác định', 'badge' => 'secondary'];
+$statusEmoji = $statusInfo['emoji'];
+$statusText = $statusInfo['label'];
+$statusBadge = $statusInfo['badge'];
 ?>
 
 <div class="container my-5">
@@ -109,9 +115,7 @@ $status = $order['status'] ?? 'pending';
                         <div class="col-md-6">
                             <h6 class="text-muted small">Thanh toán</h6>
                             <p class="mb-0">
-                                <span class="badge bg-<?= $order['payment_status'] === 'paid' ? 'success' : 'warning' ?>">
-                                    <?= $order['payment_status'] === 'paid' ? '✅ Đã thanh toán' : '⏳ Chờ thanh toán' ?>
-                                </span>
+                                <?= getPaymentStatusBadge($order['payment_status'] ?? 'pending') ?>
                             </p>
                         </div>
                     </div>

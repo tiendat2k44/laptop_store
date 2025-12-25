@@ -1,4 +1,9 @@
 <?php
+/**
+ * Shop - Quản lý Đơn Hàng Của Hàng
+ * Hiển thị các đơn hàng liên quan đến sản phẩm của cửa hàng
+ */
+
 require_once __DIR__ . '/../../../includes/init.php';
 Auth::requireRole(ROLE_SHOP, '/login.php');
 
@@ -10,11 +15,12 @@ if (!$shopId) {
     redirect('/shop/');
 }
 
+// Lấy tham số bộ lọc từ URL
 $status = isset($_GET['status']) ? trim($_GET['status']) : '';
 $keyword = isset($_GET['keyword']) ? trim($_GET['keyword']) : '';
 
-// Get shop's orders
-$where = "p.shop_id = :shop_id";
+// Tạo điều kiện WHERE để lọc đơn hàng của shop
+$where = "COALESCE(oi.shop_id, p.shop_id, -1) = :shop_id";
 $params = ['shop_id' => $shopId];
 
 if ($status) {
@@ -27,14 +33,15 @@ if ($keyword) {
 }
 
 $orders = $db->query(
-    "SELECT DISTINCT o.id, o.order_number, o.status, o.payment_status, o.created_at, u.full_name,
+    "SELECT o.id, o.order_number, o.status, o.payment_status, o.created_at, u.full_name,
             SUM(oi.subtotal) as shop_total
      FROM orders o
      JOIN order_items oi ON o.id = oi.order_id
-     JOIN products p ON oi.product_id = p.id
+     LEFT JOIN products p ON oi.product_id = p.id
      JOIN users u ON o.user_id = u.id
      WHERE $where
-     GROUP BY o.id, u.full_name
+     GROUP BY o.id, o.order_number, o.status, o.payment_status, o.created_at, u.full_name
+     HAVING COUNT(DISTINCT COALESCE(oi.shop_id, p.shop_id, -1)) = 1 AND MIN(COALESCE(oi.shop_id, p.shop_id, -1)) = :shop_id
      ORDER BY o.created_at DESC
      LIMIT 100",
     $params
@@ -95,20 +102,8 @@ include __DIR__ . '/../../../includes/header.php';
                         <td class="fw-bold">#<?= escape($order['order_number']) ?></td>
                         <td><?= escape($order['full_name']) ?></td>
                         <td class="text-danger fw-bold"><?= formatPrice($order['shop_total']) ?></td>
-                        <td>
-                            <span class="badge bg-<?= 
-                                $order['status'] === 'pending' ? 'warning' :
-                                ($order['status'] === 'delivered' ? 'success' :
-                                ($order['status'] === 'cancelled' ? 'danger' : 'info'))
-                            ?>">
-                                <?= ucfirst($order['status']) ?>
-                            </span>
-                        </td>
-                        <td>
-                            <span class="badge bg-<?= $order['payment_status'] === 'paid' ? 'success' : 'warning' ?>">
-                                <?= $order['payment_status'] === 'paid' ? 'Đã thanh toán' : 'Chờ thanh toán' ?>
-                            </span>
-                        </td>
+                        <td><?= getOrderStatusBadge($order['status']) ?></td>
+                        <td><?= getPaymentStatusBadge($order['payment_status']) ?></td>
                         <td><small><?= formatDate($order['created_at']) ?></small></td>
                         <td>
                             <a href="<?php echo SITE_URL; ?>/shop/modules/orders/view.php?id=<?= (int)$order['id'] ?>" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i> Xem</a>

@@ -1,9 +1,16 @@
 -- =============================================
--- LAPTOP E-COMMERCE DATABASE SCHEMA (PostgreSQL)
--- Multi-vendor Platform
+-- LAPTOP STORE - COMPLETE DATABASE SCHEMA (PostgreSQL)
+-- Multi-vendor E-commerce Platform
+-- Hợp nhất: schema chính + payment tables + settings + shop rating
+-- =============================================
+-- Version: 2.0
+-- Date: 2024-01
 -- =============================================
 
 -- Drop existing tables (in correct order to handle foreign keys)
+DROP TABLE IF EXISTS payment_transactions CASCADE;
+DROP TABLE IF EXISTS payment_config CASCADE;
+DROP TABLE IF EXISTS settings CASCADE;
 DROP TABLE IF EXISTS reviews CASCADE;
 DROP TABLE IF EXISTS order_items CASCADE;
 DROP TABLE IF EXISTS orders CASCADE;
@@ -96,6 +103,8 @@ CREATE TABLE shops (
     phone VARCHAR(20),
     email VARCHAR(255),
     address TEXT,
+    rating DECIMAL(3,2) DEFAULT 0.00,
+    total_reviews INTEGER DEFAULT 0,
     status VARCHAR(20) DEFAULT 'pending', -- pending, active, suspended
     approved_by INTEGER,
     approved_at TIMESTAMP,
@@ -107,6 +116,7 @@ CREATE TABLE shops (
 
 CREATE INDEX idx_shops_status ON shops(status);
 CREATE INDEX idx_shops_user ON shops(user_id);
+CREATE INDEX idx_shops_rating ON shops(rating DESC);
 
 -- =============================================
 -- BRANDS TABLE
@@ -285,7 +295,7 @@ CREATE TABLE orders (
     total_amount DECIMAL(15,2) NOT NULL,
     
     -- Payment
-    payment_method VARCHAR(50) NOT NULL, -- COD, MOMO, VNPAY
+    payment_method VARCHAR(50) NOT NULL, -- COD, MOMO, VNPAY, EASYPAY
     payment_status VARCHAR(20) DEFAULT 'pending', -- pending, paid, failed, refunded
     payment_transaction_id VARCHAR(255),
     paid_at TIMESTAMP,
@@ -395,6 +405,89 @@ CREATE INDEX idx_coupons_code ON coupons(code);
 CREATE INDEX idx_coupons_status ON coupons(status);
 
 -- =============================================
+-- PAYMENT CONFIG TABLE
+-- =============================================
+CREATE TABLE payment_config (
+    id SERIAL PRIMARY KEY,
+    config_name VARCHAR(100) NOT NULL,
+    config_key VARCHAR(100) NOT NULL UNIQUE,
+    config_value TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_payment_config_key ON payment_config(config_key);
+
+COMMENT ON TABLE payment_config IS 'Lưu trữ cấu hình thanh toán VNPay, MoMo, EasyPay';
+COMMENT ON COLUMN payment_config.config_name IS 'Tên cấu hình';
+COMMENT ON COLUMN payment_config.config_key IS 'Khóa cấu hình (ví dụ: VNPAY_TMN_CODE)';
+COMMENT ON COLUMN payment_config.config_value IS 'Giá trị cấu hình';
+
+-- Insert default payment config
+INSERT INTO payment_config (config_name, config_key, config_value) VALUES
+('VNPay TMN Code', 'VNPAY_TMN_CODE', 'your_tmn_code_here'),
+('VNPay Hash Secret', 'VNPAY_HASH_SECRET', 'your_hash_secret_here'),
+('VNPay URL', 'VNPAY_URL', 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html'),
+('MoMo Partner Code', 'MOMO_PARTNER_CODE', 'your_partner_code_here'),
+('MoMo Access Key', 'MOMO_ACCESS_KEY', 'your_access_key_here'),
+('MoMo Secret Key', 'MOMO_SECRET_KEY', 'your_secret_key_here'),
+('MoMo Endpoint', 'MOMO_ENDPOINT', 'https://test-payment.momo.vn/v2/gateway/api/create'),
+('EasyPay API Key', 'EASYPAY_API_KEY', 'your_api_key_here'),
+('EasyPay Secret', 'EASYPAY_SECRET', 'your_secret_here')
+ON CONFLICT (config_key) DO NOTHING;
+
+-- =============================================
+-- PAYMENT TRANSACTIONS TABLE
+-- =============================================
+CREATE TABLE payment_transactions (
+    id SERIAL PRIMARY KEY,
+    order_id INTEGER NOT NULL,
+    gateway VARCHAR(20) NOT NULL, -- vnpay, momo, easypay, cod
+    status VARCHAR(20) NOT NULL, -- pending, success, failed
+    transaction_id VARCHAR(255) NOT NULL,
+    amount DECIMAL(12,2) NOT NULL,
+    message TEXT,
+    ip_address VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_payment_txn_order ON payment_transactions(order_id);
+CREATE INDEX idx_payment_txn_gateway ON payment_transactions(gateway);
+CREATE INDEX idx_payment_txn_status ON payment_transactions(status);
+CREATE INDEX idx_payment_txn_transaction_id ON payment_transactions(transaction_id);
+CREATE INDEX idx_payment_txn_created_at ON payment_transactions(created_at);
+
+COMMENT ON TABLE payment_transactions IS 'Ghi lại tất cả các giao dịch thanh toán';
+COMMENT ON COLUMN payment_transactions.gateway IS 'Cổng thanh toán (vnpay, momo, easypay, cod)';
+COMMENT ON COLUMN payment_transactions.status IS 'Trạng thái (pending, success, failed)';
+COMMENT ON COLUMN payment_transactions.transaction_id IS 'ID giao dịch từ gateway';
+COMMENT ON COLUMN payment_transactions.amount IS 'Số tiền (VND)';
+
+-- =============================================
+-- SETTINGS TABLE
+-- =============================================
+CREATE TABLE settings (
+    id SERIAL PRIMARY KEY,
+    setting_key VARCHAR(100) NOT NULL UNIQUE,
+    setting_value TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_settings_key ON settings(setting_key);
+
+-- Insert default settings
+INSERT INTO settings (setting_key, setting_value) VALUES
+('site_name', 'Laptop Store'),
+('site_email', 'support@laptopstore.com'),
+('items_per_page', '12'),
+('enable_registration', '1'),
+('enable_shop_registration', '1'),
+('maintenance_mode', '0')
+ON CONFLICT (setting_key) DO NOTHING;
+
+-- =============================================
 -- CREATE DEFAULT ADMIN USER
 -- Email: admin@laptopstore.com
 -- Password: 123456
@@ -435,6 +528,8 @@ CREATE TRIGGER update_order_items_updated_at BEFORE UPDATE ON order_items FOR EA
 CREATE TRIGGER update_reviews_updated_at BEFORE UPDATE ON reviews FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_banners_updated_at BEFORE UPDATE ON banners FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_coupons_updated_at BEFORE UPDATE ON coupons FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_payment_config_updated_at BEFORE UPDATE ON payment_config FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_settings_updated_at BEFORE UPDATE ON settings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Function to update product rating when review is added/updated
 CREATE OR REPLACE FUNCTION update_product_rating()
@@ -460,3 +555,9 @@ $$ language 'plpgsql';
 CREATE TRIGGER update_product_rating_trigger 
 AFTER INSERT OR UPDATE ON reviews 
 FOR EACH ROW EXECUTE FUNCTION update_product_rating();
+
+-- =============================================
+-- SUCCESS MESSAGE
+-- =============================================
+SELECT '✅ Database schema created successfully! Ready to import sample data.' as message;
+SELECT 'Default admin account: admin@laptopstore.com / 123456' as note;

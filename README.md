@@ -82,15 +82,22 @@ cd laptop_store
 
 ### Bước 2: Import Database
 
-Xem file [IMPORT_DATABASE.md](IMPORT_DATABASE.md) để biết hướng dẫn chi tiết.
+⭐ **Sử dụng schema hoàn chỉnh mới** (khuyên dùng):
 
 ```bash
-# Import schema
-psql -U postgres -d laptop_store -f database/schema.sql
+# Tạo database
+createdb laptop_store
 
-# Import dữ liệu mẫu (15 sản phẩm laptop + hình ảnh)
+# Import schema hoàn chỉnh (bao gồm: core tables + payment + settings)
+psql -U postgres -d laptop_store -f database/complete_schema.sql
+
+# Import dữ liệu mẫu (20 sản phẩm laptop + hình ảnh + đơn hàng)
 psql -U postgres -d laptop_store -f database/sample_data.sql
 ```
+
+**Xem hướng dẫn chi tiết:** [DATABASE_IMPORT.md](DATABASE_IMPORT.md)
+
+**Lưu ý:** File `complete_schema.sql` đã hợp nhất tất cả migrations cũ (payment tables, settings, shop rating). Không cần chạy các file SQL riêng lẻ nữa.
 
 ### Bước 3: Cấu hình
 

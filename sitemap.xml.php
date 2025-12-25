@@ -5,12 +5,12 @@ header('Content-Type: application/xml; charset=utf-8');
 
 $db = Database::getInstance();
 
-// Get all active products
+// Lấy tất cả sản phẩm hoạt động
 $products = $db->query(
     "SELECT id, updated_at FROM products WHERE status = 'active' ORDER BY updated_at DESC LIMIT 5000"
 );
 
-// Get all categories
+// Lấy tất cả danh mục
 $categories = $db->query(
     "SELECT id, updated_at FROM categories WHERE status = 'active' ORDER BY id"
 );
@@ -18,21 +18,21 @@ $categories = $db->query(
 echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
 echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
 
-// Homepage
+// Trang chủ
 echo "  <url>\n";
 echo "    <loc>" . SITE_URL . "/</loc>\n";
 echo "    <changefreq>daily</changefreq>\n";
 echo "    <priority>1.0</priority>\n";
 echo "  </url>\n";
 
-// Products page
+// Trang sản phẩm
 echo "  <url>\n";
 echo "    <loc>" . SITE_URL . "/products.php</loc>\n";
 echo "    <changefreq>hourly</changefreq>\n";
 echo "    <priority>0.9</priority>\n";
 echo "  </url>\n";
 
-// All products
+// Tất cả sản phẩm
 foreach ($products as $product) {
     echo "  <url>\n";
     echo "    <loc>" . SITE_URL . "/product-detail.php?id=" . $product['id'] . "</loc>\n";
@@ -44,7 +44,7 @@ foreach ($products as $product) {
     echo "  </url>\n";
 }
 
-// All categories
+// Tất cả danh mục
 foreach ($categories as $category) {
     echo "  <url>\n";
     echo "    <loc>" . SITE_URL . "/products.php?category_id=" . $category['id'] . "</loc>\n";
@@ -56,7 +56,7 @@ foreach ($categories as $category) {
     echo "  </url>\n";
 }
 
-// Static pages
+// Các trang tĩnh
 $staticPages = [
     ['url' => '/login.php', 'priority' => '0.5', 'changefreq' => 'monthly'],
     ['url' => '/register.php', 'priority' => '0.5', 'changefreq' => 'monthly'],

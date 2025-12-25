@@ -3,12 +3,12 @@ require_once __DIR__ . '/../includes/init.php';
 
 header('Content-Type: application/json');
 
-// Check if user is logged in
+// Kiểm tra người dùng đã đăng nhập chưa
 if (!Auth::check()) {
     jsonResponse(['success' => false, 'message' => 'Vui lòng đăng nhập'], 401);
 }
 
-// Check CSRF token
+// Kiểm tra CSRF token
 if (!Session::verifyToken($_POST['csrf_token'] ?? '')) {
     jsonResponse(['success' => false, 'message' => 'Invalid CSRF token'], 403);
 }
@@ -23,7 +23,7 @@ if ($itemId <= 0 || $quantity <= 0) {
 $db = Database::getInstance();
 
 try {
-    // Verify item belongs to user
+    // Xác minh sản phẩm thuộc người dùng
     $item = $db->queryOne(
         "SELECT ci.*, p.stock_quantity FROM cart_items ci 
          JOIN products p ON ci.product_id = p.id 
@@ -39,7 +39,7 @@ try {
         jsonResponse(['success' => false, 'message' => 'Vượt quá số lượng có sẵn']);
     }
     
-    // Update quantity
+    // Cập nhật số lượng
     $sql = "UPDATE cart_items SET quantity = :quantity, updated_at = CURRENT_TIMESTAMP WHERE id = :id";
     $db->execute($sql, ['quantity' => $quantity, 'id' => $itemId]);
     

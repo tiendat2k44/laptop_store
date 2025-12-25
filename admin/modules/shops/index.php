@@ -1,11 +1,16 @@
 <?php
+/**
+ * Admin - Quản Lý Cửa Hàng
+ * Duyệt, quản lý trạng thái các cửa hàng trong hệ thống
+ */
+
 require_once __DIR__ . '/../../../includes/init.php';
 Auth::requireRole(ROLE_ADMIN, '/login.php');
 
 $db = Database::getInstance();
 $status = isset($_GET['status']) ? trim($_GET['status']) : '';
 
-// Lấy danh sách cửa hàng
+// Lấy danh sách cửa hàng với bộ lọc trạng thái
 $where = "1=1";
 $params = [];
 if ($status) {

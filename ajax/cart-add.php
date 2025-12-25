@@ -1,9 +1,14 @@
 <?php
+/**
+ * AJAX Handler - Thêm Sản Phẩm Vào Giỏ Hàng
+ * Xử lý yêu cầu thêm sản phẩm vào giỏ qua AJAX
+ */
+
 require_once __DIR__ . '/../includes/init.php';
 
 header('Content-Type: application/json');
 
-// Check if user is logged in
+// Kiểm tra đăng nhập
 if (!Auth::check()) {
     jsonResponse(['success' => false, 'message' => 'Vui lòng đăng nhập để thêm vào giỏ hàng'], 401);
 }
@@ -34,14 +39,14 @@ try {
         jsonResponse(['success' => false, 'message' => 'Sản phẩm không đủ số lượng trong kho']);
     }
     
-    // Check if product already in cart
+    // Kiểm tra sản phẩm đã có trong giỏ chưa
     $existingItem = $db->queryOne(
         "SELECT * FROM cart_items WHERE user_id = :user_id AND product_id = :product_id",
         ['user_id' => Auth::id(), 'product_id' => $productId]
     );
     
     if ($existingItem) {
-        // Update quantity
+        // Cập nhật số lượng nếu sản phẩm đã có trong giỏ
         $newQuantity = $existingItem['quantity'] + $quantity;
         
         if ($product['stock_quantity'] < $newQuantity) {

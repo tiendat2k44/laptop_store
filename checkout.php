@@ -1,4 +1,9 @@
 <?php
+/**
+ * Trang Thanh Toán
+ * Xử lý thanh toán đơn hàng và hiển thị form nhập thông tin giao hàng
+ */
+
 require_once __DIR__ . '/includes/init.php';
 
 // Kiểm tra đăng nhập
@@ -7,7 +12,7 @@ if (!Auth::check()) {
     redirect(SITE_URL . '/login.php?redirect=' . SITE_URL . '/checkout.php');
 }
 
-// Khởi tạo services
+// Khới tạo các services cần thiết
 $db = Database::getInstance();
 require_once __DIR__ . '/includes/services/CartService.php';
 require_once __DIR__ . '/includes/services/OrderService.php';
@@ -17,11 +22,20 @@ $cart = new CartService($db, Auth::id());
 $orderService = new OrderService($db, Auth::id());
 $couponService = new CouponService($db);
 
-// Coupon session tracking
+// Theo dõi mã giảm giá qua session
 $couponCode = Session::get('checkout_coupon_code');
 $couponDiscount = (float)Session::get('checkout_coupon_discount', 0);
 
-// Cờ trạng thái và thông tin đơn hàng thành công (PRG)
+// Khởi tạo biến để tránh lỗi undefined khi render
+$items = [];
+$amounts = [
+    'subtotal' => 0,
+    'shipping_fee' => 0,
+    'discount_amount' => $couponDiscount,
+    'total_amount' => 0
+];
+
+// Cờ trạng thái và thông tin đơn hàng thành công (PRG - Post/Redirect/Get pattern)
 $orderSuccess = false;
 $orderNumber = null;
 $successOrderId = null;
@@ -36,14 +50,14 @@ if ($successOrderId > 0) {
     if ($order) {
         $orderSuccess = true;
         $orderNumber = $order['order_number'];
-        // Dọn session để tránh hiển thị sai khi refresh/quay lại
+        // Dọn dẹp session để tránh hiển thị sai khi refresh/quay lại trang
         Session::set('last_order_id', null);
     }
 }
 
 // Chỉ tải giỏ hàng và tính tiền nếu chưa ở màn hình thành công
 if (!$orderSuccess) {
-    // Debug: log incoming request
+    // Ghi log yêu cầu phục vụ debug
     error_log('=== CHECKOUT PAGE LOAD ===');
     error_log('Request method: ' . $_SERVER['REQUEST_METHOD']);
     error_log('POST selected_items: ' . json_encode($_POST['selected_items'] ?? 'NOT SET'));
@@ -51,7 +65,7 @@ if (!$orderSuccess) {
     // Lấy giỏ hàng
     $allItems = $cart->getItems();
     
-    // Lấy selected_items: Ưu tiên POST data, fallback về session
+    // Lấy selected_items: ưu tiên POST, không có thì lấy từ session
     $selectedItemIds = [];
     if (isset($_POST['selected_items']) && is_array($_POST['selected_items']) && !empty($_POST['selected_items'])) {
         // Có POST data - dùng luôn và lưu vào session
@@ -75,7 +89,7 @@ if (!$orderSuccess) {
     $selectedItemIds = array_map('intval', $selectedItemIds);
     error_log('Selected item IDs: ' . json_encode($selectedItemIds));
     
-    // Filter items theo selection
+    // Lọc sản phẩm theo danh sách đã chọn
     $items = array_filter($allItems, function($item) use ($selectedItemIds) {
         return in_array($item['item_id'], $selectedItemIds, true);
     });
@@ -100,7 +114,7 @@ if (!$orderSuccess) {
     ];
 }
 
-// Xử lý form đặt hàng
+    // Xử lý submit đặt hàng
 $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -172,7 +186,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             error_log('Items count: ' . count($items));
             error_log('Total amount: ' . $amounts['total_amount']);
             
-            // Xử lý coupon nếu có
+            // Xử lý mã giảm giá nếu có
             $appliedCoupon = trim($_POST['applied_coupon_code'] ?? '');
             $appliedDiscount = (float)($_POST['applied_discount'] ?? 0);
             if ($appliedCoupon !== '' && $appliedDiscount > 0) {
@@ -216,7 +230,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     error_log('Redirecting to EasyPay...');
                     redirect(SITE_URL . '/payment/easy-pay-return.php?id=' . (int)$result['id']);
                 } else {
-                    // COD: chuyển sang màn hình thành công tại checkout
+                    // COD: chuyển sang màn hình thành công ngay tại checkout
                     error_log('COD order - Redirecting to success page...');
                     Session::set('last_order_id', (int)$result['id']);
                     redirect(SITE_URL . '/checkout.php?order_id=' . (int)$result['id']);
@@ -655,7 +669,7 @@ function loadWards() {
     }
 }
 
-// Load saved addresses
+// Tải danh sách địa chỉ đã lưu
 function loadSavedAddresses() {
     const siteUrl = '<?= SITE_URL ?>';
     fetch(siteUrl + '/ajax/address-action.php', {
@@ -717,7 +731,7 @@ function selectAddress(e, id, name, phone, addr, city, dist, ward) {
 
 document.addEventListener('DOMContentLoaded', loadSavedAddresses);
 
-// Coupon validation & apply
+// Kiểm tra và áp dụng mã giảm giá
 function applyCoupon() {
     const code = document.getElementById('couponCode').value.trim();
     const subtotal = parseFloat(<?= json_encode($amounts['subtotal'] ?? 0) ?>);

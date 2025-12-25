@@ -1,14 +1,14 @@
 <?php
 /**
- * Auth Class
- * Authentication and Authorization management
+ * Lớp Xác Thực (Auth)
+ * Quản lý đăng nhập, đăng xuất và phân quyền người dùng
  */
 
 class Auth {
     private static $db;
     
     /**
-     * Initialize Auth
+     * Khởi tạo Auth - Kết nối database và session
      */
     private static function init() {
         if (self::$db === null) {
@@ -18,21 +18,21 @@ class Auth {
     }
     
     /**
-     * Login user
-     * @param string $email
-     * @param string $password
-     * @param bool $remember
+     * Đăng nhập người dùng
+     * @param string $email Email đăng nhập
+     * @param string $password Mật khẩu
+     * @param bool $remember Ghi nhớ đăng nhập
      * @return array ['success' => bool, 'message' => string, 'user' => array]
      */
     public static function login($email, $password, $remember = false) {
         self::init();
         
-        // Validate input
+        // Kiểm tra dữ liệu đầu vào
         if (empty($email) || empty($password)) {
             return ['success' => false, 'message' => 'Email và mật khẩu không được để trống'];
         }
         
-        // Get user from database
+        // Lấy người dùng từ cơ sở dữ liệu
         $sql = "SELECT u.*, r.name as role_name 
                 FROM users u 
                 JOIN roles r ON u.role_id = r.id 
@@ -44,17 +44,17 @@ class Auth {
             return ['success' => false, 'message' => 'Email hoặc mật khẩu không đúng'];
         }
         
-        // Verify password
+        // Xác thực mật khẩu
         if (!password_verify($password, $user['password_hash'])) {
             return ['success' => false, 'message' => 'Email hoặc mật khẩu không đúng'];
         }
         
-        // Check if email is verified
+        // Kiểm tra email đã xác thực chưa
         if (!$user['email_verified']) {
             return ['success' => false, 'message' => 'Vui lòng xác thực email trước khi đăng nhập'];
         }
         
-        // Check account status
+        // Kiểm tra trạng thái tài khoản
         if ($user['status'] === 'locked') {
             return ['success' => false, 'message' => 'Tài khoản đã bị khóa'];
         }
@@ -63,11 +63,11 @@ class Auth {
             return ['success' => false, 'message' => 'Tài khoản đang chờ phê duyệt'];
         }
         
-        // Update last login
+        // Cập nhật thời gian đăng nhập cuối
         $updateSql = "UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = :id";
         self::$db->execute($updateSql, ['id' => $user['id']]);
         
-        // Set session
+        // Lưu thông tin vào session
         Session::regenerate();
         Session::set('user_id', $user['id']);
         Session::set('user_email', $user['email']);
@@ -76,26 +76,26 @@ class Auth {
         Session::set('user_role_name', $user['role_name']);
         Session::set('logged_in', true);
         
-        // Handle remember me
+        // Xử lý ghi nhớ đăng nhập
         if ($remember) {
             $token = bin2hex(random_bytes(32));
             setcookie('remember_token', $token, time() + REMEMBER_ME_DURATION, '/', '', false, true);
-            // Store token in database (implement if needed)
+            // Lưu token vào database (implement if needed)
         }
         
-        // Remove password from user array
+        // Xóa password khỏi mảng user trả về
         unset($user['password_hash']);
         
         return ['success' => true, 'message' => 'Đăng nhập thành công', 'user' => $user];
     }
     
     /**
-     * Logout user
+     * Đăng xuất người dùng
      */
     public static function logout() {
         self::init();
         
-        // Remove remember me cookie
+        // Xóa cookie ghi nhớ đăng nhập
         if (isset($_COOKIE['remember_token'])) {
             setcookie('remember_token', '', time() - 3600, '/');
         }

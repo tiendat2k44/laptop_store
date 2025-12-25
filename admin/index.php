@@ -1,7 +1,12 @@
 <?php
+/**
+ * Admin - Trang Tổng Quan (Dashboard)
+ * Hiển thị thống kê tổng quan hệ thống, đơn hàng mới, doanh thu
+ */
+
 require_once __DIR__ . '/../includes/init.php';
 
-// Kiểm tra quyền admin
+// Kiểm tra quyền truy cập Admin
 if (!Auth::check() || !Auth::isAdmin()) {
     Session::setFlash('error', 'Bạn không có quyền truy cập trang này');
     redirect('/login.php');
@@ -9,7 +14,7 @@ if (!Auth::check() || !Auth::isAdmin()) {
 
 $db = Database::getInstance();
 
-// Lấy thống kê tổng quan
+// Lấy các thống kê tổng quan hệ thống
 $stats = [
     'total_users' => $db->queryOne("SELECT COUNT(*) as count FROM users")['count'] ?? 0,
     'total_shops' => $db->queryOne("SELECT COUNT(*) as count FROM shops WHERE status = 'active'")['count'] ?? 0,
@@ -20,7 +25,7 @@ $stats = [
     'total_revenue' => $db->queryOne("SELECT SUM(total_amount) as total FROM orders WHERE payment_status = 'paid'")['total'] ?? 0
 ];
 
-// Lấy đơn hàng mới nhất
+// Lấy danh sách 10 đơn hàng mới nhất
 $recentOrders = $db->query(
     "SELECT o.id, o.order_number, o.total_amount, o.status, o.payment_status, o.created_at,
             u.full_name AS customer_name
@@ -30,7 +35,7 @@ $recentOrders = $db->query(
      LIMIT 10"
 );
 
-// Lấy shop đang chờ duyệt
+// Lấy danh sách các cửa hàng đang chờ phê duyệt
 $pendingShops = $db->query(
     "SELECT s.id, s.shop_name, s.created_at, u.full_name, u.email
      FROM shops s
@@ -42,7 +47,8 @@ $pendingShops = $db->query(
 
 $pageTitle = 'Admin Dashboard';
 
-// Doanh thu tổng hợp - Compatible với cả PostgreSQL và MySQL
+// Tính toán doanh thu tổng hợp theo ngày/tháng/năm
+// Tương thích với cả PostgreSQL và MySQL
 $driver = $db->getConnection()->getAttribute(PDO::ATTR_DRIVER_NAME);
 
 if ($driver === 'pgsql') {

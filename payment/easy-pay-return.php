@@ -75,28 +75,13 @@ if (!empty($_GET['status'])) {
 }
 
 // ========================================
-// TẠO URL THANH TOÁN EASYPAY
+// HIỂN THỊ THÔNG TIN CHUYỂN KHOẢN
+// Sepay không có API tạo payment URL, chỉ cần hiển thị QR + thông tin chuyển khoản
 // ========================================
-try {
-    require_once __DIR__ . '/../includes/payment/EasyPayGateway.php';
-    
-    // Kiểm tra config
-    if (!defined('EASYPAY_PARTNER_CODE') || strpos(EASYPAY_PARTNER_CODE, 'your_') === 0) {
-        throw new Exception('EasyPay chưa được cấu hình. Vui lòng cập nhật thông tin trong config hoặc admin panel.');
-    }
-    
-    $easypay = new EasyPayGateway();
-    $paymentResult = $easypay->createPaymentUrl($order);
-    
-    if (!$paymentResult['success']) {
-        throw new Exception($paymentResult['error'] ?? 'Không thể tạo URL thanh toán');
-    }
-    
-    $paymentUrl = $paymentResult['url'];
-    
-} catch (Throwable $e) {
-    error_log('EasyPay payment error: ' . $e->getMessage());
-    Session::setFlash('error', 'Lỗi thanh toán: ' . $e->getMessage());
+
+// Kiểm tra config cơ bản
+if (!defined('EASYPAY_BANK_ID') || !defined('EASYPAY_ACCOUNT_NUMBER')) {
+    Session::setFlash('error', 'Thông tin tài khoản ngân hàng chưa được cấu hình.');
     redirect('/account/order-detail.php?id=' . $orderId);
 }
 

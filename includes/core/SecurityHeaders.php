@@ -63,7 +63,7 @@ class SecurityHeaders {
             // Default fallback
             "default-src 'self'",
             
-            // Scripts - allow from self and CDNs
+            // Scripts - allow from self and CDNs (ajax.googleapis.com cho jQuery)
             "script-src 'self' 'unsafe-inline' cdn.jsdelivr.net ajax.googleapis.com",
             
             // Styles - allow from self and CDNs

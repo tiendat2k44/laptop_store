@@ -1,5 +1,3 @@
-    </main>
-
     <!-- Footer -->
     <footer class="bg-dark text-white mt-5">
         <div class="container py-5">
@@ -48,7 +46,7 @@
             
             <div class="row">
                 <div class="col-md-6 text-center text-md-start">
-                    <p class="mb-0">&copy; <?php echo date('Y'); ?> <?php echo SITE_NAME; ?>. All rights reserved.</p>
+                    <p class="mb-0">&copy; <?php echo date('Y'); ?> <?php echo SITE_NAME; ?>. Bảo lưu mọi quyền.</p>
                 </div>
                 <div class="col-md-6 text-center text-md-end">
                     <span class="badge bg-light text-dark me-2 px-3 py-2">Visa</span>
@@ -59,17 +57,17 @@
         </div>
     </footer>
 
-    <!-- Bootstrap 5 JS Bundle -->
+    <!-- Bundle Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- jQuery (for AJAX operations) - Dùng Google CDN theo CSP -->
+    <!-- jQuery (cho AJAX) - Từ Google CDN theo CSP -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script>
         window.jQuery || document.write('<script src="<?php echo SITE_URL; ?>/assets/js/jquery-3.6.0.min.js"><\\/script>');
         window.SITE_URL = '<?php echo SITE_URL; ?>';
     </script>
     
-    <!-- Custom JS -->
+    <!-- JavaScript tùy chỉnh -->
     <script src="<?php echo SITE_URL; ?>/assets/js/main.js"></script>
     
     <?php if (isset($additionalJS)): ?>

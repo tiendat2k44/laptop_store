@@ -6,16 +6,16 @@
     <title><?php echo isset($pageTitle) ? escape($pageTitle) . ' - ' : ''; ?>Admin - <?php echo SITE_NAME; ?></title>
     <meta name="csrf-token" content="<?php echo Session::getToken(); ?>">
     
-    <!-- Bootstrap 5 CSS -->
+    <!-- CSS Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     
-    <!-- Bootstrap Icons -->
+    <!-- Bộ biểu tượng Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     
-    <!-- Chart.js -->
+    <!-- Thư viện Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     
-    <!-- Custom CSS -->
+    <!-- CSS tùy chỉnh -->
     <style>
         * {
             box-sizing: border-box;
@@ -26,7 +26,7 @@
             background: #f8f9fa;
         }
         
-        /* Sidebar Styles */
+        /* Kiểu dáng sidebar */
         .sidebar {
             position: fixed;
             top: 0;
@@ -95,7 +95,7 @@
             font-weight: 700;
         }
         
-        /* Main Content */
+        /* Khu vực nội dung chính */
         main {
             margin-left: 260px;
             margin-top: 70px;
@@ -104,7 +104,7 @@
             background: #f8f9fa;
         }
         
-        /* Navbar */
+        /* Thanh điều hướng */
         .navbar-admin {
             position: fixed;
             top: 0;
@@ -134,7 +134,7 @@
             color: #fff !important;
         }
         
-        /* Stat Cards */
+        /* Thẻ thống kê */
         .stat-card {
             border-left: 4px solid;
             border-radius: 8px;
@@ -167,7 +167,7 @@
             border-left-color: #dc3545;
         }
         
-        /* Table Improvements */
+        /* Tùy chỉnh bảng */
         .table {
             background: #fff;
             margin-bottom: 0;
@@ -185,7 +185,7 @@
             background: #f8f9fa;
         }
         
-        /* Cards */
+        /* Thẻ */
         .card {
             border: none;
             border-radius: 8px;
@@ -197,7 +197,7 @@
             background: #f8f9fa !important;
         }
         
-        /* Alerts */
+        /* Thông báo */
         .alert {
             border: none;
             border-radius: 8px;
@@ -229,14 +229,14 @@
             border-left: 4px solid #ffc107;
         }
         
-        /* Badges */
+        /* Huy hiệu */
         .badge {
             padding: 0.4rem 0.8rem;
             border-radius: 6px;
             font-weight: 500;
         }
         
-        /* Buttons */
+        /* Nút bấm */
         .btn {
             border-radius: 6px;
             font-weight: 500;
@@ -247,7 +247,7 @@
             transform: translateY(-2px);
         }
         
-        /* Scrollbar */
+        /* Thanh cuộn */
         .sidebar::-webkit-scrollbar {
             width: 6px;
         }
@@ -289,7 +289,7 @@
     <?php endif; ?>
 </head>
 <body>
-    <!-- Top Navigation -->
+    <!-- Thanh điều hướng trên cùng -->
     <nav class="navbar navbar-admin">
         <div class="container-fluid">
             <a class="navbar-brand" href="<?php echo SITE_URL; ?>/admin/">
@@ -312,7 +312,7 @@
         </div>
     </nav>
 
-    <!-- Sidebar Navigation -->
+    <!-- Điều hướng thanh bên -->
     <nav class="sidebar">
         <div class="sidebar-sticky">
             <ul class="nav flex-column">
@@ -377,7 +377,7 @@
         </div>
     </nav>
 
-    <!-- Main Content -->
+    <!-- Khu vực nội dung chính -->
     <main class="p-4">
         <!-- Flash Messages -->
         <?php if (Session::hasFlash('success')): ?>

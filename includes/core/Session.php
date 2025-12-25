@@ -1,28 +1,28 @@
 <?php
 /**
- * Session Class
- * Secure session management
+ * Lớp Quản Lý Session
+ * Quản lý phiên làm việc với các thiết lập bảo mật
  */
 
 class Session {
     private static $started = false;
     
     /**
-     * Start session with security settings
+     * Khởi động session với các thiết lập bảo mật
      */
     public static function start() {
         if (!self::$started && session_status() === PHP_SESSION_NONE) {
-            // Security settings
+            // Thiết lập bảo mật cho session
             ini_set('session.cookie_httponly', 1);
             ini_set('session.use_only_cookies', 1);
-            ini_set('session.cookie_secure', 0); // Set to 1 if using HTTPS
+            ini_set('session.cookie_secure', 0); // Đặt thành 1 nếu dùng HTTPS
             ini_set('session.cookie_samesite', 'Lax');
             
             session_name('LAPTOP_STORE_SESSION');
             session_start();
             self::$started = true;
             
-            // Regenerate session ID periodically for security
+            // Tái tạo session ID định kỳ để bảo mật
             if (!self::has('last_regeneration')) {
                 self::regenerate();
             } elseif (time() - self::get('last_regeneration') > 300) {
@@ -32,7 +32,7 @@ class Session {
     }
     
     /**
-     * Regenerate session ID
+     * Tái tạo session ID mới (bảo mật)
      */
     public static function regenerate() {
         session_regenerate_id(true);
@@ -40,9 +40,9 @@ class Session {
     }
     
     /**
-     * Set session variable
-     * @param string $key
-     * @param mixed $value
+     * Lưu biến vào session
+     * @param string $key Tên biến
+     * @param mixed $value Giá trị
      */
     public static function set($key, $value) {
         self::start();
@@ -50,9 +50,9 @@ class Session {
     }
     
     /**
-     * Get session variable
-     * @param string $key
-     * @param mixed $default Default value if key doesn't exist
+     * Lấy giá trị biến từ session
+     * @param string $key Tên biến
+     * @param mixed $default Giá trị mặc định nếu không tồn tại
      * @return mixed
      */
     public static function get($key, $default = null) {
@@ -61,8 +61,8 @@ class Session {
     }
     
     /**
-     * Check if session variable exists
-     * @param string $key
+     * Kiểm tra biến có tồn tại trong session không
+     * @param string $key Tên biến
      * @return bool
      */
     public static function has($key) {
@@ -71,8 +71,8 @@ class Session {
     }
     
     /**
-     * Remove session variable
-     * @param string $key
+     * Xóa biến khỏi session
+     * @param string $key Tên biến
      */
     public static function remove($key) {
         self::start();

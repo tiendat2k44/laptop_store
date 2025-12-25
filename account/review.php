@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $rating = intval($_POST['rating'] ?? 0);
         $comment = trim($_POST['comment'] ?? '');
 
-        // Validation
+        // Kiểm tra dữ liệu
         if ($rating < 1 || $rating > 5) {
             $errors[] = 'Đánh giá phải từ 1 đến 5 sao';
         }

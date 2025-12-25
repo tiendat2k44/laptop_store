@@ -1,4 +1,9 @@
 <?php
+/**
+ * Admin - Quản lý Sản Phẩm
+ * Danh sách, thêm, sửa, xóa sản phẩm
+ */
+
 require_once __DIR__ . '/../../../includes/init.php';
 Auth::requireRole(ROLE_ADMIN, '/login.php');
 
@@ -8,11 +13,11 @@ $action = isset($_GET['action']) ? trim($_GET['action']) : 'list';
 $keyword = isset($_GET['keyword']) ? trim($_GET['keyword']) : '';
 $status = isset($_GET['status']) ? trim($_GET['status']) : '';
 
-// Xử lý POST actions
+// Xử lý các hành động POST (thêm/xóa sản phẩm)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $csrf = isset($_POST['csrf_token']) ? trim($_POST['csrf_token']) : '';
     if (!Session::verifyToken($csrf)) {
-        Session::setFlash('error', 'Invalid token');
+        Session::setFlash('error', 'Token bảo mật không hợp lệ');
         redirect(SITE_URL . '/admin/modules/products/');
     }
     

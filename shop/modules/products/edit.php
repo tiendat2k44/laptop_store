@@ -17,7 +17,7 @@ if ($productId <= 0) {
     redirect(SITE_URL . '/shop/modules/products/');
 }
 
-// Verify product belongs to shop
+// Xác minh sản phẩm thuộc cửa hàng này
 $product = $db->queryOne(
     "SELECT id, name, price, sale_price, stock_quantity, description, status FROM products WHERE id = :id AND shop_id = :sid",
     ['id' => $productId, 'sid' => $shopId]

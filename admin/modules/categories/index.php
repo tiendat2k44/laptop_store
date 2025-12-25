@@ -1,11 +1,16 @@
 <?php
+/**
+ * Admin - Quản Lý Danh Mục Sản Phẩm
+ * Danh sách, thêm, sửa, xóa các danh mục sản phẩm
+ */
+
 require_once __DIR__ . '/../../../includes/init.php';
 Auth::requireRole(ROLE_ADMIN, '/login.php');
 
 $db = Database::getInstance();
 $keyword = isset($_GET['keyword']) ? trim($_GET['keyword']) : '';
 
-// Lấy danh sách danh mục
+// Lấy danh sách tất cả các danh mục
 $categories = $db->query(
     "SELECT id, name, description, created_at FROM categories ORDER BY created_at DESC LIMIT 100"
 );

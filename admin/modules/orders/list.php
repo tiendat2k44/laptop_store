@@ -1,4 +1,9 @@
 <?php
+/**
+ * Admin - AJAX Lấy Danh Sách Đơn Hàng
+ * API trả về HTML để render danh sách đơn hàng với phân trang
+ */
+
 require_once __DIR__ . '/../../../includes/init.php';
 Auth::requireRole(ROLE_ADMIN, '/login.php');
 
@@ -8,6 +13,7 @@ $db = Database::getInstance();
 require_once __DIR__ . '/../../../includes/services/AdminOrderService.php';
 $service = new AdminOrderService($db);
 
+// Lấy các tham số bộ lọc và phân trang
 $status = isset($_GET['status']) ? trim($_GET['status']) : '';
 $keyword = isset($_GET['keyword']) ? trim($_GET['keyword']) : '';
 $date_from = isset($_GET['date_from']) ? trim($_GET['date_from']) : '';
@@ -19,6 +25,7 @@ $filters = [
     'date_to' => $date_to,
 ];
 
+// Tính toán phân trang
 $perPage = max(1, intval($_GET['perPage'] ?? 20));
 $page = max(1, intval($_GET['p'] ?? 1));
 $total = $service->countOrders($filters);
@@ -27,7 +34,7 @@ if ($page > $pages) $page = $pages;
 $offset = ($page - 1) * $perPage;
 $orders = $service->listOrders($filters, $perPage, $offset);
 
-ob_start();
+// Tạo HTML cho tbody (danh sách đơn hàng)
 foreach ($orders as $o): ?>
 <tr>
     <td><input type="checkbox" class="row-check" name="ids[]" value="<?= (int)$o['id'] ?>"></td>
@@ -49,6 +56,7 @@ foreach ($orders as $o): ?>
 <?php endforeach; 
 $tbodyHtml = ob_get_clean();
 
+// Tạo HTML cho pagination (phân trang)
 ob_start();
 ?>
 <ul class="pagination justify-content-center">
@@ -75,6 +83,7 @@ ob_start();
 <?php
 $paginationHtml = ob_get_clean();
 
+// Trả về JSON chứa HTML đã render
 echo json_encode([
     'success' => true,
     'tbody' => $tbodyHtml,

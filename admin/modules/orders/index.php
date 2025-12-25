@@ -1,4 +1,9 @@
 <?php
+/**
+ * Admin - Quản lý Đơn Hàng
+ * Danh sách đơn hàng với bộ lọc, tìm kiếm và xuất báo cáo
+ */
+
 require_once __DIR__ . '/../../../includes/init.php';
 Auth::requireRole(ROLE_ADMIN, '/login.php');
 
@@ -6,11 +11,13 @@ $db = Database::getInstance();
 require_once __DIR__ . '/../../../includes/services/AdminOrderService.php';
 $service = new AdminOrderService($db);
 
+// Lấy tham số bộ lọc từ URL
 $status = isset($_GET['status']) ? trim($_GET['status']) : '';
 $keyword = isset($_GET['keyword']) ? trim($_GET['keyword']) : '';
 $date_from = isset($_GET['date_from']) ? trim($_GET['date_from']) : '';
 $date_to = isset($_GET['date_to']) ? trim($_GET['date_to']) : '';
 
+// Kiểm tra trạng thái hợp lệ
 $validStatuses = ['pending','confirmed','processing','shipping','delivered','cancelled'];
 if ($status !== '' && !in_array($status, $validStatuses, true)) $status = '';
 
@@ -22,7 +29,7 @@ $filters = [
 ];
 $counts = $service->getCountsByStatus();
 
-// Phân trang
+// Thiết lập phân trang
 $perPage = 20;
 $page = max(1, intval($_GET['p'] ?? 1));
 $total = $service->countOrders($filters);
@@ -39,6 +46,7 @@ include __DIR__ . '/../../includes/header.php';
     <h2><i class="bi bi-cart-check"></i> Đơn hàng</h2>
     <div class="gap-2" style="display:flex">
         <?php 
+            // Tạo URL xuất file với các tham số bộ lọc hiện tại
             $qs = $_GET; unset($qs['p']); 
             $csvUrl = '/admin/modules/orders/export.php' . (empty($qs) ? '' : ('?' . http_build_query($qs)));
             $xlsxUrl = '/admin/modules/orders/export-xlsx.php' . (empty($qs) ? '' : ('?' . http_build_query($qs)));

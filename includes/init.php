@@ -17,7 +17,7 @@ require_once __DIR__ . '/core/Auth.php';
 require_once __DIR__ . '/core/RateLimiter.php';
 require_once __DIR__ . '/core/SecurityHeaders.php';
 
-// Load helper functions
+// Tải các hàm trợ giúp
 require_once __DIR__ . '/helpers/functions.php';
 // Mailer + Email templates (nhẹ, không cần thư viện ngoài)
 require_once __DIR__ . '/helpers/mailer.php';

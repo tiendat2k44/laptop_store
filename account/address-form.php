@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'is_default' => isset($_POST['is_default']) ? 1 : 0,
         ];
 
-        // Validate
+        // Kiểm tra
         if ($data['recipient_name'] === '') {
             $errors[] = 'Tên người nhận không được để trống';
         }

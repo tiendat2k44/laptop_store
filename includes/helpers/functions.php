@@ -1,28 +1,23 @@
 <?php
 /**
- * Helper Functions
- * Common utility functions used throughout the application
+ * Hàm Tiện Ích (Helper Functions)
+ * Các hàm dùng chung trong toàn bộ ứng dụng
  */
 
 /**
- * Sanitize output to prevent XSS
- * @param string $string
- * @return string
+ * Làm sạch dữ liệu đầu ra để phòng chống XSS
+ * @param string $string Chuỗi cần làm sạch
+ * @return string Chuỗi đã được escape
  */
 function escape($string) {
     return htmlspecialchars($string ?? '', ENT_QUOTES, 'UTF-8');
 }
 
 /**
- * Redirect to URL
- * @param string $url
- * @param int $statusCode
- */
-/**
- * Redirect to a URL
+ * Chuyển hướng đến URL
  * Tự động thêm SITE_URL nếu $url bắt đầu bằng /
- * @param string $url
- * @param int $statusCode
+ * @param string $url URL cần chuyển hướng
+ * @param int $statusCode Mã trạng thái HTTP (mặc định 302)
  */
 function redirect($url, $statusCode = 302) {
     // Nếu URL bắt đầu bằng / và không phải là URL đầy đủ, thêm SITE_URL
@@ -34,14 +29,14 @@ function redirect($url, $statusCode = 302) {
 }
 
 /**
- * Generate slug from string
- * @param string $string
- * @return string
+ * Tạo slug từ chuỗi tiếng Việt (dùng cho URL thân thiện)
+ * @param string $string Chuỗi cần chuyển thành slug
+ * @return string Slug đã được tạo
  */
 function generateSlug($string) {
     $string = mb_strtolower($string, 'UTF-8');
     
-    // Vietnamese character replacement
+    // Chuyển đổi ký tự tiếng Việt có dấu sang không dấu
     $vietnameseMap = [
         'á' => 'a', 'à' => 'a', 'ả' => 'a', 'ã' => 'a', 'ạ' => 'a',
         'ă' => 'a', 'ắ' => 'a', 'ằ' => 'a', 'ẳ' => 'a', 'ẵ' => 'a', 'ặ' => 'a',
@@ -67,19 +62,19 @@ function generateSlug($string) {
 }
 
 /**
- * Format price to VND currency
- * @param float $price
- * @return string
+ * Định dạng giá tiền sang định dạng VNĐ
+ * @param float $price Giá cần định dạng
+ * @return string Giá đã định dạng (VD: 10.000.000 ₫)
  */
 function formatPrice($price) {
     return number_format($price, 0, ',', '.') . ' ₫';
 }
 
 /**
- * Format date to Vietnamese format
- * @param string $date
- * @param string $format
- * @return string
+ * Định dạng ngày tháng theo kiểu Việt Nam
+ * @param string $date Ngày cần định dạng
+ * @param string $format Định dạng mong muốn (mặc định: d/m/Y H:i)
+ * @return string Ngày đã định dạng
  */
 function formatDate($date, $format = 'd/m/Y H:i') {
     if (empty($date)) {
@@ -91,33 +86,33 @@ function formatDate($date, $format = 'd/m/Y H:i') {
 // image_url() đã có ở cuối file với logic nâng cao; không định nghĩa lại ở đây
 
 /**
- * Generate order number
- * @return string
+ * Tạo mã đơn hàng tự động
+ * @return string Mã đơn hàng (VD: ORD20231224153045789)
  */
 function generateOrderNumber() {
     return ORDER_PREFIX . date('YmdHis') . rand(100, 999);
 }
 
 /**
- * Validate email
- * @param string $email
- * @return bool
+ * Kiểm tra tính hợp lệ của email
+ * @param string $email Email cần kiểm tra
+ * @return bool true nếu hợp lệ, false nếu không
  */
 function validateEmail($email) {
     return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
 }
 
 /**
- * Alias dùng trong code mới: isValidEmail
+ * Hàm alias: Kiểm tra email hợp lệ (dùng trong code mới)
  */
 function isValidEmail($email) {
     return validateEmail($email);
 }
 
 /**
- * Validate phone number (Vietnamese format)
- * @param string $phone
- * @return bool
+ * Kiểm tra số điện thoại Việt Nam hợp lệ
+ * @param string $phone Số điện thoại cần kiểm tra
+ * @return bool true nếu hợp lệ (0/+84 + 10 số)
  */
 function validatePhone($phone) {
     $pattern = '/^(0|\+84)(3|5|7|8|9)[0-9]{8}$/';
@@ -125,14 +120,17 @@ function validatePhone($phone) {
 }
 
 /**
- * Alias dùng trong code mới: isValidPhone (10-11 số, bắt đầu 0)
+ * Hàm alias: Kiểm tra số điện thoại (10-11 số, bắt đầu 0)
  */
 function isValidPhone($phone) {
     return preg_match('/^0\d{9,10}$/', (string)$phone) === 1;
 }
 
 /**
- * Giá hiển thị ưu tiên sale_price nếu hợp lệ
+ * Lấy giá hiển thị - ưu tiên giá khuyến mại nếu hợp lệ
+ * @param float $price Giá gốc
+ * @param float|null $salePrice Giá khuyến mại
+ * @return float Giá hiển thị cuối cùng
  */
 function getDisplayPrice($price, $salePrice = null) {
     if (!empty($salePrice) && (float)$salePrice > 0 && (float)$salePrice < (float)$price) {
@@ -142,7 +140,10 @@ function getDisplayPrice($price, $salePrice = null) {
 }
 
 /**
- * Tính % giảm giá
+ * Tính phần trăm giảm giá
+ * @param float $originalPrice Giá gốc
+ * @param float $salePrice Giá khuyến mại
+ * @return int Phần trăm giảm (0-100)
  */
 function calculateDiscount($originalPrice, $salePrice) {
     if (empty($salePrice) || $salePrice >= $originalPrice) {
@@ -355,16 +356,13 @@ function truncate($text, $length = 100, $suffix = '...') {
  * @return string
  */
 function getOrderStatusBadge($status) {
-    $badges = [
-        'pending' => '<span class="badge bg-warning">Chờ xác nhận</span>',
-        'confirmed' => '<span class="badge bg-info">Đã xác nhận</span>',
-        'processing' => '<span class="badge bg-primary">Đang xử lý</span>',
-        'shipping' => '<span class="badge bg-primary">Đang giao</span>',
-        'delivered' => '<span class="badge bg-success">Đã giao</span>',
-        'cancelled' => '<span class="badge bg-danger">Đã hủy</span>',
-    ];
-    
-    return $badges[$status] ?? '<span class="badge bg-secondary">' . escape($status) . '</span>';
+    $map = getOrderStatusMap();
+    if (isset($map[$status])) {
+        $cls = $map[$status]['badge'];
+        $label = $map[$status]['label'];
+        return '<span class="badge bg-' . $cls . '">' . $label . '</span>';
+    }
+    return '<span class="badge bg-secondary">' . escape($status) . '</span>';
 }
 
 /**
@@ -373,14 +371,57 @@ function getOrderStatusBadge($status) {
  * @return string
  */
 function getPaymentStatusBadge($status) {
-    $badges = [
-        'pending' => '<span class="badge bg-warning">Chờ thanh toán</span>',
-        'paid' => '<span class="badge bg-success">Đã thanh toán</span>',
-        'failed' => '<span class="badge bg-danger">Thất bại</span>',
-        'refunded' => '<span class="badge bg-secondary">Đã hoàn tiền</span>',
+    $map = getPaymentStatusMap();
+    if (isset($map[$status])) {
+        $cls = $map[$status]['badge'];
+        $label = $map[$status]['label'];
+        return '<span class="badge bg-' . $cls . '">' . $label . '</span>';
+    }
+    return '<span class="badge bg-secondary">' . escape($status) . '</span>';
+}
+
+/**
+ * Bản đồ trạng thái đơn hàng: nhãn + lớp badge + emoji
+ */
+function getOrderStatusMap() {
+    return [
+        'pending' => ['label' => 'Chờ xác nhận', 'badge' => 'warning', 'emoji' => '⏳'],
+        'confirmed' => ['label' => 'Đã xác nhận', 'badge' => 'info', 'emoji' => '✓'],
+        'processing' => ['label' => 'Đang xử lý', 'badge' => 'primary', 'emoji' => '⚙️'],
+        'shipping' => ['label' => 'Đang giao', 'badge' => 'primary', 'emoji' => '🚚'],
+        'delivered' => ['label' => 'Đã giao', 'badge' => 'success', 'emoji' => '✅'],
+        'cancelled' => ['label' => 'Đã hủy', 'badge' => 'danger', 'emoji' => '❌'],
     ];
-    
-    return $badges[$status] ?? '<span class="badge bg-secondary">' . escape($status) . '</span>';
+}
+
+function getOrderStatusKeys() {
+    return array_keys(getOrderStatusMap());
+}
+
+function getOrderStatusLabel($status) {
+    $map = getOrderStatusMap();
+    return $map[$status]['label'] ?? $status;
+}
+
+/**
+ * Bản đồ trạng thái thanh toán
+ */
+function getPaymentStatusMap() {
+    return [
+        'pending' => ['label' => 'Chờ thanh toán', 'badge' => 'warning', 'emoji' => '⏳'],
+        'paid' => ['label' => 'Đã thanh toán', 'badge' => 'success', 'emoji' => '💰'],
+        'failed' => ['label' => 'Thất bại', 'badge' => 'danger', 'emoji' => '❌'],
+        'refunded' => ['label' => 'Đã hoàn tiền', 'badge' => 'secondary', 'emoji' => '↩️'],
+    ];
+}
+
+function getPaymentStatusKeys() {
+    return array_keys(getPaymentStatusMap());
+}
+
+function getPaymentStatusLabel($status) {
+    $map = getPaymentStatusMap();
+    return $map[$status]['label'] ?? $status;
 }
 
 /**

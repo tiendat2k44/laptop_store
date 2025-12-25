@@ -1,8 +1,8 @@
-// Main JavaScript for Laptop Store
+// JavaScript chính cho Laptop Store
 
 $(document).ready(function() {
     
-    // Add to cart
+    // Thêm vào giỏ hàng
     $(document).on('click', '.btn-add-to-cart', function(e) {
         e.preventDefault();
         
@@ -10,7 +10,7 @@ $(document).ready(function() {
         const quantity = $(this).data('quantity') || 1;
         const button = $(this);
         
-        // Check if user is logged in
+        // Kiểm tra người dùng đã đăng nhập chưa
         if (!isLoggedIn()) {
             window.location.href = window.SITE_URL + '/login.php?redirect=' + encodeURIComponent(window.location.pathname);
             return;
@@ -51,14 +51,14 @@ $(document).ready(function() {
         });
     });
     
-    // Buy now - Direct checkout
+    // Mua ngay - chuyển thẳng tới thanh toán
     $(document).on('click', '.btn-buy-now', function(e) {
         e.preventDefault();
         
         const productId = $(this).data('product-id');
         const button = $(this);
         
-        // Check if user is logged in
+        // Kiểm tra người dùng đã đăng nhập chưa
         if (!isLoggedIn()) {
             window.location.href = window.SITE_URL + '/login.php?redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
             return;
@@ -77,7 +77,7 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 if (response.success) {
-                    // Redirect to checkout
+                    // Chuyển tới trang thanh toán
                     window.location.href = window.SITE_URL + '/checkout.php';
                 } else {
                     showNotification('error', response.message || 'Không thể thêm vào giỏ hàng');
@@ -91,7 +91,7 @@ $(document).ready(function() {
         });
     });
     
-    // Add to wishlist
+    // Thêm vào danh sách yêu thích
     $(document).on('click', '.btn-wishlist', function(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -125,7 +125,7 @@ $(document).ready(function() {
         });
     });
     
-    // Update cart quantity
+    // Cập nhật số lượng trong giỏ
     $(document).on('change', '.cart-quantity-input', function() {
         const itemId = $(this).data('item-id');
         const quantity = parseInt($(this).val());
@@ -138,7 +138,7 @@ $(document).ready(function() {
         updateCartItem(itemId, quantity);
     });
     
-    // Remove cart item
+    // Xóa sản phẩm khỏi giỏ
     $(document).on('click', '.btn-remove-cart-item', function(e) {
         e.preventDefault();
         
@@ -170,7 +170,7 @@ $(document).ready(function() {
         });
     });
     
-    // Live search
+    // Tìm kiếm nhanh
     let searchTimeout;
     $('#searchInput').on('keyup', function() {
         clearTimeout(searchTimeout);
@@ -211,19 +211,19 @@ $(document).ready(function() {
         }, 300);
     });
     
-    // Click on search suggestion
+    // Nhấp vào gợi ý tìm kiếm
     $(document).on('click', '.search-suggestion-item', function() {
         window.location.href = $(this).data('url');
     });
     
-    // Hide search suggestions when clicking outside
+    // Ẩn gợi ý khi click ra ngoài
     $(document).click(function(e) {
         if (!$(e.target).closest('#searchInput, #searchSuggestions').length) {
             $('#searchSuggestions').hide();
         }
     });
     
-    // Product image gallery
+    // Bộ sưu tập ảnh sản phẩm
     $('.product-thumbnail').on('click', function() {
         const imageUrl = $(this).data('image');
         $('.product-detail-image').attr('src', imageUrl);
@@ -231,7 +231,7 @@ $(document).ready(function() {
         $(this).addClass('active');
     });
     
-    // Form validation
+    // Kiểm tra dữ liệu biểu mẫu
     $('form[data-validate="true"]').on('submit', function(e) {
         let isValid = true;
         
@@ -250,18 +250,18 @@ $(document).ready(function() {
         }
     });
     
-    // Clear invalid state on input
+    // Xóa trạng thái lỗi khi nhập
     $('input, select, textarea').on('input change', function() {
         $(this).removeClass('is-invalid');
     });
     
-    // Auto dismiss alerts
+    // Tự động ẩn thông báo
     setTimeout(function() {
         $('.alert').fadeOut('slow');
     }, 5000);
 });
 
-// Helper functions
+// Các hàm tiện ích
 function addToCart(productId, quantity = 1) {
     try {
         if (!isLoggedIn()) {
@@ -299,7 +299,7 @@ function addToCart(productId, quantity = 1) {
 }
 
 function isLoggedIn() {
-    // This should be set from PHP
+    // Giá trị này được đặt từ PHP
     return typeof window.userLoggedIn !== 'undefined' && window.userLoggedIn;
 }
 

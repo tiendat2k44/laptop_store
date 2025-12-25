@@ -1,7 +1,12 @@
 <?php
+/**
+ * Admin - Cài Đặt Hệ Thống
+ * Quản lý các thiết lập chung của website (tên, email, bảo trì...)
+ */
+
 require_once __DIR__ . '/../includes/init.php';
 
-// Kiểm tra quyền admin
+// Kiểm tra quyền truy cập Admin
 if (!Auth::check() || !Auth::isAdmin()) {
     Session::setFlash('error', 'Bạn không có quyền truy cập trang này');
     redirect('/login.php');
@@ -11,7 +16,7 @@ $db = Database::getInstance();
 $errors = [];
 $success = false;
 
-// Xử lý form submit
+// Xử lý khi người dùng submit form cài đặt
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!Session::verifyToken($_POST['csrf_token'] ?? '')) {
         $errors[] = 'Token bảo mật không hợp lệ';
@@ -24,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $enableShopRegistration = isset($_POST['enable_shop_registration']) ? 1 : 0;
         $maintenanceMode = isset($_POST['maintenance_mode']) ? 1 : 0;
         
-        // Validation
+        // Kiểm tra tính hợp lệ dữ liệu đầu vào
         if (empty($siteName)) {
             $errors[] = 'Tên website không được để trống';
         }
@@ -40,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         if (empty($errors)) {
-            // Cập nhật hoặc thêm mới settings
+            // Lưu các cài đặt vào database (update nếu có, insert nếu chưa có)
             $settings = [
                 ['key' => 'site_name', 'value' => $siteName],
                 ['key' => 'site_email', 'value' => $siteEmail],

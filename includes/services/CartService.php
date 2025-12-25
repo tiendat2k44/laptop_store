@@ -1,4 +1,8 @@
 <?php
+/**
+ * Dịch Vụ Giỏ Hàng (CartService)
+ * Quản lý giỏ hàng của người dùng - thêm, xóa, cập nhật sản phẩm
+ */
 
 class CartService {
     private $db;
@@ -63,7 +67,7 @@ class CartService {
     }
     
     /**
-     * Xóa các items được chọn (sau khi checkout một phần)
+     * Xóa các sản phẩm đã chọn (sau khi thanh toán một phần)
      * @param array $itemIds Danh sách item_id cần xóa
      */
     public function clearSelectedItems($itemIds) {
@@ -71,6 +75,7 @@ class CartService {
             return;
         }
         
+        // Tạo placeholders cho câu query (?, ?, ?...)
         $placeholders = implode(',', array_fill(0, count($itemIds), '?'));
         $params = array_merge([$this->userId], $itemIds);
         

@@ -1,4 +1,9 @@
 <?php
+/**
+ * Shop - Quản lý Sản Phẩm Của Hàng
+ * Thêm, sửa, xóa sản phẩm thuộc quyền quản lý của cửa hàng
+ */
+
 require_once __DIR__ . '/../../../includes/init.php';
 Auth::requireRole(ROLE_SHOP, '/login.php');
 
@@ -10,11 +15,11 @@ if (!$shopId) {
     redirect('/shop/');
 }
 
-// Handle POST actions
+// Xử lý các hành động POST (thêm/xóa sản phẩm)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $csrf = isset($_POST['csrf_token']) ? trim($_POST['csrf_token']) : '';
     if (!Session::verifyToken($csrf)) {
-        Session::setFlash('error', 'Invalid token');
+        Session::setFlash('error', 'Token bảo mật không hợp lệ');
         redirect(SITE_URL . '/shop/modules/products/');
     }
     
@@ -50,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['delete_product'])) {
         $productId = intval($_POST['product_id'] ?? 0);
         if ($productId > 0) {
-            // Verify product belongs to this shop
+            // Xác minh sản phẩm thuộc cửa hàng này
             $prod = $db->queryOne("SELECT id FROM products WHERE id = :id AND shop_id = :sid", ['id' => $productId, 'sid' => $shopId]);
             if ($prod) {
                 try {
@@ -70,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $keyword = isset($_GET['keyword']) ? trim($_GET['keyword']) : '';
 $status = isset($_GET['status']) ? trim($_GET['status']) : '';
 
-// Get products
+// Lấy sản phẩm
 $where = "shop_id = :shop_id";
 $params = ['shop_id' => $shopId];
 

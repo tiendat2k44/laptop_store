@@ -1,4 +1,9 @@
 <?php
+/**
+ * Admin - Quản lý Người Dùng
+ * Danh sách, thêm, sửa, xóa người dùng
+ */
+
 require_once __DIR__ . '/../../../includes/init.php';
 Auth::requireRole(ROLE_ADMIN, '/login.php');
 
@@ -24,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_user'])) {
     redirect(SITE_URL . '/admin/modules/users/');
 }
 
-// Lấy danh sách người dùng
+// Lấy danh sách người dùng với bộ lọc tìm kiếm
 $where = "1=1";
 $params = [];
 if ($keyword) {
@@ -44,7 +49,7 @@ $users = $db->query(
 $pageTitle = 'Quản lý người dùng';
 include __DIR__ . '/../../includes/header.php';
 
-// Get statistics
+// Lấy thống kê số lượng người dùng
 $stats = [
     'total' => $db->queryOne("SELECT COUNT(*) as count FROM users")['count'] ?? 0,
     'active' => $db->queryOne("SELECT COUNT(*) as count FROM users WHERE status = 'active'")['count'] ?? 0,

@@ -119,6 +119,13 @@ class AdminOrderService {
                 error_log('AdminOrderService::mail updateStatus - ' . $e->getMessage());
             }
         }
+        // Nếu không có dòng nào bị ảnh hưởng, kiểm tra lại trạng thái hiện tại
+        if (!$ok) {
+            $cur = $this->getOrder($orderId);
+            if ($cur && $cur['status'] === $newStatus) {
+                return 1; // coi như cập nhật thành công (không đổi giá trị)
+            }
+        }
         return $ok;
     }
 

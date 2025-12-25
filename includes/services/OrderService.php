@@ -1,4 +1,8 @@
 <?php
+/**
+ * Dịch Vụ Đơn Hàng (OrderService)
+ * Quản lý đơn hàng - tạo, cập nhật, hủy, lấy thông tin đơn hàng
+ */
 
 class OrderService {
     private $db;
@@ -11,13 +15,16 @@ class OrderService {
     
     /**
      * Tạo đơn hàng mới từ giỏ hàng
-     * Trả về: order ID hoặc null nếu thất bại
+     * @param array $shipping Thông tin giao hàng (tên, sdt, địa chỉ...)
+     * @param array $items Danh sách sản phẩm đặt hàng
+     * @param array $amounts Số tiền (tạm tính, ship, giảm giá, tổng)
+     * @return int|null order ID hoặc null nếu thất bại
      */
     public function createOrder($shipping, $items, $amounts) {
         try {
             $this->db->beginTransaction();
             
-            // 1️⃣ Tạo đơn hàng chính
+            // Bước 1: Tạo đơn hàng chính
             $orderNumber = $this->generateOrderNumber();
             // Chèn đơn hàng, tương thích cả PostgreSQL (RETURNING) và MySQL (lastInsertId)
             $driver = $this->db->getConnection()->getAttribute(PDO::ATTR_DRIVER_NAME);
@@ -76,7 +83,7 @@ class OrderService {
                 throw new Exception('Không thể tạo đơn hàng');
             }
             
-            // 2️⃣ Thêm items vào đơn hàng + cập nhật tồn kho
+            // Bước 2: Thêm sản phẩm vào đơn hàng + cập nhật tồn kho
             foreach ($items as $item) {
                 $price = getDisplayPrice($item['price'], $item['sale_price']);
                 

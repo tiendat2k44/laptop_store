@@ -21,7 +21,7 @@ try {
         exit;
     }
     
-    // Require fields
+    // Các trường bắt buộc
     $requestId = $data['request_id'] ?? '';
     $status = (int)($data['status'] ?? -1);
     $amount = (int)($data['amount'] ?? 0);

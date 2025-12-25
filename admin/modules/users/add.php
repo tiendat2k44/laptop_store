@@ -1,10 +1,15 @@
 <?php
+/**
+ * Admin - Thêm Người Dùng Mới
+ * Tạo tài khoản người dùng mới vào hệ thống
+ */
+
 require_once __DIR__ . '/../../../includes/init.php';
 Auth::requireRole(ROLE_ADMIN, '/login.php');
 
 $db = Database::getInstance();
 
-// Xử lý form thêm người dùng
+// Xử lý form thêm người dùng mới
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!Session::verifyToken($_POST['csrf_token'] ?? '')) {
         Session::setFlash('error', 'CSRF token không hợp lệ');
@@ -17,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = trim($_POST['password'] ?? '');
     $status = trim($_POST['status'] ?? 'active');
     
-    // Validate
+    // Kiểm tra dữ liệu hợp lệ
     if (!$email || !$fullName || !$password) {
         Session::setFlash('error', 'Vui lòng điền đầy đủ thông tin bắt buộc');
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -25,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (strlen($password) < 6) {
         Session::setFlash('error', 'Mật khẩu phải có ít nhất 6 ký tự');
     } else {
-        // Kiểm tra email đã tồn tại
+        // Kiểm tra email đã tồn tại trong hệ thống chưa
         $existing = $db->queryOne(
             "SELECT id FROM users WHERE email = :email",
             ['email' => $email]

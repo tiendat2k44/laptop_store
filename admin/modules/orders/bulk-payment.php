@@ -1,11 +1,18 @@
 <?php
+/**
+ * Admin - Cập Nhật Thanh Toán Hàng Loạt
+ * Cập nhật trạng thái thanh toán cho nhiều đơn hàng cùng lúc
+ */
+
 require_once __DIR__ . '/../../../includes/init.php';
 Auth::requireRole(ROLE_ADMIN, '/login.php');
 
+// Chỉ chấp nhận phương thức POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     redirect('/admin/modules/orders/');
 }
 
+// Xác thực CSRF token
 if (!Session::verifyToken($_POST['csrf_token'] ?? '')) {
     Session::setFlash('error', 'CSRF token không hợp lệ');
     redirect('/admin/modules/orders/');
@@ -22,7 +29,7 @@ $db = Database::getInstance();
 require_once __DIR__ . '/../../../includes/services/AdminOrderService.php';
 $service = new AdminOrderService($db);
 
-$status = null;
+// Xác định trạng thái thanh toán tương ứng với hành động
 if ($action === 'mark_paid') $status = 'paid';
 if ($action === 'mark_refunded') $status = 'refunded';
 
@@ -31,6 +38,7 @@ if (!$status) {
     redirect('/admin/modules/orders/');
 }
 
+// Thực hiện cập nhật hàng loạt trong transaction
 try {
     $db->beginTransaction();
     $updated = 0;

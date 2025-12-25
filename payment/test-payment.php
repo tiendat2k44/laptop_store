@@ -124,7 +124,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         die('Invalid request');
     }
 
-    // Verify order belongs to current user
+    // Xác minh đơn hàng thuộc người dùng hiện tại
     $order = $db->queryOne(
         "SELECT id FROM orders WHERE id = :id AND user_id = :uid",
         ['id' => $orderId, 'uid' => Auth::id()]
